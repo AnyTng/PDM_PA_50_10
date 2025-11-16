@@ -1,0 +1,40 @@
+@startuml
+skinparam state {
+  BackgroundColor #FDFDFD
+  BorderColor #333
+  FontSize 14
+}
+
+[*] --> Pendente : Processo mensal iniciado
+
+state Pendente {
+    [*] --> Verificacao
+    Verificacao : Verificar disponibilidade de stock
+}
+
+Verificacao --> Pendente_de_Stock : Artigos em falta
+Verificacao --> Em_Preparacao : Artigos disponíveis e reservados
+
+Pendente_de_Stock : Aguarda reposição de stock
+Pendente_de_Stock --> Pendente : Stock atualizado
+Pendente_de_Stock --> Cancelado : Apoio cancelado
+
+Em_Preparacao : Colaborador prepara o cabaz
+Em_Preparacao --> Pronto_para_Entrega : Cabaz concluído
+Em_Preparacao --> Cancelado : Apoio cancelado
+
+Pronto_para_Entrega : Aguarda recolha pelo beneficiário
+Pronto_para_Entrega --> Entregue : Marcado "Entregue"
+Pronto_para_Entrega --> Nao_Entregue : Marcado "Não Entregue"
+
+Nao_Entregue : Aguarda reagendamento
+Nao_Entregue --> Pronto_para_Entrega : Reagendado
+Nao_Entregue --> Cancelado : Cancelado
+
+Entregue : Entrega confirmada, stock abatido
+Entregue --> [*]
+
+Cancelado : Cabaz cancelado e produtos devolvidos
+Cancelado --> [*]
+
+@enduml
