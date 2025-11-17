@@ -69,4 +69,4 @@ node_modules/
 .dataconnect
 
 # Ficheiro de histórico personalizado
-.\historico\historico.txt
+./historico/historico.txt
