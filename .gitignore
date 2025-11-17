@@ -28,3 +28,4 @@ replay_pid*
 
 # useless MacOS files
 .DS_Store
+/Backend/historico
