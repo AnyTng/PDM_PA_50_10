@@ -1,16 +1,14 @@
-// src/routes/index.ts
-
-import { Router } from 'express';
-import apoiadosRouter from './apoiados.routes';
-// import outraColecaoRouter from './outra-colecao.routes';
+import { Router } from "express";
+import apoiadosRoutes from "./apoiados.routes";
+import funcionariosRoutes from "./funcionarios.routes"; // Faltava importar este!
 
 const router = Router();
 
-// Todas as rotas em 'apoiados.routes.ts' serão prefixadas com /apoiados
-router.use('/apoiados', apoiadosRouter);
-router.use('/funcionarios', apoiadosRouter);
+// Rota para Apoiados -> usa o ficheiro apoiados.routes.ts
+router.use("/apoiados", apoiadosRoutes);
 
-// Quando tiver outra coleção (ex: 'projetos'):
-// router.use('/projetos', outraColecaoRouter);
+// Rota para Funcionários -> usa o ficheiro funcionarios.routes.ts
+// (No seu código anterior, estava a repetir 'apoiadosRouter' aqui por engano)
+router.use("/funcionarios", funcionariosRoutes);
 
 export default router;
