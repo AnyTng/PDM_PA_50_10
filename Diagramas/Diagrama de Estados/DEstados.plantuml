@@ -31,10 +31,10 @@ Nao_Entregue : Aguarda reagendamento
 Nao_Entregue --> Pronto_para_Entrega : Reagendado
 Nao_Entregue --> Cancelado : Cancelado
 
-Entregue : Entrega confirmada, stock abatido
+Entregue : Entrega confirmada e stock abatido
 Entregue --> [*]
 
-Cancelado : Cabaz cancelado e produtos devolvidos
+Cancelado : Cabaz cancelado ou produtos devolvidos
 Cancelado --> [*]
 
 @enduml
