@@ -1,130 +1,105 @@
-import { Request, Response } from "express";
-// IMPORTANTE: Importamos a 'db' do nosso novo ficheiro de configuração
-import { db } from "../config/firebase"; 
+import { Response } from "express";
+import { db } from "../config/firebase";
+import { AuthRequest } from "../middlewares/authentication";
+import { ApoiadoSchema } from "../schemas/apoiado.schema";
 
-// Referência à coleção 'apoiados'
-const apoiadosCollection = db.collection("apoiados");
+type Controller = (req: AuthRequest, res: Response) => Promise<Response | void>;
 
-/**
- * GET /api/apoiados
- * Lista todos os apoiados.
- */
-export const getAllApoiados = async (request: Request, response: Response) => {
+export const addApoiado: Controller = async (req, res) => {
   try {
-    const snapshot = await apoiadosCollection.get();
-    const apoiados: { id: string; [key: string]: any }[] = [];
-    snapshot.forEach((doc) => {
-      apoiados.push({ id: doc.id, ...doc.data() });
+    const validatedData = ApoiadoSchema.parse(req.body);
+
+    const dadosProntosParaDB = {
+      ...validatedData,
+      dataNascimento: new Date(validatedData.dataNascimento),
+      validadeConta: validatedData.validadeConta ? new Date(validatedData.validadeConta) : null,
+      ultimaCesta: validatedData.ultimaCesta ? new Date(validatedData.ultimaCesta) : null,
+      criadoPor: req.user?.uid,
+      criadoEm: new Date(),
+    };
+
+    const docRef = await db.collection("apoiados").add(dadosProntosParaDB);
+
+    return res.status(201).json({
+      id: docRef.id,
+      message: "Apoiado criado com sucesso",
+      data: validatedData,
     });
-    return response.json(apoiados);
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao buscar apoiados" });
+  } catch (error: any) {
+    if (error.name === "ZodError") {
+      return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+    }
+    return res.status(500).json({ error: error.message });
   }
 };
 
-/**
- * POST /api/apoiados
- * Cria um novo apoiado.
- */
-export const createApoiado = async (request: Request, response: Response) => {
+export const getAllApoiados: Controller = async (req, res) => {
   try {
-    const apoiadoData = request.body;
-    const { id, nomeApoiado } = apoiadoData;
-
-    if (!id || !nomeApoiado) {
-      return response.status(400).json({ error: 'Os campos "id" e "nomeApoiado" são obrigatórios' });
-    }
-
-    const docRef = apoiadosCollection.doc(id);
-    const doc = await docRef.get();
-
-    if (doc.exists) {
-      return response.status(409).json({ error: "Já existe um documento com esse ID" });
-    }
-
-    const dataToSet = { ...apoiadoData };
-    delete dataToSet.id;
-
-    await docRef.set(dataToSet);
-
-    return response.status(201).json({ id: id, ...dataToSet });
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao criar apoiado" });
+    const snapshot = await db.collection("apoiados").get();
+    const apoiados = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return res.status(200).json(apoiados);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 };
 
-/**
- * GET /api/apoiados/:id
- */
-export const getApoiadoById = async (request: Request, response: Response) => {
+// --- ADICIONAR ESTA FUNÇÃO ---
+export const getApoiadoById: Controller = async (req, res) => {
+  const { apoiadoId } = req.params;
   try {
-    const { id } = request.params;
-    const docRef = apoiadosCollection.doc(id);
-    const doc = await docRef.get();
-
+    const doc = await db.collection("apoiados").doc(apoiadoId).get();
     if (!doc.exists) {
-      return response.status(404).json({ error: "Apoiado não encontrado" });
+      return res.status(404).json({ error: "Apoiado não encontrado" });
     }
-    return response.json({ id: doc.id, ...doc.data() });
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao buscar apoiado" });
+    return res.status(200).json({ id: doc.id, ...doc.data() });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 };
+// -----------------------------
 
-/**
- * PUT /api/apoiados/:id
- */
-export const updateApoiado = async (request: Request, response: Response) => {
+export const updateApoiado: Controller = async (req, res) => {
+  const { apoiadoId } = req.params;
+  
   try {
-    const { id } = request.params;
-    const dataToUpdate = request.body;
+    const docRef = db.collection("apoiados").doc(apoiadoId);
+    const doc = await docRef.get();
 
-    if (dataToUpdate.id) delete dataToUpdate.id;
-
-    if (Object.keys(dataToUpdate).length === 0) {
-      return response.status(400).json({ error: "Corpo da requisição está vazio" });
+    // VERIFICAÇÃO 404
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Apoiado não encontrado" });
     }
+
+    const validatedData = ApoiadoSchema.partial().parse(req.body);
     
-    if (!dataToUpdate.nomeApoiado) {
-       return response.status(400).json({ error: "Campo 'nomeApoiado' é obrigatório" });
-    }
+    const dadosParaAtualizar: any = { ...validatedData };
+    if (validatedData.dataNascimento) dadosParaAtualizar.dataNascimento = new Date(validatedData.dataNascimento);
+    if (validatedData.validadeConta) dadosParaAtualizar.validadeConta = new Date(validatedData.validadeConta);
+    if (validatedData.ultimaCesta) dadosParaAtualizar.ultimaCesta = new Date(validatedData.ultimaCesta);
 
-    const docRef = apoiadosCollection.doc(id);
-    const doc = await docRef.get();
+    await docRef.update(dadosParaAtualizar);
 
-    if (!doc.exists) {
-      return response.status(404).json({ error: "Apoiado não encontrado" });
-    }
-
-    await docRef.update(dataToUpdate);
-
-    return response.status(200).json({ id: docRef.id, ...dataToUpdate });
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao atualizar apoiado" });
+    return res.status(200).json({ message: "Apoiado atualizado com sucesso" });
+  } catch (error: any) {
+    if (error.name === "ZodError") return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+    return res.status(500).json({ error: error.message });
   }
 };
 
-/**
- * DELETE /api/apoiados/:id
- */
-export const deleteApoiado = async (request: Request, response: Response) => {
+export const deleteApoiado: Controller = async (req, res) => {
+  const { apoiadoId } = req.params;
   try {
-    const { id } = request.params;
-    const docRef = apoiadosCollection.doc(id);
+    const docRef = db.collection("apoiados").doc(apoiadoId);
     const doc = await docRef.get();
 
+    // VERIFICAÇÃO 404
     if (!doc.exists) {
-      return response.status(404).json({ error: "Apoiado não encontrado" });
+      return res.status(404).json({ error: "Apoiado não encontrado" });
     }
 
     await docRef.delete();
-    return response.status(204).send();
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao apagar apoiado" });
+    return res.status(200).json({ message: "Apoiado removido com sucesso" });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 };

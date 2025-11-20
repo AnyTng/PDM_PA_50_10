@@ -1,23 +1,18 @@
 import { Router } from "express";
-
-// Importa as funções do NOVO controlador de funcionários
 import {
+  addFuncionario, // Mudado de createFuncionario para addFuncionario
   getAllFuncionarios,
-  createFuncionario,
   getFuncionarioById,
   updateFuncionario,
   deleteFuncionario,
 } from "../controllers/funcionarios.controller";
 
-const router = Router();
+const funcionariosRoutes = Router();
 
-// Rota base: /api/funcionarios
-router.get("/", getAllFuncionarios);
-router.post("/", createFuncionario);
+funcionariosRoutes.post("/", addFuncionario);
+funcionariosRoutes.get("/", getAllFuncionarios);
+funcionariosRoutes.get("/:funcionarioId", getFuncionarioById);
+funcionariosRoutes.put("/:funcionarioId", updateFuncionario);
+funcionariosRoutes.delete("/:funcionarioId", deleteFuncionario);
 
-// Rota com parâmetro: /api/funcionarios/:id
-router.get("/:id", getFuncionarioById);
-router.put("/:id", updateFuncionario);
-router.delete("/:id", deleteFuncionario);
-
-export default router;
+export { funcionariosRoutes };

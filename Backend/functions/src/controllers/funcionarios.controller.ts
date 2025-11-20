@@ -1,98 +1,97 @@
-import { Request, Response } from "express";
-// IMPORTANTE: Importamos a 'db' do nosso novo ficheiro de configuração
-import { db } from "../config/firebase"; 
+import { Response } from "express";
+import { db } from "../config/firebase";
+import { AuthRequest } from "../middlewares/authentication";
+import { FuncionarioSchema } from "../schemas/funcionario.schema";
 
-const funcionariosCollection = db.collection("funcionarios");
+type Controller = (req: AuthRequest, res: Response) => Promise<Response | void>;
 
-export const getAllFuncionarios = async (request: Request, response: Response) => {
+export const addFuncionario: Controller = async (req, res) => {
   try {
-    const snapshot = await funcionariosCollection.get();
-    const funcionarios: { id: string; [key: string]: any }[] = [];
-    snapshot.forEach((doc) => {
-      funcionarios.push({ id: doc.id, ...doc.data() });
+    const validatedData = FuncionarioSchema.parse(req.body);
+
+    const userCheck = await db.collection("funcionarios").where("email", "==", validatedData.email).get();
+    if (!userCheck.empty) {
+        return res.status(400).json({ error: "Funcionário com este email já existe." });
+    }
+
+    const docRef = await db.collection("funcionarios").add({
+        ...validatedData,
+        criadoEm: new Date().toISOString(),
     });
-    return response.json(funcionarios);
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao buscar funcionários" });
+
+    return res.status(201).json({
+      id: docRef.id,
+      message: "Funcionário adicionado com sucesso",
+      data: validatedData,
+    });
+  } catch (error: any) {
+    if (error.name === "ZodError") {
+      return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+    }
+    return res.status(500).json({ error: error.message });
   }
 };
 
-export const createFuncionario = async (request: Request, response: Response) => {
+export const getAllFuncionarios: Controller = async (req, res) => {
   try {
-    const funcionarioData = request.body;
-    const { id, nome, email } = funcionarioData; 
-
-    if (!id || !nome || !email) {
-      return response.status(400).json({ error: "Os campos 'id', 'nome' e 'email' são obrigatórios" });
-    }
-
-    const docRef = funcionariosCollection.doc(id);
-    const doc = await docRef.get();
-
-    if (doc.exists) {
-      return response.status(409).json({ error: "Já existe um funcionário com esse ID" });
-    }
-
-    const dataToSet = { ...funcionarioData };
-    delete dataToSet.id;
-
-    await docRef.set(dataToSet);
-    return response.status(201).json({ id: id, ...dataToSet });
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao criar funcionário" });
+    const snapshot = await db.collection("funcionarios").get();
+    const funcionarios = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return res.status(200).json(funcionarios);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 };
 
-export const getFuncionarioById = async (request: Request, response: Response) => {
+// --- ADICIONAR ESTA FUNÇÃO ---
+export const getFuncionarioById: Controller = async (req, res) => {
+  const { funcionarioId } = req.params;
   try {
-    const { id } = request.params;
-    const docRef = funcionariosCollection.doc(id);
-    const doc = await docRef.get();
+    const doc = await db.collection("funcionarios").doc(funcionarioId).get();
     if (!doc.exists) {
-      return response.status(404).json({ error: "Funcionário não encontrado" });
+      return res.status(404).json({ error: "Funcionário não encontrado" });
     }
-    return response.json({ id: doc.id, ...doc.data() });
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao buscar funcionário" });
+    return res.status(200).json({ id: doc.id, ...doc.data() });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
   }
 };
+// -----------------------------
 
-export const updateFuncionario = async (request: Request, response: Response) => {
-  try {
-    const { id } = request.params;
-    const dataToUpdate = request.body;
-    if (dataToUpdate.id) delete dataToUpdate.id;
-    if (Object.keys(dataToUpdate).length === 0) {
-      return response.status(400).json({ error: "Corpo da requisição está vazio" });
-    }
-    const docRef = funcionariosCollection.doc(id);
-    const doc = await docRef.get();
-    if (!doc.exists) {
-      return response.status(404).json({ error: "Funcionário não encontrado" });
-    }
-    await docRef.update(dataToUpdate);
-    return response.status(200).json({ id: docRef.id, ...dataToUpdate });
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao atualizar funcionário" });
-  }
-};
+export const updateFuncionario: Controller = async (req, res) => {
+    const { funcionarioId } = req.params;
+    try {
+      const docRef = db.collection("funcionarios").doc(funcionarioId);
+      const doc = await docRef.get();
 
-export const deleteFuncionario = async (request: Request, response: Response) => {
-  try {
-    const { id } = request.params;
-    const docRef = funcionariosCollection.doc(id);
-    const doc = await docRef.get();
-    if (!doc.exists) {
-      return response.status(404).json({ error: "Funcionário não encontrado" });
+      // VERIFICAÇÃO 404
+      if (!doc.exists) {
+        return res.status(404).json({ error: "Funcionário não encontrado" });
+      }
+
+      const validatedData = FuncionarioSchema.partial().parse(req.body);
+      await docRef.update(validatedData);
+      
+      return res.status(200).json({ message: "Funcionário atualizado" });
+    } catch (error: any) {
+      if (error.name === "ZodError") return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+      return res.status(500).json({ error: error.message });
     }
-    await docRef.delete();
-    return response.status(204).send();
-  } catch (error) {
-    console.error(error);
-    return response.status(500).json({ error: "Erro ao apagar funcionário" });
-  }
-};
+  };
+
+export const deleteFuncionario: Controller = async (req, res) => {
+    const { funcionarioId } = req.params;
+    try {
+      const docRef = db.collection("funcionarios").doc(funcionarioId);
+      const doc = await docRef.get();
+
+      // VERIFICAÇÃO 404
+      if (!doc.exists) {
+        return res.status(404).json({ error: "Funcionário não encontrado" });
+      }
+
+      await docRef.delete();
+      return res.status(200).json({ message: "Funcionário removido" });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  };

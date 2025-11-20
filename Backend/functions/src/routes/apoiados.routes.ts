@@ -1,23 +1,18 @@
-import { Router } from 'express';
-
-// Importa todas as funções do controlador
+import { Router } from "express";
 import {
+  addApoiado, // Mudado de createApoiado para addApoiado
   getAllApoiados,
-  createApoiado,
   getApoiadoById,
   updateApoiado,
   deleteApoiado,
-} from '../controllers/apoiados.controller';
+} from "../controllers/apoiados.controller";
 
-const router = Router();
+const apoiadosRoutes = Router();
 
-// Rota base /
-router.get('/', getAllApoiados);
-router.post('/', createApoiado);
+apoiadosRoutes.post("/", addApoiado);
+apoiadosRoutes.get("/", getAllApoiados);
+apoiadosRoutes.get("/:apoiadoId", getApoiadoById);
+apoiadosRoutes.put("/:apoiadoId", updateApoiado); // ou patch
+apoiadosRoutes.delete("/:apoiadoId", deleteApoiado);
 
-// Rota com parâmetro /:id
-router.get('/:id', getApoiadoById);
-router.put('/:id', updateApoiado);
-router.delete('/:id', deleteApoiado);
-
-export default router;
+export { apoiadosRoutes };
