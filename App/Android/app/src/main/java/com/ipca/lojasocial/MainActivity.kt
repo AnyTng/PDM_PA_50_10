@@ -1,6 +1,5 @@
 package com.ipca.lojasocial
 
-import android.database.sqlite.SQLiteDatabase          // 🔴 ADICIONADO, APAGARRRRRR
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.ipca.lojasocial.ui.theme.LojaSocialIPCATheme
+
+//Imports de coisas inseguras
+import javax.crypto.Cipher
+import java.security.MessageDigest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,22 +32,21 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Apagar isto mais tarde, teste do CodeQL
-        vulnerableQuery()
+        // Chamar as funções
+        badCrypto()
+        badHash()
     }
 
-    // Apagar assim que puder
-    private fun vulnerableQuery() {
+    // Teste 1.
+    private fun badCrypto() {
+        val cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+        println(cipher) // só para usar a variável
+    }
 
-        val username = intent.getStringExtra("username") ?: ""
-
-        // DB de teste local
-        val db: SQLiteDatabase = openOrCreateDatabase("test.db", MODE_PRIVATE, null)
-
-
-        val query = "SELECT * FROM users WHERE name = '$username'"
-
-        db.rawQuery(query, null)
+    // Teste 2-
+    private fun badHash() {
+        val md5 = MessageDigest.getInstance("MD5")
+        println(md5) // só para usar a variável
     }
 }
 
