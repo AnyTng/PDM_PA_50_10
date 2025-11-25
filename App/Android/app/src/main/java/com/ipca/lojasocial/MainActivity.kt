@@ -1,5 +1,6 @@
 package com.ipca.lojasocial
 
+import android.database.sqlite.SQLiteDatabase          // 🔴 ADICIONADO, APAGARRRRRR
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,6 +28,23 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        // Apagar isto mais tarde, teste do CodeQL
+        vulnerableQuery()
+    }
+
+    // Apagar assim que puder
+    private fun vulnerableQuery() {
+
+        val username = intent.getStringExtra("username") ?: ""
+
+        // DB de teste local
+        val db: SQLiteDatabase = openOrCreateDatabase("test.db", MODE_PRIVATE, null)
+
+
+        val query = "SELECT * FROM users WHERE name = '$username'"
+
+        db.rawQuery(query, null)
     }
 }
 
