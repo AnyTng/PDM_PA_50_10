@@ -13,9 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.ipca.lojasocial.ui.theme.LojaSocialIPCATheme
 
-//Imports de coisas inseguras
-import javax.crypto.Cipher
-import java.security.MessageDigest
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,23 +30,8 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Chamar as funções
-        badCrypto()
-        badHash()
     }
 
-    // Teste 1.
-    private fun badCrypto() {
-        val cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
-        println(cipher) // só para usar a variável
-    }
-
-    // Teste 2-
-    private fun badHash() {
-        val md5 = MessageDigest.getInstance("MD5")
-        println(md5) // só para usar a variável
-    }
-}
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
@@ -64,4 +47,4 @@ fun GreetingPreview() {
     LojaSocialIPCATheme {
         Greeting("Android")
     }
-}
+}}
