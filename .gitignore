@@ -28,4 +28,9 @@ replay_pid*
 
 # useless MacOS files
 .DS_Store
+
+# other useless stuff 
 /Backend/historico
+/Frontend/Android/.gradle
+/Frontend/Android/.idea
+Frontend/Android/local.properties
