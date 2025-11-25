@@ -89,8 +89,7 @@ jobs:
       shell: bash
       working-directory: App/Android
       run: |
-        chmod +x ./gradlew
-        ./gradlew assembleDebug
+        gradle assembleDebug
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
