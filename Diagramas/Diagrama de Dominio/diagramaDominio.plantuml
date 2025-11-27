@@ -1,0 +1,149 @@
+@startuml
+skinparam class {
+    BackgroundColor #F2FFF2
+    BorderColor #2A2A2A
+    FontSize 13
+}
+
+' ============================================
+'                ENTIDADES
+' ============================================
+
+class Beneficiario {
+    -idBeneficiario : string
+    -nomeCompleto : string
+    -telemovel : string
+    -dataNasc : dateTime
+    -email : string
+    -curso : string
+    -ativo : boolean
+    -apoioEmergencialSocial : boolean
+    -bolsaEstudo : boolean
+    -ccpasaporte : string
+    -nacionalidade : string
+    -necessidade : string[]        
+    -relacaoIPCA : string
+    -ultimoApoio : dateTime
+    -validadeConta : dateTime
+}
+
+class ColaboradorSAS {
+    -idColaborador : string        
+    -nome : string
+    -cargo : string
+    -admin : boolean
+    -codPostal : string
+    -contacto : string             
+    -dataNasc : dateTime
+    -email : string
+    -morada : string
+    -nif : string                  
+}
+
+class CategoriaProduto {
+    -idCategoria : string
+    -nomeCategoria : string      
+}
+
+class Produto {
+    -idProduto : string
+    -nomeProduto : string
+    -descProduto : string
+    -dataValidade : dateTime
+    -dataEntrada : dateTime
+    -codigoBarras : string
+    -doado : string
+    -estadoProduto : string
+    -marca : string
+    -subCategoria : string
+    -tamanho : string[]            
+    -descParceiroExterno : string
+    -atributtes : string[]        
+}
+
+class Campanha {
+    -idCampanha : string
+    -nome : string
+    -dataInicio : dateTime
+    -dataFim : dateTime
+    -tipo : Enum(interna, Externa)
+    -descCampanha : string
+}
+
+class ContaUtilizador {
+    -email : string
+    -password : string
+    -dataCriacao : dateTime
+    -estadoConta : string          
+}
+
+class PedidoApoio {
+    -idPedido : int
+    -dataPedido : dateTime
+    -motivoDescricao : string
+    -estado : Enum
+    -idBeneficiario : string
+    -idColaborador : string       
+}
+
+class Apoio {
+    -dataAgendada : dateTime
+    -idApoio : string
+    -dataEntregaReal : dateTime
+    -estado : Enum
+    -observacoes : string
+    -tipoApoio : string
+    -idColaborador : string        
+    -dataAtual : dateTime
+}
+
+class ItemApoio {
+    -quantidade : int
+}
+
+class InstituicaoParceira {
+    -idInstituicao : string
+    -nome : string
+    -contacto : string
+}
+
+class DoacaoSaida {
+    -idDoacao : string
+    -data : dateTime
+    -motivo : string
+}
+
+' ============================================
+'                RELAÇÕES
+' ============================================
+
+' --- Beneficiário e Apoios ---
+Beneficiario "1" -- "*" Apoio : recebe >
+
+' --- Apoio Mensal (Cabaz) ---
+Apoio "1" *-- "*" ItemApoio : composto_por >
+ItemApoio "*" --> "1" Produto : produto >
+
+' --- Stock e Categorias ---
+Produto "*" --> "1" CategoriaProduto : pertence_a >
+
+' --- Produtos vindos de campanhas ---
+Produto "*" --> "0..1" Campanha : proveniente_de >
+
+' --- Saída externa ---
+DoacaoSaida "1" *-- "*" Produto : contem >
+DoacaoSaida "*" --> "1" InstituicaoParceira : destinada_a >
+
+' --- Colaborador SAS ---
+ColaboradorSAS "1" --> "*" Produto : gere_stock >
+ColaboradorSAS "1" --> "*" Apoio : regista >
+ColaboradorSAS "1" --> "*" Campanha : cria >
+
+' --- Pedidos de apoio ---
+PedidoApoio "1" --> "1" Beneficiario : pedido_por >
+PedidoApoio "0..1" --> "1" ColaboradorSAS : analisado_por >
+
+' --- Conta Utilizador ---
+ContaUtilizador "1" -- "1" ColaboradorSAS : pertence_a >
+
+@enduml
