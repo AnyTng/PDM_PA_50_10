@@ -20,30 +20,29 @@ class Beneficiario {
     -apoioEmergencialSocial : boolean
     -bolsaEstudo : boolean
     -ccpasaporte : string
-    -estadoConta : string
-    -idFuncionario : int
     -nacionalidade : string
-    -necessidade : array
+    -necessidade : string[]        
     -relacaoIPCA : string
     -ultimoApoio : dateTime
     -validadeConta : dateTime
 }
 
 class ColaboradorSAS {
+    -idColaborador : string        
     -nome : string
     -cargo : string
     -admin : boolean
     -codPostal : string
-    -contacto : float
+    -contacto : string             
     -dataNasc : dateTime
     -email : string
     -morada : string
-    -nif : float
+    -nif : string                  
 }
 
 class CategoriaProduto {
     -idCategoria : string
-    -categoria : string
+    -nomeCategoria : string      
 }
 
 class Produto {
@@ -53,14 +52,13 @@ class Produto {
     -dataValidade : dateTime
     -dataEntrada : dateTime
     -codigoBarras : string
-    -idCampanha : string
     -doado : string
     -estadoProduto : string
     -marca : string
     -subCategoria : string
-    -tamanho : array
+    -tamanho : string[]            
     -descParceiroExterno : string
-    -atributtes : array
+    -atributtes : string[]        
 }
 
 class Campanha {
@@ -76,6 +74,7 @@ class ContaUtilizador {
     -email : string
     -password : string
     -dataCriacao : dateTime
+    -estadoConta : string          
 }
 
 class PedidoApoio {
@@ -84,7 +83,7 @@ class PedidoApoio {
     -motivoDescricao : string
     -estado : Enum
     -idBeneficiario : string
-    -idFunc : string
+    -idColaborador : string       
 }
 
 class Apoio {
@@ -94,9 +93,8 @@ class Apoio {
     -estado : Enum
     -observacoes : string
     -tipoApoio : string
-    -idFunc : string
+    -idColaborador : string        
     -dataAtual : dateTime
-    -produtos : array
 }
 
 class ItemApoio {
@@ -104,11 +102,13 @@ class ItemApoio {
 }
 
 class InstituicaoParceira {
+    -idInstituicao : string
     -nome : string
     -contacto : string
 }
 
 class DoacaoSaida {
+    -idDoacao : string
     -data : dateTime
     -motivo : string
 }
@@ -120,8 +120,8 @@ class DoacaoSaida {
 ' --- Beneficiário e Apoios ---
 Beneficiario "1" -- "*" Apoio : recebe >
 
-' --- Apoio Mensal (Cabaz) composição ---
-Apoio "1" *-- "*" ItemApoio : composto_por
+' --- Apoio Mensal (Cabaz) ---
+Apoio "1" *-- "*" ItemApoio : composto_por >
 ItemApoio "*" --> "1" Produto : produto >
 
 ' --- Stock e Categorias ---
@@ -130,21 +130,20 @@ Produto "*" --> "1" CategoriaProduto : pertence_a >
 ' --- Produtos vindos de campanhas ---
 Produto "*" --> "0..1" Campanha : proveniente_de >
 
-' --- Saída externa de produtos (fim validade) ---
+' --- Saída externa ---
 DoacaoSaida "1" *-- "*" Produto : contem >
 DoacaoSaida "*" --> "1" InstituicaoParceira : destinada_a >
 
-' --- Colaborador SAS controla processos ---
+' --- Colaborador SAS ---
 ColaboradorSAS "1" --> "*" Produto : gere_stock >
 ColaboradorSAS "1" --> "*" Apoio : regista >
 ColaboradorSAS "1" --> "*" Campanha : cria >
 
-' --- Pedidos de apoio iniciais ---
+' --- Pedidos de apoio ---
 PedidoApoio "1" --> "1" Beneficiario : pedido_por >
-PedidoApoio "1" --> "1" ColaboradorSAS : analisado_por >
+PedidoApoio "0..1" --> "1" ColaboradorSAS : analisado_por >
 
-' --- Conta Utilizador associada a colaborador ---
-ContaUtilizador "1" --> "1" ColaboradorSAS : pertence_a >
+' --- Conta Utilizador ---
+ContaUtilizador "1" -- "1" ColaboradorSAS : pertence_a >
 
 @enduml
-

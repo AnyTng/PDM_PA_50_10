@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.ipca.lojasocial.ui.theme.LojaSocialIPCATheme
 
+
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,8 +29,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
-}
+
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
@@ -44,4 +47,4 @@ fun GreetingPreview() {
     LojaSocialIPCATheme {
         Greeting("Android")
     }
-}
+}}
