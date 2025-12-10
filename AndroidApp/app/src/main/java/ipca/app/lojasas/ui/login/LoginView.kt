@@ -223,7 +223,8 @@ fun CustomFigmaInput(
                 if (value.isEmpty()) {
                     Text(
                         text = placeholder,
-                        style = TextStyle(color = Color.Gray, fontSize = 14.sp)
+                        style = TextStyle(color = Color.Gray, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
+                        )
                     )
                 }
                 innerTextField()
