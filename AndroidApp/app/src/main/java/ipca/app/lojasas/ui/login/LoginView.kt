@@ -85,9 +85,8 @@ fun LoginView(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .offset(x = 140.dp, y = 140.dp)
-                        .width(2340.dp)
-                        .height(990.dp),
-                    contentScale = ContentScale.Fit
+                        .width(4680.dp)
+                        .height(1980.dp),
                 )
                 Image(
                     painter = painterResource(id = logoResId),
