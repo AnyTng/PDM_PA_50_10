@@ -70,15 +70,14 @@ fun LoginView(
             // --- Secção do Logótipo ---
             Box(
                 modifier = Modifier
-                    .offset(x = 16.dp, y = 18.dp)
+                    .offset(x = 16.dp, y = 60.dp)
                     .width(244.dp)
-                    .height(112.dp) // Arredondei ligeiramente para simplificar
+                    .height(112.dp)
             ) {
                 // Certifique-se que a imagem "loginlogo" existe em res/drawable
                 Image(
-                    painter = painterResource(id = R.drawable.loginlogo),
-                    contentDescription = "Logo IPCA",
-                    contentScale = ContentScale.FillBounds,
+                    painter = painterResource(id = R.drawable.sas_white),
+                    contentDescription = "Logo do SAS IPCA",
                     modifier = Modifier.fillMaxSize()
                 )
             }
