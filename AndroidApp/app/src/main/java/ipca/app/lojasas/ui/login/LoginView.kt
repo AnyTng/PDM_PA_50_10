@@ -22,10 +22,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -57,31 +59,46 @@ fun LoginView(
     val viewModel: LoginViewModel = viewModel()
     val uiState by viewModel.uiState
 
+    val context = LocalContext.current
+    val logoResId = remember {
+        // Try to load sas_white; if missing (e.g. in preview cache), fall back to loginlogo.
+        context.resources.getIdentifier("sas_white", "drawable", context.packageName)
+            .takeIf { it != 0 } ?: R.drawable.loginlogo
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(color = GreenIPCA) // Fundo Verde Principal
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween, // Empurra o cartão branco para o fundo
-        ) {
-
-            // --- Secção do Logótipo ---
+        Column(modifier = Modifier.fillMaxSize()) {
+            // --- Secção do Logótipo + Ilustração na área verde ---
             Box(
                 modifier = Modifier
-                    .offset(x = 16.dp, y = 60.dp)
-                    .width(244.dp)
-                    .height(112.dp)
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                // Certifique-se que a imagem "loginlogo" existe em res/drawable
                 Image(
-                    painter = painterResource(id = R.drawable.sas_white),
+                    painter = painterResource(id = R.drawable.lswhitecircle),
+                    contentDescription = "Ilustração Loja Social",
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .offset(x = 140.dp, y = 140.dp)
+                        .width(2340.dp)
+                        .height(990.dp),
+                    contentScale = ContentScale.Fit
+                )
+                Image(
+                    painter = painterResource(id = logoResId),
                     contentDescription = "Logo do SAS IPCA",
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = 40.dp, start = 20.dp)
+                        .width(244.dp)
+                        .height(112.dp)
                 )
             }
-
             // --- Secção do Cartão Branco (Bottom Sheet) ---
             Column(
                 modifier = Modifier
@@ -191,7 +208,7 @@ fun LoginView(
     }
 }
 
-// --- Componente de Input Personalizado (Estilo Figma) ---
+
 @Composable
 fun CustomFigmaInput(
     value: String,
