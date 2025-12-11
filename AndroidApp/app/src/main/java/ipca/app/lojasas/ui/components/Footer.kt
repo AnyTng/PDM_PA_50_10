@@ -28,7 +28,7 @@ fun Footer(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(62.dp)
+            .height(80.dp)
             .background(
                 color = Color(0xFF094E33),
                 shape = RoundedCornerShape(
@@ -40,16 +40,16 @@ fun Footer(
             )
             .padding(horizontal = 20.dp, vertical = 14.dp),
         // Define o espaçamento automático entre os elementos
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(50.dp, Alignment.CenterHorizontally),
+        //verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
             painter = painterResource(id = R.drawable.calendarmonth),
             contentDescription = "Calendário",
             contentScale = ContentScale.Fit,
             modifier = Modifier
-                .width(30.dp)
-                .height(33.dp) // Arredondei para simplificar
+                .width(36.dp)
+                .height(39.dp) // Arredondei para simplificar
                 .clickable { onCalendarClick() }
         )
 
