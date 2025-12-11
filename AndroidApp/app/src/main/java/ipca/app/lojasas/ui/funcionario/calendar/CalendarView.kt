@@ -9,9 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
-import ipca.app.lojasas.ui.components.AppHeader
+
 
 @Composable
 fun CalendarView(navController: NavController) {
@@ -21,10 +22,8 @@ fun CalendarView(navController: NavController) {
         },
         bottomBar = {
             Footer(
-                type = FooterType.FUNCIONARIO,
-                onCalendarClick = {
-                    // Já estamos no calendário, talvez recarregar ou nada
-                }
+                navController = navController,
+                type = FooterType.FUNCIONARIO
             )
         }
     ) { innerPadding ->

@@ -28,6 +28,7 @@ import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
+import ipca.app.lojasas.ui.funcionario.menu.MenuView
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,12 +60,16 @@ class MainActivity : ComponentActivity() {
 
                         // Se o ApoiadoHomeScreen também precisar de navegação, adiciona lá também
                         composable("apoiadoHome") {
-                            ApoiadoHomeScreen(/* navController = navController */)
+                            ApoiadoHomeScreen(navController = navController)
                         }
 
                         // CORREÇÃO AQUI: Passar o navController
                         composable("funcionarioHome") {
                             CalendarView(navController = navController)
+                        }
+
+                        composable("menu") {
+                            MenuView(navController = navController)
                         }
                     }
                 }

@@ -3,14 +3,7 @@ package ipca.app.lojasas.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -22,20 +15,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import ipca.app.lojasas.R
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 
 enum class FooterType { FUNCIONARIO, APOIADO }
 
 @Composable
 fun Footer(
-    type: FooterType = FooterType.FUNCIONARIO,
-    onCalendarClick: () -> Unit = {},
-    onBagClick: () -> Unit = {},
-    onInventoryClick: () -> Unit = {},
-    onHomeClick: () -> Unit = {},
-    onMenuClick: () -> Unit = {}
+    navController: NavController, // 1. Recebe o controlador aqui
+    type: FooterType = FooterType.FUNCIONARIO
 ) {
     Row(
         modifier = Modifier
@@ -54,50 +45,66 @@ fun Footer(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val itemModifier = Modifier.weight(1f)
+
         when (type) {
             FooterType.FUNCIONARIO -> {
-                val itemModifier = Modifier.weight(1f)
                 FooterIcon(
                     painterRes = R.drawable.calendarmonth,
                     contentDescription = "Calendário",
-                    onClick = onCalendarClick,
+                    onClick = {
+                        // Navega para a Home do Funcionário e limpa a pilha para não acumular ecrãs
+                        navController.navigate("funcionarioHome") {
+                            popUpTo("funcionarioHome") { inclusive = true }
+                        }
+                    },
                     modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.shoppingbag,
                     contentDescription = "Saco",
-                    onClick = onBagClick,
+                    onClick = {
+                        // Exemplo: navController.navigate("saco")
+                    },
                     modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.grocery,
                     contentDescription = "Mercearia",
-                    onClick = onInventoryClick,
+                    onClick = {
+                        // Exemplo: navController.navigate("inventario")
+                    },
                     modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.dehaze,
                     contentDescription = "Menu",
-                    onClick = onMenuClick,
+                    onClick = { navController.navigate("menu") },
                     modifier = itemModifier
                 )
             }
+
             FooterType.APOIADO -> {
-                val itemModifier = Modifier.weight(1f)
                 FooterIcon(
                     painterRes = R.drawable.shoppingbag,
                     contentDescription = "Saco",
-                    onClick = onBagClick,
+                    onClick = {
+                        // Exemplo: navController.navigate("saco")
+                    },
                     modifier = itemModifier
                 )
                 HeartHomeIcon(
-                    onClick = onHomeClick,
+                    onClick = {
+                        navController.navigate("apoiadoHome") {
+                            popUpTo("apoiadoHome") { inclusive = true }
+                        }
+                    },
                     modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.dehaze,
                     contentDescription = "Menu",
-                    onClick = onMenuClick,
+                    onClick = { navController.navigate("menuApoiado") },
                     modifier = itemModifier
                 )
             }
@@ -152,14 +159,27 @@ private fun HeartHomeIcon(
     }
 }
 
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun FooterFuncionarioPreview() {
-    Footer(type = FooterType.FUNCIONARIO)
+    // O rememberNavController cria uma instância válida para desenhar a UI,
+    // mesmo que a navegação não funcione dentro da pré-visualização estática.
+    val navController = rememberNavController()
+    Footer(
+        navController = navController,
+        type = FooterType.FUNCIONARIO
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun FooterApoiadoPreview() {
-    Footer(type = FooterType.APOIADO)
+    val navController = rememberNavController()
+    Footer(
+        navController = navController,
+        type = FooterType.APOIADO
+    )
 }
