@@ -104,7 +104,7 @@ fun Footer(
                 FooterIcon(
                     painterRes = R.drawable.dehaze,
                     contentDescription = "Menu",
-                    onClick = { navController.navigate("menuApoiado") },
+                    onClick = {  },
                     modifier = itemModifier
                 )
             }
