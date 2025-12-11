@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ipca.app.lojasas.R
 
@@ -37,47 +39,46 @@ fun Footer(
                 )
             )
             .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.Center, // Centralizado como no Figma
+        // Define o espaçamento automático entre os elementos
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Icone do Calendário
         Image(
-            painter = painterResource(id = R.drawable.calendarmonth), // O teu SVG importado
+            painter = painterResource(id = R.drawable.calendarmonth),
             contentDescription = "Calendário",
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .width(30.dp)
-                .height(33.dp)
+                .height(33.dp) // Arredondei para simplificar
                 .clickable { onCalendarClick() }
         )
-        // Ícone do Saco de Compras (Novo)
+
         Image(
-            painter = painterResource(id = R.drawable.shoppingbag), // Nome do ficheiro XML que criaste
-            contentDescription = "Loja",
+            painter = painterResource(id = R.drawable.shoppingbag),
+            contentDescription = "Saco",
             contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .width(30.dp)
-                .height(33.dp)
-                //.clickable { onShopClick() }
+            modifier = Modifier.size(40.dp) // Simplifiquei width/height
         )
+
         Image(
-            painter = painterResource(id = R.drawable.grocery), // Nome do ficheiro XML que criaste
-            contentDescription = "Loja",
+            painter = painterResource(id = R.drawable.grocery),
+            contentDescription = "Mercearia",
             contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .width(30.dp)
-                .height(33.dp)
-            //.clickable { onShopClick() }
+            modifier = Modifier.size(40.dp)
         )
+
         Image(
-            painter = painterResource(id = R.drawable.dehaze), // Nome do ficheiro XML que criaste
-            contentDescription = "Loja",
+            painter = painterResource(id = R.drawable.dehaze),
+            contentDescription = "Menu",
             contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .width(30.dp)
-                .height(33.dp)
-            //.clickable { onShopClick() }
+            modifier = Modifier.size(40.dp)
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun FooterPreview() {
+    Footer()
 }
 
