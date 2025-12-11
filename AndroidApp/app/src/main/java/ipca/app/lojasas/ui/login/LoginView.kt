@@ -44,6 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 
 // Definição das Cores do Figma
@@ -195,8 +196,12 @@ fun LoginView(
                             .height(40.dp)
                             .background(color = GreenIPCA, shape = RoundedCornerShape(5.dp))
                             .clickable {
-                                viewModel.login {
-                                    navController.navigate("home") {
+                                viewModel.login { role ->
+                                    val destination = when (role) {
+                                        UserRole.APOIADO -> "apoiadoHome"
+                                        UserRole.FUNCIONARIO -> "funcionarioHome"
+                                    }
+                                    navController.navigate(destination) {
                                         popUpTo("login") { inclusive = true }
                                     }
                                 }

@@ -3,6 +3,8 @@ package ipca.app.lojasas.ui.login
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import ipca.app.lojasas.data.UserRole
+import ipca.app.lojasas.data.UserRoleRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -30,7 +32,7 @@ class LoginViewModel : ViewModel() {
         uiState.value = uiState.value.copy(password = password)
     }
 
-    fun login(onLoginSuccess:()->Unit) {
+    fun login(onLoginSuccess:(UserRole)->Unit) {
         uiState.value = uiState.value.copy(isLoading = true)
 
         if (uiState.value.email.isNullOrEmpty()) {
@@ -47,18 +49,16 @@ class LoginViewModel : ViewModel() {
             return
         }
 
+        val email = uiState.value.email!!.trim()
         val auth: FirebaseAuth = Firebase.auth
         auth.signInWithEmailAndPassword(
-            uiState.value.email!!,
+            email,
             uiState.value.password!!)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     // Sign in success
                     Log.d(TAG, "signInWithEmail:success")
-                    uiState.value = uiState.value.copy(
-                        isLoading = false,
-                        error = null)
-                    onLoginSuccess()
+                    resolveRoleAndProceed(email, onLoginSuccess)
                 } else {
                     // If sign in fails
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
@@ -67,5 +67,34 @@ class LoginViewModel : ViewModel() {
                         error = "Wrong password or no internet connection")
                 }
             }
+    }
+
+    private fun resolveRoleAndProceed(
+        email: String,
+        onLoginSuccess:(UserRole)->Unit
+    ) {
+        UserRoleRepository.fetchUserRoleByEmail(
+            email = email,
+            onSuccess = { role ->
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = null
+                )
+                onLoginSuccess(role)
+            },
+            onNotFound = {
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = "Conta sem perfil associado."
+                )
+            },
+            onError = { exception ->
+                Log.e(TAG, "Erro ao obter perfil do utilizador", exception)
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = "Não foi possível obter o tipo de utilizador."
+                )
+            }
+        )
     }
 }

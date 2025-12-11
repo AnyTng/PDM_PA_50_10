@@ -24,6 +24,10 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import ipca.app.lojasas.ui.login.LoginView
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
+import ipca.app.lojasas.data.UserRoleRepository
+import ipca.app.lojasas.data.destination
+import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
+import ipca.app.lojasas.ui.funcionario.FuncionarioHomeScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,12 +56,8 @@ class MainActivity : ComponentActivity() {
                         composable("login") {
                             LoginView(navController = navController)
                         }
-                        composable("home") {
-                            // Placeholder para a Home, usando o Greeting existente
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Greeting("Android")
-                            }
-                        }
+                        composable("apoiadoHome") { ApoiadoHomeScreen() }
+                        composable("funcionarioHome") { FuncionarioHomeScreen() }
                     }
                 }
             }
@@ -65,10 +65,26 @@ class MainActivity : ComponentActivity() {
             // Verifica se o utilizador já está logado
             LaunchedEffect(Unit) {
                 val user = Firebase.auth.currentUser
-                if (user != null) {
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
-                    }
+                val email = user?.email
+                if (email != null) {
+                    UserRoleRepository.fetchUserRoleByEmail(
+                        email = email,
+                        onSuccess = { role ->
+                            navController.navigate(role.destination()) {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        onNotFound = {
+                            navController.navigate("login") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        onError = {
+                            navController.navigate("login") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        }
+                    )
                 }
             }
         }
