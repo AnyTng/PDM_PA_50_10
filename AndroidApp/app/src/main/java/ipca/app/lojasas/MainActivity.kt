@@ -27,7 +27,6 @@ import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
-import ipca.app.lojasas.ui.funcionario.FuncionarioHomeScreen
 import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 
 class MainActivity : ComponentActivity() {
