@@ -29,6 +29,8 @@ import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
+import ipca.app.lojasas.ui.funcionario.profile.CreateProfileView // Adicionar import
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +72,10 @@ class MainActivity : ComponentActivity() {
 
                         composable("menu") {
                             MenuView(navController = navController)
+                        }
+
+                        composable("createProfile") {
+                            CreateProfileView(navController = navController)
                         }
                     }
                 }
