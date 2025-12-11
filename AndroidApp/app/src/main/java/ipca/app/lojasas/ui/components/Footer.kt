@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -39,7 +40,7 @@ fun Footer(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(88.dp)
             .background(
                 color = Color(0xFF094E33),
                 shape = RoundedCornerShape(
@@ -49,44 +50,55 @@ fun Footer(
                     bottomEnd = 0.dp
                 )
             )
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         when (type) {
             FooterType.FUNCIONARIO -> {
+                val itemModifier = Modifier.weight(1f)
                 FooterIcon(
                     painterRes = R.drawable.calendarmonth,
                     contentDescription = "Calendário",
-                    onClick = onCalendarClick
+                    onClick = onCalendarClick,
+                    modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.shoppingbag,
                     contentDescription = "Saco",
-                    onClick = onBagClick
+                    onClick = onBagClick,
+                    modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.grocery,
                     contentDescription = "Mercearia",
-                    onClick = onInventoryClick
+                    onClick = onInventoryClick,
+                    modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.dehaze,
                     contentDescription = "Menu",
-                    onClick = onMenuClick
+                    onClick = onMenuClick,
+                    modifier = itemModifier
                 )
             }
             FooterType.APOIADO -> {
+                val itemModifier = Modifier.weight(1f)
                 FooterIcon(
                     painterRes = R.drawable.shoppingbag,
                     contentDescription = "Saco",
-                    onClick = onBagClick
+                    onClick = onBagClick,
+                    modifier = itemModifier
                 )
-                HeartHomeIcon(onClick = onHomeClick)
+                HeartHomeIcon(
+                    onClick = onHomeClick,
+                    modifier = itemModifier
+                )
                 FooterIcon(
                     painterRes = R.drawable.dehaze,
                     contentDescription = "Menu",
-                    onClick = onMenuClick
+                    onClick = onMenuClick,
+                    modifier = itemModifier
                 )
             }
         }
@@ -97,25 +109,31 @@ fun Footer(
 private fun FooterIcon(
     painterRes: Int,
     contentDescription: String,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
-    Image(
-        painter = painterResource(id = painterRes),
-        contentDescription = contentDescription,
-        contentScale = ContentScale.Fit,
-        modifier = Modifier
-            .size(40.dp)
-            .clickable { onClick() }
-    )
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = painterRes),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .size(44.dp)
+                .clickable { onClick() }
+        )
+    }
 }
 
 @Composable
 private fun HeartHomeIcon(
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
-            .size(40.dp)
+        modifier = modifier
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -123,13 +141,13 @@ private fun HeartHomeIcon(
             imageVector = Icons.Filled.Home,
             contentDescription = "Início",
             tint = Color.White,
-            modifier = Modifier.size(36.dp)
+            modifier = Modifier.size(42.dp)
         )
         Icon(
             imageVector = Icons.Filled.Favorite,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(18.dp)
         )
     }
 }
