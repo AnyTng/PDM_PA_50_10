@@ -11,13 +11,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
-import ipca.app.lojasas.ui.components.Header
+import ipca.app.lojasas.ui.components.AppHeader
 
 @Composable
 fun CalendarView(navController: NavController) {
     Scaffold(
         topBar = {
-            Header(title = "Calendário")
+            AppHeader(title = "Calendário")
         },
         bottomBar = {
             Footer(
