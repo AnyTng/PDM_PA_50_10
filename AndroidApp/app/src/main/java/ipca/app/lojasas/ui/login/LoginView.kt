@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -79,25 +80,33 @@ fun LoginView(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
+                // 1) Ilustração grande do Figma (imagem "a")
                 Image(
                     painter = painterResource(id = R.drawable.lswhitecircle),
-                    contentDescription = "Ilustração Loja Social",
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.CenterStart,          // mantém a “origem” à esquerda
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .offset(x = 140.dp, y = 140.dp)
-                        .width(4680.dp)
-                        .height(1980.dp),
+                        .align(Alignment.CenterStart)           // ancora o frame na esquerda do Box
+                        .offset(x = 38.dp, y = 138.dp)          // empurra para a direita/baixo (ajusta a gosto)
+                        .width(463.dp)
+                        .height(463.dp)
+                        .alpha(0.4f)
                 )
+
+
+                // 2) Logótipo (fica por cima)
                 Image(
                     painter = painterResource(id = logoResId),
                     contentDescription = "Logo do SAS IPCA",
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(top = 40.dp, start = 20.dp)
-                        .width(244.dp)
-                        .height(112.dp)
+                        .width(275.dp)
+                        .height(100.dp)
                 )
             }
+
             // --- Secção do Cartão Branco (Bottom Sheet) ---
             Column(
                 modifier = Modifier
