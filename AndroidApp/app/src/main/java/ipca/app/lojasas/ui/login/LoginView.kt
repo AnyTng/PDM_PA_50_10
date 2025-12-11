@@ -17,23 +17,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -60,12 +68,28 @@ fun LoginView(
 ) {
     val viewModel: LoginViewModel = viewModel()
     val uiState by viewModel.uiState
+    val focusManager = LocalFocusManager.current
+    val passwordFocusRequester = remember { FocusRequester() }
 
     val context = LocalContext.current
     val logoResId = remember {
         // Try to load sas_white; if missing (e.g. in preview cache), fall back to loginlogo.
         context.resources.getIdentifier("sas_white", "drawable", context.packageName)
             .takeIf { it != 0 } ?: R.drawable.loginlogo
+    }
+
+    val performLogin: () -> Unit = {
+        if (!uiState.isLoading) {
+            viewModel.login { role ->
+                val destination = when (role) {
+                    UserRole.APOIADO -> "apoiadoHome"
+                    UserRole.FUNCIONARIO -> "funcionarioHome"
+                }
+                navController.navigate(destination) {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+        }
     }
 
     Box(
@@ -144,7 +168,11 @@ fun LoginView(
                     value = uiState.email ?: "",
                     onValueChange = { viewModel.updateEmail(it) },
                     placeholder = "Email",
-                    keyboardType = KeyboardType.Email
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next,
+                    keyboardActions = KeyboardActions(
+                        onNext = { passwordFocusRequester.requestFocus() }
+                    )
                 )
 
                 // --- Campo de Password ---
@@ -153,7 +181,15 @@ fun LoginView(
                     onValueChange = { viewModel.updatePassword(it) },
                     placeholder = "Password",
                     keyboardType = KeyboardType.Password,
-                    isPassword = true
+                    isPassword = true,
+                    focusRequester = passwordFocusRequester,
+                    imeAction = ImeAction.Done,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            performLogin()
+                        }
+                    )
                 )
 
                 if (uiState.error != null) {
@@ -196,15 +232,7 @@ fun LoginView(
                             .height(40.dp)
                             .background(color = GreenIPCA, shape = RoundedCornerShape(5.dp))
                             .clickable {
-                                viewModel.login { role ->
-                                    val destination = when (role) {
-                                        UserRole.APOIADO -> "apoiadoHome"
-                                        UserRole.FUNCIONARIO -> "funcionarioHome"
-                                    }
-                                    navController.navigate(destination) {
-                                        popUpTo("login") { inclusive = true }
-                                    }
-                                }
+                                performLogin()
                             }
                     ) {
                         if (uiState.isLoading) {
@@ -228,8 +256,21 @@ fun CustomFigmaInput(
     onValueChange: (String) -> Unit,
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    imeAction: ImeAction = ImeAction.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    focusRequester: FocusRequester? = null
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    val focusModifier = (if (focusRequester != null) {
+        Modifier.focusRequester(focusRequester)
+    } else {
+        Modifier
+    }).onFocusChanged { focusState ->
+        isFocused = focusState.isFocused
+    }
+
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -237,8 +278,14 @@ fun CustomFigmaInput(
             fontSize = 16.sp,
             color = Color.Black
         ),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction
+        ),
+        keyboardActions = keyboardActions,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        singleLine = true,
+        modifier = focusModifier,
         decorationBox = { innerTextField ->
             Row(
                 modifier = Modifier
@@ -249,7 +296,7 @@ fun CustomFigmaInput(
                     .padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (value.isEmpty()) {
+                if (value.isEmpty() && !isFocused) {
                     Text(
                         text = placeholder,
                         style = TextStyle(color = Color.Gray, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
