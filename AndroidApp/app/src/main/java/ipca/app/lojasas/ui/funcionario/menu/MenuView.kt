@@ -20,8 +20,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.components.Footer
-import ipca.app.lojasas.ui.components.FooterType
 
 @Composable
 fun MenuView(
@@ -34,12 +32,6 @@ fun MenuView(
     Scaffold(
         topBar = {
             AppHeader(title = "Menu")
-        },
-        bottomBar = {
-            Footer(
-                navController = navController,
-                type = FooterType.FUNCIONARIO
-            )
         },
         containerColor = backgroundColor // Define a cor de fundo do Scaffold
     ) { innerPadding ->

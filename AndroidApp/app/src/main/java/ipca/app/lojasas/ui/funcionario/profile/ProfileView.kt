@@ -24,10 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.components.Footer
-import ipca.app.lojasas.ui.components.FooterType
 import ipca.app.lojasas.ui.login.GreenIPCA
 
 @Composable
@@ -54,10 +51,6 @@ fun ProfileView(
                 showBack = true,
                 onBack = { navController.popBackStack() }
             )
-        },
-        bottomBar = {
-            val footerType = if (state.role == UserRole.APOIADO) FooterType.APOIADO else FooterType.FUNCIONARIO
-            Footer(navController = navController, type = footerType)
         },
         floatingActionButton = {
             if (!state.isLoading) {

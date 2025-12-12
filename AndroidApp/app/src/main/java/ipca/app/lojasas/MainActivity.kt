@@ -13,12 +13,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -27,6 +29,8 @@ import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
+import ipca.app.lojasas.ui.components.Footer
+import ipca.app.lojasas.ui.components.FooterType
 import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.profile.CreateProfileView // Adicionar import
@@ -45,10 +49,22 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             LojaSocialIPCATheme {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val footerType = when (navBackStackEntry?.destination?.route) {
+                    "funcionarioHome", "menu", "createProfile", "profile" -> FooterType.FUNCIONARIO
+                    "apoiadoHome" -> FooterType.APOIADO
+                    else -> null
+                }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent,
-                    contentWindowInsets = WindowInsets(0, 0, 0, 0)
+                    contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    bottomBar = {
+                        footerType?.let {
+                            Footer(navController = navController, type = it)
+                        }
+                    }
                 ) { innerPadding ->
 
                     NavHost(

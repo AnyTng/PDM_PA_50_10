@@ -10,8 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.components.Footer
-import ipca.app.lojasas.ui.components.FooterType
 
 
 @Composable
@@ -19,12 +17,6 @@ fun CalendarView(navController: NavController) {
     Scaffold(
         topBar = {
             AppHeader(title = "Calendário")
-        },
-        bottomBar = {
-            Footer(
-                navController = navController,
-                type = FooterType.FUNCIONARIO
-            )
         }
     ) { innerPadding ->
         // O conteúdo principal da página fica aqui
