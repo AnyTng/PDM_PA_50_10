@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 
 @Composable
@@ -71,7 +72,7 @@ fun ApoiadoHomeScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Bem-vindo, Apoiado! A sua conta está ativa.")
+                    Text(text = "Bem-vindo, Apoiado!")
                 }
 
                 // --- BOTÃO TERMINAR SESSÃO ---
@@ -82,8 +83,19 @@ fun ApoiadoHomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            // --- AQUI ESTÁ A CORREÇÃO ---
+
+                            // 1. Limpa a autenticação no Firebase
+                            try {
+                                FirebaseAuth.getInstance().signOut()
+                            } catch (e: Exception) {
+                                // Caso não estejas a usar Firebase ou dê erro, o código continua
+                                e.printStackTrace()
+                            }
+
+                            // 2. Navega para o Login e limpa o histórico para trás
                             navController.navigate("login") {
-                                popUpTo(0)
+                                popUpTo(0) // Garante que a pilha de navegação é limpa
                             }
                         }
                 ) {
@@ -101,6 +113,8 @@ fun ApoiadoHomeScreen(
                         )
                     }
                 }
+                // --- BOTÃO TERMINAR SESSÃO ---
+
             }
         }
     }

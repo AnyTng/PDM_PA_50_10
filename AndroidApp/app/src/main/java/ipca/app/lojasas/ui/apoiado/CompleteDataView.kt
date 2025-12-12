@@ -199,7 +199,7 @@ fun CompleteDataView(
             enabled = !state.isLoading
         ) {
             if (state.isLoading) CircularProgressIndicator(color = Color.White)
-            else Text("Submeter Pedido")
+            else Text("Seguinte")
         }
 
         Spacer(modifier = Modifier.height(50.dp))

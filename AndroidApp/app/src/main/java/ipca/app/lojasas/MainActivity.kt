@@ -34,7 +34,7 @@ import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView // Adicionar import
 import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView // <--- Import
-
+import ipca.app.lojasas.ui.login.CreateProfileApoiadoView
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,6 +122,10 @@ class MainActivity : ComponentActivity() {
                         composable("profile") {
                             ProfileView(navController = navController)
                         }
+                        composable("createProfileApoiado") {
+                            CreateProfileView(navController = navController)
+                        }
+
                     }
                 }
             }

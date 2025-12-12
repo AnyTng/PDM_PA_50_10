@@ -54,6 +54,7 @@ import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
+import ipca.app.lojasas.ui.login.CreateProfileApoiadoView
 
 // Definição das Cores do Figma
 val GreenIPCA = Color(0xFF094E33)
@@ -217,7 +218,7 @@ fun LoginView(
                             .border(width = 0.7.dp, color = GreenIPCA, shape = RoundedCornerShape(5.dp))
                             .background(color = WhiteColor, shape = RoundedCornerShape(5.dp))
                             .clickable {
-                                // Navegar para o ecrã de registo
+                                navController.navigate("createProfileApoiado")
                             }
                     ) {
                         Text(text = "Não tens conta?", color = GreenIPCA, fontFamily = FontFamily(Font(R.font.introboldalt)),
