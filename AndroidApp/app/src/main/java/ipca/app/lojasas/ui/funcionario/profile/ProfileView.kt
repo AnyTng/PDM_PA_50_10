@@ -44,6 +44,7 @@ fun ProfileView(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             if (!state.isLoading) {
                 FloatingActionButton(

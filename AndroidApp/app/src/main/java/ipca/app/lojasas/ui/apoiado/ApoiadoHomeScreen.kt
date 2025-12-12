@@ -22,10 +22,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import androidx.navigation.NavController
+import androidx.compose.foundation.layout.WindowInsets
 
 @Composable
 fun ApoiadoHomeScreen(navController: NavController) {
-    Scaffold { innerPadding ->
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

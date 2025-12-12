@@ -29,7 +29,8 @@ fun MenuView(
     val backgroundColor = Color(0xFFF2F2F2)
 
     Scaffold(
-        containerColor = backgroundColor // Define a cor de fundo do Scaffold
+        containerColor = backgroundColor, // Define a cor de fundo do Scaffold
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
 
         Column(

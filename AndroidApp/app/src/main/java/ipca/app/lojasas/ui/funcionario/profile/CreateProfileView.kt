@@ -60,6 +60,7 @@ fun CreateProfileView(
     val scrollState = rememberScrollState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
