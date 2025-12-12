@@ -16,10 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.auth.FirebaseAuth // <--- IMPORTANTE: Import do Firebase
-import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.components.Footer
-import ipca.app.lojasas.ui.components.FooterType
 
 @Composable
 fun MenuView(
@@ -30,16 +26,8 @@ fun MenuView(
     val backgroundColor = Color(0xFFF2F2F2)
 
     Scaffold(
-        topBar = {
-            AppHeader(title = "Menu")
-        },
-        bottomBar = {
-            Footer(
-                navController = navController,
-                type = FooterType.FUNCIONARIO
-            )
-        },
-        containerColor = backgroundColor
+        containerColor = backgroundColor, // Define a cor de fundo do Scaffold
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
 
         Column(

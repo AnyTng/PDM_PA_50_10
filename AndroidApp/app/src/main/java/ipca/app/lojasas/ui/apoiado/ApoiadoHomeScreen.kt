@@ -20,28 +20,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.components.Footer
-import ipca.app.lojasas.ui.components.FooterType
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import androidx.navigation.NavController
+import androidx.compose.foundation.layout.WindowInsets
 
 @Composable
 fun ApoiadoHomeScreen(navController: NavController) {
     Scaffold(
-        topBar = {
-            AppHeader(
-                title = "Home",
-                showBack = false,
-                onBack = null
-            )
-        },
-        bottomBar = {
-            Footer(
-                navController = navController,
-                type = FooterType.APOIADO
-            )
-        }
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         Column(
             modifier = Modifier
