@@ -14,6 +14,7 @@ data class CreateProfileState(
     var email: String = "",
     var password: String = "",
     var nif: String = "",
+    var documentType: String = "NIF", // Novo campo
     var morada: String = "",
     var codPostal: String = "",
     var role: UserRole = UserRole.FUNCIONARIO,
@@ -27,13 +28,14 @@ class CreateProfileViewModel : ViewModel() {
     var uiState = mutableStateOf(CreateProfileState())
         private set
 
-    // Funções de update (iguais às anteriores)
+    // Funções de update
     fun onNumMecanograficoChange(newValue: String) { uiState.value = uiState.value.copy(numMecanografico = newValue) }
     fun onNomeChange(newValue: String) { uiState.value = uiState.value.copy(nome = newValue) }
     fun onContactoChange(newValue: String) { uiState.value = uiState.value.copy(contacto = newValue) }
     fun onEmailChange(newValue: String) { uiState.value = uiState.value.copy(email = newValue) }
     fun onPasswordChange(newValue: String) { uiState.value = uiState.value.copy(password = newValue) }
     fun onNifChange(newValue: String) { uiState.value = uiState.value.copy(nif = newValue) }
+    fun onDocumentTypeChange(newValue: String) { uiState.value = uiState.value.copy(documentType = newValue) } // Nova função
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
     fun onCodPostalChange(newValue: String) { uiState.value = uiState.value.copy(codPostal = newValue) }
     fun onRoleChange(newValue: UserRole) { uiState.value = uiState.value.copy(role = newValue) }
@@ -48,7 +50,6 @@ class CreateProfileViewModel : ViewModel() {
         }
 
         // 2. Validação do Formato do Nº Mecanográfico
-        // Regex: ^[a-zA-Z] (Começa com letra) + \d+ (Seguido de um ou mais números) + $ (Fim da string)
         val mecanograficoRegex = Regex("^[a-zA-Z]\\d+$")
         if (!state.numMecanografico.matches(mecanograficoRegex)) {
             uiState.value = state.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: f12345).")
@@ -77,11 +78,11 @@ class CreateProfileViewModel : ViewModel() {
 
         val userMap = hashMapOf(
             "uid" to authUid,
-            // Guardamos o número tal como foi escrito (podemos forçar lowercase se quiseres: .lowercase())
             "numMecanografico" to state.numMecanografico,
             "nome" to state.nome,
             "contacto" to state.contacto,
-            "nif" to state.nif,
+            "nif" to state.nif, // Este campo guarda o número (seja NIF ou Passaporte)
+            "documentType" to state.documentType, // Guardamos o tipo escolhido
             "morada" to state.morada,
             "codPostal" to state.codPostal,
             "email" to state.email,
@@ -94,7 +95,6 @@ class CreateProfileViewModel : ViewModel() {
             userMap["emailApoiado"] = state.email
         }
 
-        // Usa o numMecanografico como ID do documento
         db.collection(collectionName).document(state.numMecanografico)
             .set(userMap)
             .addOnSuccessListener {

@@ -40,7 +40,6 @@ fun ProfileView(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // Estados para controlar os Pop-ups
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
 
@@ -122,9 +121,10 @@ fun ProfileView(
                     ReadOnlyInput(value = state.email, placeholder = "Email")
                 }
 
-                // --- NIF (Apenas Leitura) ---
-                FormSection(title = "NIF") {
-                    ReadOnlyInput(value = state.nif, placeholder = "NIF")
+                // --- DOCUMENTO (Dinâmico: NIF ou Passaporte) ---
+                val documentLabel = if (state.documentType == "Passaporte") "Passaporte" else "NIF"
+                FormSection(title = documentLabel) {
+                    ReadOnlyInput(value = state.nif, placeholder = documentLabel)
                 }
 
                 // --- MORADA E CÓDIGO POSTAL (Editável) ---
@@ -188,7 +188,9 @@ fun ProfileView(
             }
         }
 
-        // --- DIALOG DE MUDANÇA DE SENHA ---
+        // --- DIALOGS (MUDANÇA DE SENHA e APAGAR CONTA) ---
+        // (Mantém-se igual ao que já tinhas)
+
         if (showPasswordDialog) {
             ChangePasswordDialog(
                 onDismiss = { showPasswordDialog = false },
@@ -208,7 +210,6 @@ fun ProfileView(
             )
         }
 
-        // --- DIALOG DE APAGAR CONTA ---
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
@@ -241,7 +242,7 @@ fun ProfileView(
     }
 }
 
-// --- COMPONENTE DIALOG DE SENHA ---
+// ... (Resto dos componentes ChangePasswordDialog e ReadOnlyInput mantêm-se) ...
 @Composable
 fun ChangePasswordDialog(
     onDismiss: () -> Unit,
@@ -310,11 +311,6 @@ fun ChangePasswordDialog(
         containerColor = Color.White
     )
 }
-
-// --- COMPONENTES ÚNICOS DESTE FICHEIRO ---
-
-// NOTA: FormSection e FormInput não estão aqui porque já existem no CreateProfileView.kt.
-// Como estão no mesmo package, o Kotlin reconhece-os automaticamente.
 
 @Composable
 fun ReadOnlyInput(value: String, placeholder: String) {

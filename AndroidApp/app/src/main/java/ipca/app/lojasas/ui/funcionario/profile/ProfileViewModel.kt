@@ -14,6 +14,7 @@ data class ProfileState(
     var contacto: String = "",
     var email: String = "",
     var nif: String = "",
+    var documentType: String = "NIF", // Novo campo para leitura
     var morada: String = "",
     var codPostal: String = "",
     var role: UserRole? = null,
@@ -75,6 +76,7 @@ class ProfileViewModel : ViewModel() {
             contacto = data["contacto"] as? String ?: "",
             email = data["email"] as? String ?: data["emailApoiado"] as? String ?: "",
             nif = data["nif"] as? String ?: "",
+            documentType = data["documentType"] as? String ?: "NIF", // Lê o tipo, default é NIF
             morada = data["morada"] as? String ?: "",
             codPostal = data["codPostal"] as? String ?: "",
             role = role,
@@ -135,20 +137,16 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
-    // --- NOVA FUNÇÃO: ALTERAR SENHA ---
     fun changePassword(oldPass: String, newPass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val user = auth.currentUser
         val email = user?.email
         if (user != null && email != null) {
             uiState.value = uiState.value.copy(isLoading = true)
 
-            // 1. Criar credencial com a senha antiga
             val credential = EmailAuthProvider.getCredential(email, oldPass)
 
-            // 2. Reautenticar para garantir segurança
             user.reauthenticate(credential)
                 .addOnSuccessListener {
-                    // 3. Atualizar para a nova senha
                     user.updatePassword(newPass)
                         .addOnSuccessListener {
                             uiState.value = uiState.value.copy(isLoading = false)

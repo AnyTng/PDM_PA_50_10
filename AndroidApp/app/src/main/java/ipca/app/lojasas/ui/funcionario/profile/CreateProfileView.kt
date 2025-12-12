@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,7 +77,6 @@ fun CreateProfileView(
             FloatingActionButton(
                 onClick = {
                     viewModel.createProfile {
-                        // Ação ao concluir com sucesso (ex: voltar atrás)
                         navController.popBackStack()
                     }
                 },
@@ -101,13 +101,12 @@ fun CreateProfileView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF8F8F8)) // Fundo ligeiramente cinza
+                .background(Color(0xFFF8F8F8))
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
 
-            // Mensagem de Erro
             if (state.error != null) {
                 Text(
                     text = state.error!!,
@@ -117,13 +116,12 @@ fun CreateProfileView(
                 )
             }
 
-            // --- IDENTIFICAÇÃO (Nº Mecanográfico) ---
+            // --- IDENTIFICAÇÃO ---
             FormSection(title = "Identificação") {
                 FormInput(
                     value = state.numMecanografico,
                     onValueChange = { viewModel.onNumMecanograficoChange(it) },
                     placeholder = "Nº Mecanográfico (ex: f12345)",
-                    // IMPORTANTE: KeyboardType.Text para permitir letras ('f', 'a') + números
                     keyboardType = KeyboardType.Text
                 )
             }
@@ -164,14 +162,37 @@ fun CreateProfileView(
                 )
             }
 
-            // --- NIF E MORADA ---
-            FormSection(title = "NIF e Morada") {
+            // --- NIF / PASSAPORTE E MORADA ---
+            FormSection(title = "Documento e Morada") {
+
+                // Escolha entre NIF e Passaporte
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RoleRadioButton(
+                        selected = state.documentType == "NIF",
+                        text = "NIF",
+                        onClick = { viewModel.onDocumentTypeChange("NIF") }
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+                    RoleRadioButton(
+                        selected = state.documentType == "Passaporte",
+                        text = "Passaporte",
+                        onClick = { viewModel.onDocumentTypeChange("Passaporte") }
+                    )
+                }
+
                 FormInput(
                     value = state.nif,
                     onValueChange = { viewModel.onNifChange(it) },
-                    placeholder = "NIF",
-                    keyboardType = KeyboardType.Number
+                    // Placeholder e Teclado dinâmicos
+                    placeholder = if (state.documentType == "NIF") "NIF" else "Nº Passaporte",
+                    keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
                 FormInput(
                     value = state.morada,
@@ -206,13 +227,12 @@ fun CreateProfileView(
                 }
             }
 
-            // Espaço extra para o FAB não tapar o conteúdo
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
 
-// --- COMPONENTES AUXILIARES PARA O ESTILO DO FIGMA ---
+// --- COMPONENTES AUXILIARES ---
 
 @Composable
 fun FormSection(
