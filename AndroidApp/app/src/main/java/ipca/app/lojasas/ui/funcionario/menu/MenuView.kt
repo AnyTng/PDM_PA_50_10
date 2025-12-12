@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import ipca.app.lojasas.ui.components.AppHeader
 
 @Composable
 fun MenuView(
@@ -30,9 +29,6 @@ fun MenuView(
     val backgroundColor = Color(0xFFF2F2F2)
 
     Scaffold(
-        topBar = {
-            AppHeader(title = "Menu")
-        },
         containerColor = backgroundColor // Define a cor de fundo do Scaffold
     ) { innerPadding ->
 

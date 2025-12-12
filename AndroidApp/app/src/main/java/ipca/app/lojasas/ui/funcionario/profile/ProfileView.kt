@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.login.GreenIPCA
 
 @Composable
@@ -45,13 +44,6 @@ fun ProfileView(
     }
 
     Scaffold(
-        topBar = {
-            AppHeader(
-                title = "O meu Perfil",
-                showBack = true,
-                onBack = { navController.popBackStack() }
-            )
-        },
         floatingActionButton = {
             if (!state.isLoading) {
                 FloatingActionButton(

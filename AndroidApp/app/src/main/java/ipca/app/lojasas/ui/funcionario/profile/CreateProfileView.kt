@@ -47,7 +47,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.data.UserRole
-import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.IntroFontFamily
 import ipca.app.lojasas.ui.login.GreenIPCA
 
@@ -61,13 +60,6 @@ fun CreateProfileView(
     val scrollState = rememberScrollState()
 
     Scaffold(
-        topBar = {
-            AppHeader(
-                title = "Criar Perfil",
-                showBack = true,
-                onBack = { navController.popBackStack() }
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {

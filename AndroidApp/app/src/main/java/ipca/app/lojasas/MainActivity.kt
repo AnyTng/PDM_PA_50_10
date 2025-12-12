@@ -50,9 +50,27 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val footerType = when (navBackStackEntry?.destination?.route) {
+                val currentRoute = navBackStackEntry?.destination?.route
+                val footerType = when (currentRoute) {
                     "funcionarioHome", "menu", "createProfile", "profile" -> FooterType.FUNCIONARIO
                     "apoiadoHome" -> FooterType.APOIADO
+                    else -> null
+                }
+
+                val headerConfig = when (currentRoute) {
+                    "apoiadoHome" -> HeaderConfig(title = "Home")
+                    "funcionarioHome" -> HeaderConfig(title = "Calendário")
+                    "menu" -> HeaderConfig(title = "Menu")
+                    "createProfile" -> HeaderConfig(
+                        title = "Criar Perfil",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "profile" -> HeaderConfig(
+                        title = "O meu Perfil",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     else -> null
                 }
 
@@ -60,6 +78,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     containerColor = Color.Transparent,
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                    topBar = {
+                        headerConfig?.let {
+                            AppHeader(
+                                title = it.title,
+                                showBack = it.showBack,
+                                onBack = it.onBack
+                            )
+                        }
+                    },
                     bottomBar = {
                         footerType?.let {
                             Footer(navController = navController, type = it)
@@ -128,6 +155,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private data class HeaderConfig(
+    val title: String,
+    val showBack: Boolean = false,
+    val onBack: (() -> Unit)? = null
+)
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {

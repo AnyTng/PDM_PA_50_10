@@ -20,21 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import androidx.navigation.NavController
 
 @Composable
 fun ApoiadoHomeScreen(navController: NavController) {
-    Scaffold(
-        topBar = {
-            AppHeader(
-                title = "Home",
-                showBack = false,
-                onBack = null
-            )
-        }
-    ) { innerPadding ->
+    Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
