@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding // Importante
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions // Importante
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,9 +37,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection // Importante
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager // Importante
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction // Importante
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -59,6 +64,9 @@ fun CreateProfileView(
     val viewModel: CreateProfileViewModel = viewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
+
+    // 1. Gestor de Foco
+    val focusManager = LocalFocusManager.current
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -91,6 +99,7 @@ fun CreateProfileView(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color(0xFFF8F8F8))
+                .imePadding() // 2. Adiciona espaço quando o teclado abre
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -111,7 +120,9 @@ fun CreateProfileView(
                     value = state.numMecanografico,
                     onValueChange = { viewModel.onNumMecanograficoChange(it) },
                     placeholder = "Nº Mecanográfico (ex: f12345)",
-                    keyboardType = KeyboardType.Text
+                    keyboardType = KeyboardType.Text,
+                    // 3. Passar foco para o próximo
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -120,7 +131,8 @@ fun CreateProfileView(
                 FormInput(
                     value = state.nome,
                     onValueChange = { viewModel.onNomeChange(it) },
-                    placeholder = "Nome"
+                    placeholder = "Nome",
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -130,7 +142,8 @@ fun CreateProfileView(
                     value = state.contacto,
                     onValueChange = { viewModel.onContactoChange(it) },
                     placeholder = "Contacto",
-                    keyboardType = KeyboardType.Phone
+                    keyboardType = KeyboardType.Phone,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -140,14 +153,16 @@ fun CreateProfileView(
                     value = state.email,
                     onValueChange = { viewModel.onEmailChange(it) },
                     placeholder = "Mail",
-                    keyboardType = KeyboardType.Email
+                    keyboardType = KeyboardType.Email,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 FormInput(
                     value = state.password,
                     onValueChange = { viewModel.onPasswordChange(it) },
                     placeholder = "Passe",
-                    isPassword = true
+                    isPassword = true,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -179,20 +194,26 @@ fun CreateProfileView(
                     onValueChange = { viewModel.onNifChange(it) },
                     // Placeholder e Teclado dinâmicos
                     placeholder = if (state.documentType == "NIF") "NIF" else "Nº Passaporte",
-                    keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text
+                    keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
                 FormInput(
                     value = state.morada,
                     onValueChange = { viewModel.onMoradaChange(it) },
-                    placeholder = "Morada"
+                    placeholder = "Morada",
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // Último campo de texto: Ação Done
                 FormInput(
                     value = state.codPostal,
                     onValueChange = { viewModel.onCodPostalChange(it) },
-                    placeholder = "CodPostal"
+                    placeholder = "CodPostal",
+                    imeAction = ImeAction.Done,
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
             }
 
@@ -251,15 +272,21 @@ fun FormInput(
     onValueChange: (String) -> Unit,
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    imeAction: ImeAction = ImeAction.Next, // 4. Parâmetro novo (default Next)
+    keyboardActions: KeyboardActions = KeyboardActions.Default // 5. Parâmetro novo
 ) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction // Define a tecla Enter
+        ),
+        keyboardActions = keyboardActions, // Define a ação
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-        singleLine = true,
+        singleLine = true, // Garante que é só uma linha
         decorationBox = { innerTextField ->
             Box(
                 modifier = Modifier

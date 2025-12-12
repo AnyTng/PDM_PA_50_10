@@ -87,7 +87,7 @@ class CreateProfileApoiadoViewModel : ViewModel() {
             "codPostal" to state.codPostal,
             "email" to state.email,
             "role" to state.role.name,
-            "mudarPass" to false // Força a mudança de senha no próximo login
+            "mudarPass" to false
         )
 
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"

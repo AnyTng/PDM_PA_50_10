@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
                             ProfileView(navController = navController)
                         }
                         composable("createProfileApoiado") {
-                            CreateProfileView(navController = navController)
+                            CreateProfileApoiadoView(navController = navController)
                         }
 
                     }

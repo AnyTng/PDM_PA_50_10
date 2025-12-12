@@ -9,7 +9,6 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 
-// Definição da TAG localmente para logs
 const val TAG = "LojaSocial"
 
 data class LoginState (
@@ -36,64 +35,64 @@ class LoginViewModel : ViewModel() {
         uiState.value = uiState.value.copy(isLoading = true)
 
         if (uiState.value.email.isNullOrEmpty()) {
-            uiState.value = uiState.value.copy(
-                isLoading = false,
-                error = "Email is required")
+            uiState.value = uiState.value.copy(isLoading = false, error = "Email is required")
             return
         }
 
         if (uiState.value.password.isNullOrEmpty()) {
-            uiState.value = uiState.value.copy(
-                isLoading = false,
-                error = "Password is required")
+            uiState.value = uiState.value.copy(isLoading = false, error = "Password is required")
             return
         }
 
         val email = uiState.value.email!!.trim()
         val auth: FirebaseAuth = Firebase.auth
-        auth.signInWithEmailAndPassword(
-            email,
-            uiState.value.password!!)
+        auth.signInWithEmailAndPassword(email, uiState.value.password!!)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Sign in success
                     Log.d(TAG, "signInWithEmail:success")
                     resolveRoleAndProceed(email, onLoginSuccess)
                 } else {
-                    // If sign in fails
                     Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    uiState.value = uiState.value.copy(
-                        isLoading = false,
-                        error = "Wrong password or no internet connection")
+                    uiState.value = uiState.value.copy(isLoading = false, error = "Credenciais inválidas ou sem internet.")
                 }
             }
     }
 
-    private fun resolveRoleAndProceed(
-        email: String,
-        onLoginSuccess:(UserRole)->Unit
-    ) {
+    // --- ESTA É A FUNÇÃO QUE FALTAVA ---
+    fun recoverPassword(onResult: (String) -> Unit) {
+        val email = uiState.value.email
+        if (email.isNullOrEmpty()) {
+            onResult("Por favor, preencha o campo de email primeiro.")
+            return
+        }
+
+        uiState.value = uiState.value.copy(isLoading = true)
+
+        Firebase.auth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                uiState.value = uiState.value.copy(isLoading = false)
+                if (task.isSuccessful) {
+                    onResult("Email de recuperação enviado! Verifique a sua caixa de correio.")
+                } else {
+                    onResult("Erro: ${task.exception?.message}")
+                }
+            }
+    }
+    // -----------------------------------
+
+    private fun resolveRoleAndProceed(email: String, onLoginSuccess:(UserRole)->Unit) {
         UserRoleRepository.fetchUserRoleByEmail(
             email = email,
             onSuccess = { role ->
-                uiState.value = uiState.value.copy(
-                    isLoading = false,
-                    error = null
-                )
+                uiState.value = uiState.value.copy(isLoading = false, error = null)
                 onLoginSuccess(role)
             },
             onNotFound = {
-                uiState.value = uiState.value.copy(
-                    isLoading = false,
-                    error = "Conta sem perfil associado."
-                )
+                uiState.value = uiState.value.copy(isLoading = false, error = "Conta sem perfil associado.")
             },
             onError = { exception ->
-                Log.e(TAG, "Erro ao obter perfil do utilizador", exception)
-                uiState.value = uiState.value.copy(
-                    isLoading = false,
-                    error = "Não foi possível obter o tipo de utilizador."
-                )
+                Log.e(TAG, "Erro ao obter perfil", exception)
+                uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao obter tipo de utilizador.")
             }
         )
     }

@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.login
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,8 +20,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog // Adicionado
+import androidx.compose.material3.Button // Adicionado
+import androidx.compose.material3.ButtonDefaults // Adicionado
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField // Adicionado
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton // Adicionado
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -45,6 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,7 +61,6 @@ import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
-import ipca.app.lojasas.ui.login.CreateProfileApoiadoView
 
 // Definição das Cores do Figma
 val GreenIPCA = Color(0xFF094E33)
@@ -72,9 +78,11 @@ fun LoginView(
     val focusManager = LocalFocusManager.current
     val passwordFocusRequester = remember { FocusRequester() }
 
+    // Estado para controlar a visibilidade do Dialog
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+
     val context = LocalContext.current
     val logoResId = remember {
-        // Try to load sas_white; if missing (e.g. in preview cache), fall back to loginlogo.
         context.resources.getIdentifier("sas_white", "drawable", context.packageName)
             .takeIf { it != 0 } ?: R.drawable.loginlogo
     }
@@ -96,32 +104,29 @@ fun LoginView(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(color = GreenIPCA) // Fundo Verde Principal
+            .background(color = GreenIPCA)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // --- Secção do Logótipo + Ilustração na área verde ---
+            // --- Secção do Logótipo + Ilustração ---
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                // 1) Ilustração grande do Figma (imagem "a")
                 Image(
                     painter = painterResource(id = R.drawable.lswhitecircle),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    alignment = Alignment.CenterStart,          // mantém a “origem” à esquerda
+                    alignment = Alignment.CenterStart,
                     modifier = Modifier
-                        .align(Alignment.CenterStart)           // ancora o frame na esquerda do Box
-                        .offset(x = 38.dp, y = 138.dp)          // empurra para a direita/baixo (ajusta a gosto)
+                        .align(Alignment.CenterStart)
+                        .offset(x = 38.dp, y = 138.dp)
                         .width(463.dp)
                         .height(463.dp)
                         .alpha(0.4f)
                 )
 
-
-                // 2) Logótipo (fica por cima)
                 Image(
                     painter = painterResource(id = logoResId),
                     contentDescription = "Logo do SAS IPCA",
@@ -151,12 +156,10 @@ fun LoginView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // --- Título Bem-Vindo (Com a fonte Intro) ---
                 Text(
                     text = "Bem-Vindo",
                     style = TextStyle(
                         fontSize = 20.sp,
-                        // Certifique-se que o ficheiro intro.ttf está na pasta res/font/
                         fontFamily = FontFamily(Font(R.font.introboldalt)),
                         fontWeight = FontWeight(700),
                         color = Color(0xFF000000),
@@ -203,53 +206,145 @@ fun LoginView(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // --- Botões ---
-                Row(
+                // --- Botões e Link de Recuperação ---
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    // Botão 1: "Não tens conta?" (Estilo: Outline Verde)
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp)
-                            .border(width = 0.7.dp, color = GreenIPCA, shape = RoundedCornerShape(5.dp))
-                            .background(color = WhiteColor, shape = RoundedCornerShape(5.dp))
-                            .clickable {
-                                navController.navigate("createProfileApoiado")
-                            }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "Não tens conta?", color = GreenIPCA, fontFamily = FontFamily(Font(R.font.introboldalt)),
-                        )
-                    }
-
-                    // Botão 2: "Login" (Estilo: Filled Verde)
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(40.dp)
-                            .background(color = GreenIPCA, shape = RoundedCornerShape(5.dp))
-                            .clickable {
-                                performLogin()
-                            }
-                    ) {
-                        if (uiState.isLoading) {
-                            CircularProgressIndicator(color = WhiteColor, modifier = Modifier.height(20.dp).width(20.dp))
-                        } else {
-                            Text(text = "Login", color = WhiteColor, fontFamily = FontFamily(Font(R.font.introboldalt)),
+                        // Botão "Não tens conta?"
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .border(width = 0.7.dp, color = GreenIPCA, shape = RoundedCornerShape(5.dp))
+                                .background(color = WhiteColor, shape = RoundedCornerShape(5.dp))
+                                .clickable {
+                                    navController.navigate("createProfileApoiado")
+                                }
+                        ) {
+                            Text(
+                                text = "Não tens conta?",
+                                color = GreenIPCA,
+                                fontFamily = FontFamily(Font(R.font.introboldalt)),
                             )
                         }
+
+                        // Botão "Login"
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .background(color = GreenIPCA, shape = RoundedCornerShape(5.dp))
+                                .clickable {
+                                    performLogin()
+                                }
+                        ) {
+                            if (uiState.isLoading) {
+                                CircularProgressIndicator(color = WhiteColor, modifier = Modifier.height(20.dp).width(20.dp))
+                            } else {
+                                Text(
+                                    text = "Login",
+                                    color = WhiteColor,
+                                    fontFamily = FontFamily(Font(R.font.introboldalt)),
+                                )
+                            }
+                        }
                     }
+
+                    // Link de Recuperação
+                    Text(
+                        text = "Recuperar Palavra-passe",
+                        style = TextStyle(
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(R.font.introboldalt)),
+                            fontWeight = FontWeight.Normal,
+                            color = Color.Gray,
+                            textDecoration = TextDecoration.Underline
+                        ),
+                        modifier = Modifier
+                            .padding(top=10.dp)
+                            .clickable {
+                                // Abre o Dialog ao clicar
+                                showForgotPasswordDialog = true
+                            }
+                    )
                 }
-                Spacer(modifier = Modifier.height(10.dp))
             }
+        }
+
+        // --- Pop-up de Recuperação de Senha ---
+        if (showForgotPasswordDialog) {
+            // Variável local para editar o email no dialog (inicia com o que já estava escrito)
+            var dialogEmail by remember { mutableStateOf(uiState.email ?: "") }
+
+            AlertDialog(
+                onDismissRequest = { showForgotPasswordDialog = false },
+                title = {
+                    Text(
+                        text = "Recuperar Palavra-passe",
+                        color = GreenIPCA,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Insira o seu email para receber as instruções de recuperação.")
+                        OutlinedTextField(
+                            value = dialogEmail,
+                            onValueChange = { dialogEmail = it },
+                            label = { Text("Email") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (dialogEmail.isNotEmpty()) {
+                                // Atualiza o email no ViewModel e chama a função de recuperar
+                                viewModel.updateEmail(dialogEmail)
+                                viewModel.recoverPassword { message ->
+                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                    showForgotPasswordDialog = false
+                                }
+                            } else {
+                                Toast.makeText(context, "Por favor, insira um email.", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenIPCA)
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.height(16.dp).width(16.dp),
+                                color = WhiteColor,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Confirmar")
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showForgotPasswordDialog = false }) {
+                        Text("Cancelar", color = Color.Gray)
+                    }
+                },
+                containerColor = WhiteColor,
+                shape = RoundedCornerShape(12.dp)
+            )
         }
     }
 }
-
 
 @Composable
 fun CustomFigmaInput(

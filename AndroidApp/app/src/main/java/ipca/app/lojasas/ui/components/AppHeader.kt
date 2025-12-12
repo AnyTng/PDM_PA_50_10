@@ -96,7 +96,7 @@ fun AppHeader(
 @Preview
 @Composable
 fun AppHeaderPreview(){
-    AppHeader(title = "Home", showBack = false, onBack = {})
+    AppHeader(title = "Home", showBack = true, onBack = {})
 
 }
 

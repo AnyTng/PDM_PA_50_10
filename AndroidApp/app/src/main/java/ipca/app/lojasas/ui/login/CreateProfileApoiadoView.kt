@@ -1,45 +1,30 @@
 package ipca.app.lojasas.ui.login
 
 import androidx.compose.runtime.getValue
-import ipca.app.lojasas.ui.login.CreateProfileApoiadoViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions // Import necessário
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection // Import necessário
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager // Import necessário
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction // Import necessário
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -62,13 +47,18 @@ fun CreateProfileApoiadoView(
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
 
+    // 1. Gestor de Foco
+    val focusManager = LocalFocusManager.current
+
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
                     viewModel.createProfile {
-                        navController.popBackStack()
+                        navController.navigate("apoiadoHome") {
+                            popUpTo("login") { inclusive = true }
+                        }
                     }
                 },
                 containerColor = GreenIPCA,
@@ -93,10 +83,42 @@ fun CreateProfileApoiadoView(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color(0xFFF8F8F8))
+                .imePadding() // 2. Adiciona espaço quando o teclado abre
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+
+            // --- CABEÇALHO ---
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(bottom = 10.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable { navController.popBackStack() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Voltar",
+                        tint = GreenIPCA,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Criar Conta",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = GreenIPCA,
+                    fontFamily = IntroFontFamily
+                )
+            }
 
             if (state.error != null) {
                 Text(
@@ -113,7 +135,9 @@ fun CreateProfileApoiadoView(
                     value = state.numMecanografico,
                     onValueChange = { viewModel.onNumMecanograficoChange(it) },
                     placeholder = "Nº Mecanográfico (ex: f12345)",
-                    keyboardType = KeyboardType.Text
+                    keyboardType = KeyboardType.Text,
+                    // 3. Configuração de Next
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -122,7 +146,8 @@ fun CreateProfileApoiadoView(
                 FormInput(
                     value = state.nome,
                     onValueChange = { viewModel.onNomeChange(it) },
-                    placeholder = "Nome"
+                    placeholder = "Nome",
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -132,7 +157,8 @@ fun CreateProfileApoiadoView(
                     value = state.contacto,
                     onValueChange = { viewModel.onContactoChange(it) },
                     placeholder = "Contacto",
-                    keyboardType = KeyboardType.Phone
+                    keyboardType = KeyboardType.Phone,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
@@ -142,21 +168,22 @@ fun CreateProfileApoiadoView(
                     value = state.email,
                     onValueChange = { viewModel.onEmailChange(it) },
                     placeholder = "Mail",
-                    keyboardType = KeyboardType.Email
+                    keyboardType = KeyboardType.Email,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 FormInput(
                     value = state.password,
                     onValueChange = { viewModel.onPasswordChange(it) },
                     placeholder = "Passe",
-                    isPassword = true
+                    isPassword = true,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
 
             // --- NIF / PASSAPORTE E MORADA ---
             FormSection(title = "Documento e Morada") {
 
-                // Escolha entre NIF e Passaporte
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -179,27 +206,30 @@ fun CreateProfileApoiadoView(
                 FormInput(
                     value = state.nif,
                     onValueChange = { viewModel.onNifChange(it) },
-                    // Placeholder e Teclado dinâmicos
                     placeholder = if (state.documentType == "NIF") "NIF" else "Nº Passaporte",
-                    keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text
+                    keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text,
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
                 FormInput(
                     value = state.morada,
                     onValueChange = { viewModel.onMoradaChange(it) },
-                    placeholder = "Morada"
+                    placeholder = "Morada",
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+
+                // ÚLTIMO CAMPO: Ação Done para fechar o teclado
                 FormInput(
                     value = state.codPostal,
                     onValueChange = { viewModel.onCodPostalChange(it) },
-                    placeholder = "CodPostal"
+                    placeholder = "CodPostal",
+                    imeAction = ImeAction.Done,
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
             }
-
-
-                        state.role == UserRole.APOIADO
+            viewModel.onRoleChange(UserRole.APOIADO)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -230,21 +260,28 @@ fun FormSection(
     }
 }
 
+// 4. FormInput Atualizado para suportar navegação
 @Composable
 fun FormInput(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    imeAction: ImeAction = ImeAction.Next, // Default é Next
+    keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = keyboardType,
+            imeAction = imeAction // Define a tecla Enter
+        ),
+        keyboardActions = keyboardActions, // Define a ação
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-        singleLine = true,
+        singleLine = true, // Impede criar novas linhas
         decorationBox = { innerTextField ->
             Box(
                 modifier = Modifier

@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.apoiado
+package ipca.app.lojasas.ui.apoiado.formulario
 
 import android.app.DatePickerDialog
 import android.widget.DatePicker
@@ -6,7 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -15,14 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ipca.app.lojasas.ui.theme.GreenSas // ou Color(0xFF094E33)
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -37,6 +39,9 @@ fun CompleteDataView(
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    // 1. Gestor de Foco para controlar o "Enter"
+    val focusManager = LocalFocusManager.current
 
     // Configuração do DatePicker
     val calendar = Calendar.getInstance()
@@ -55,6 +60,8 @@ fun CompleteDataView(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            // 2. imePadding faz o ecrã encolher quando o teclado abre
+            .imePadding()
             .padding(16.dp)
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -76,7 +83,13 @@ fun CompleteDataView(
             value = state.nacionalidade,
             onValueChange = { viewModel.onNacionalidadeChange(it) },
             label = { Text("Nacionalidade") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            // 3. Configuração para Single Line e Next
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
         )
 
         // --- DATA DE NASCIMENTO ---
@@ -123,7 +136,13 @@ fun CompleteDataView(
                         value = state.curso,
                         onValueChange = { viewModel.onCursoChange(it) },
                         label = { Text("Curso (ex: LESI)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        // Configuração Single Line
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        )
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text("Grau de Ensino:")
@@ -161,8 +180,16 @@ fun CompleteDataView(
                 value = state.valorBolsa,
                 onValueChange = { viewModel.onValorBolsaChange(it) },
                 label = { Text("Valor da Bolsa (€)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                // Configuração Numérica e Done
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                )
             )
         }
 

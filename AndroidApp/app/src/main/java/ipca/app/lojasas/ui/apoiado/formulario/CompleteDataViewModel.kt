@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.apoiado
+package ipca.app.lojasas.ui.apoiado.formulario
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
