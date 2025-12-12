@@ -14,7 +14,7 @@ data class CreateProfileState(
     var email: String = "",
     var password: String = "",
     var nif: String = "",
-    var documentType: String = "NIF", // Novo campo
+    var documentType: String = "NIF",
     var morada: String = "",
     var codPostal: String = "",
     var role: UserRole = UserRole.FUNCIONARIO,
@@ -35,7 +35,7 @@ class CreateProfileViewModel : ViewModel() {
     fun onEmailChange(newValue: String) { uiState.value = uiState.value.copy(email = newValue) }
     fun onPasswordChange(newValue: String) { uiState.value = uiState.value.copy(password = newValue) }
     fun onNifChange(newValue: String) { uiState.value = uiState.value.copy(nif = newValue) }
-    fun onDocumentTypeChange(newValue: String) { uiState.value = uiState.value.copy(documentType = newValue) } // Nova função
+    fun onDocumentTypeChange(newValue: String) { uiState.value = uiState.value.copy(documentType = newValue) }
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
     fun onCodPostalChange(newValue: String) { uiState.value = uiState.value.copy(codPostal = newValue) }
     fun onRoleChange(newValue: UserRole) { uiState.value = uiState.value.copy(role = newValue) }
@@ -81,18 +81,22 @@ class CreateProfileViewModel : ViewModel() {
             "numMecanografico" to state.numMecanografico,
             "nome" to state.nome,
             "contacto" to state.contacto,
-            "nif" to state.nif, // Este campo guarda o número (seja NIF ou Passaporte)
-            "documentType" to state.documentType, // Guardamos o tipo escolhido
+            "documentNumber" to state.nif,
+            "documentType" to state.documentType,
             "morada" to state.morada,
             "codPostal" to state.codPostal,
             "email" to state.email,
-            "role" to state.role.name
+            "role" to state.role.name,
+            "mudarPass" to true // Força a mudança de senha no próximo login
         )
 
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
 
+        // Lógica específica para Apoiados
         if (state.role == UserRole.APOIADO) {
             userMap["emailApoiado"] = state.email
+            // --- VARIÁVEL PARA LEMBRAR DE PREENCHER DADOS ---
+            userMap["dadosIncompletos"] = true
         }
 
         db.collection(collectionName).document(state.numMecanografico)

@@ -1,6 +1,5 @@
 package ipca.app.lojasas.ui.funcionario.menu
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,10 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,8 +34,8 @@ fun MenuView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp), // Margens laterais
-            verticalArrangement = Arrangement.spacedBy(24.dp) // Espaço entre o grupo principal e o botão sair
+                .padding(horizontal = 16.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
             // --- GRUPO DE OPÇÕES PRINCIPAIS ---
@@ -62,7 +59,6 @@ fun MenuView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-
                     MenuRow(title = "Histórico de ações") { /* Navegar */ }
                     MenuDivider()
                 }
@@ -81,6 +77,7 @@ fun MenuView(
                     MenuRow(title = "Campanhas") { /* Navegar */ }
                 }
             }
+
             // --- BOTÃO TERMINAR SESSÃO ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -89,8 +86,19 @@ fun MenuView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
+                        // --- AQUI ESTÁ A CORREÇÃO ---
+
+                        // 1. Limpa a autenticação no Firebase
+                        try {
+                            FirebaseAuth.getInstance().signOut()
+                        } catch (e: Exception) {
+                            // Caso não estejas a usar Firebase ou dê erro, o código continua
+                            e.printStackTrace()
+                        }
+
+                        // 2. Navega para o Login e limpa o histórico para trás
                         navController.navigate("login") {
-                            popUpTo(0)
+                            popUpTo(0) // Garante que a pilha de navegação é limpa
                         }
                     }
             ) {
