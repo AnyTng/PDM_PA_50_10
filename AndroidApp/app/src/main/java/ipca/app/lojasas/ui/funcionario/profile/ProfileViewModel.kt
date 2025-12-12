@@ -3,6 +3,7 @@ package ipca.app.lojasas.ui.funcionario.profile
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.data.UserRole
@@ -29,7 +30,6 @@ class ProfileViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val auth = Firebase.auth
 
-    // Apenas os campos permitidos para edição
     fun onNomeChange(newValue: String) { uiState.value = uiState.value.copy(nome = newValue) }
     fun onContactoChange(newValue: String) { uiState.value = uiState.value.copy(contacto = newValue) }
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
@@ -45,14 +45,12 @@ class ProfileViewModel : ViewModel() {
         val uid = currentUser.uid
         uiState.value = uiState.value.copy(isLoading = true, error = null)
 
-        // Tentar encontrar na coleção 'funcionarios'
         db.collection("funcionarios").whereEqualTo("uid", uid).get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     val doc = documents.documents[0]
                     fillState(doc.data, doc.id, UserRole.FUNCIONARIO)
                 } else {
-                    // Se não encontrar, tentar na coleção 'apoiados'
                     db.collection("apoiados").whereEqualTo("uid", uid).get()
                         .addOnSuccessListener { apoiadoDocs ->
                             if (!apoiadoDocs.isEmpty) {
@@ -86,17 +84,14 @@ class ProfileViewModel : ViewModel() {
 
     fun saveProfile(onSuccess: () -> Unit) {
         val state = uiState.value
-
         if (state.nome.isEmpty()) {
             uiState.value = state.copy(error = "O nome não pode estar vazio.")
             return
         }
 
         uiState.value = state.copy(isLoading = true)
-
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
 
-        // Atualizar apenas os campos permitidos
         val updates = hashMapOf<String, Any>(
             "nome" to state.nome,
             "contacto" to state.contacto,
@@ -120,15 +115,12 @@ class ProfileViewModel : ViewModel() {
         if (state.role == null || state.numMecanografico.isEmpty()) return
 
         uiState.value = state.copy(isLoading = true)
-
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
         val user = auth.currentUser
 
-        // 1. Apagar documento do Firestore
         db.collection(collectionName).document(state.numMecanografico)
             .delete()
             .addOnSuccessListener {
-                // 2. Apagar utilizador da Autenticação
                 user?.delete()?.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         uiState.value = state.copy(isLoading = false)
@@ -141,5 +133,36 @@ class ProfileViewModel : ViewModel() {
             .addOnFailureListener { e ->
                 uiState.value = state.copy(isLoading = false, error = "Erro ao apagar dados: ${e.message}")
             }
+    }
+
+    // --- NOVA FUNÇÃO: ALTERAR SENHA ---
+    fun changePassword(oldPass: String, newPass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val user = auth.currentUser
+        val email = user?.email
+        if (user != null && email != null) {
+            uiState.value = uiState.value.copy(isLoading = true)
+
+            // 1. Criar credencial com a senha antiga
+            val credential = EmailAuthProvider.getCredential(email, oldPass)
+
+            // 2. Reautenticar para garantir segurança
+            user.reauthenticate(credential)
+                .addOnSuccessListener {
+                    // 3. Atualizar para a nova senha
+                    user.updatePassword(newPass)
+                        .addOnSuccessListener {
+                            uiState.value = uiState.value.copy(isLoading = false)
+                            onSuccess()
+                        }
+                        .addOnFailureListener { e ->
+                            uiState.value = uiState.value.copy(isLoading = false)
+                            onError("Erro ao atualizar senha: ${e.message}")
+                        }
+                }
+                .addOnFailureListener { e ->
+                    uiState.value = uiState.value.copy(isLoading = false)
+                    onError("Senha antiga incorreta.")
+                }
+        }
     }
 }

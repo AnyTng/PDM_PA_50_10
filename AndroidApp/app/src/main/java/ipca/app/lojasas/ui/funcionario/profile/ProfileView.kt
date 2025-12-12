@@ -1,12 +1,12 @@
 package ipca.app.lojasas.ui.funcionario.profile
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-// 1. IMPORT NECESSÁRIO PARA O ERRO DO innerTextField
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,8 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,9 +38,11 @@ fun ProfileView(
     val viewModel: ProfileViewModel = viewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
-    // Estado para controlar o Pop-up de confirmação
+    // Estados para controlar os Pop-ups
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showPasswordDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadUserProfile()
@@ -100,63 +104,61 @@ fun ProfileView(
 
                 // --- IDENTIFICAÇÃO (Apenas Leitura) ---
                 FormSection(title = "Identificação") {
-                    ReadOnlyInput(
-                        value = state.numMecanografico,
-                        placeholder = "Nº Mecanográfico"
-                    )
+                    ReadOnlyInput(value = state.numMecanografico, placeholder = "Nº Mecanográfico")
                 }
 
                 // --- NOME (Editável) ---
                 FormSection(title = "Nome") {
-                    FormInput(
-                        value = state.nome,
-                        onValueChange = { viewModel.onNomeChange(it) },
-                        placeholder = "Nome"
-                    )
+                    FormInput(value = state.nome, onValueChange = { viewModel.onNomeChange(it) }, placeholder = "Nome")
                 }
 
                 // --- CONTACTO (Editável) ---
                 FormSection(title = "Contacto") {
-                    FormInput(
-                        value = state.contacto,
-                        onValueChange = { viewModel.onContactoChange(it) },
-                        placeholder = "Contacto",
-                        keyboardType = KeyboardType.Phone
-                    )
+                    FormInput(value = state.contacto, onValueChange = { viewModel.onContactoChange(it) }, placeholder = "Contacto", keyboardType = KeyboardType.Phone)
                 }
 
                 // --- EMAIL (Apenas Leitura) ---
                 FormSection(title = "Email") {
-                    ReadOnlyInput(
-                        value = state.email,
-                        placeholder = "Email"
-                    )
+                    ReadOnlyInput(value = state.email, placeholder = "Email")
                 }
 
                 // --- NIF (Apenas Leitura) ---
                 FormSection(title = "NIF") {
-                    ReadOnlyInput(
-                        value = state.nif,
-                        placeholder = "NIF"
-                    )
+                    ReadOnlyInput(value = state.nif, placeholder = "NIF")
                 }
 
                 // --- MORADA E CÓDIGO POSTAL (Editável) ---
                 FormSection(title = "Morada") {
-                    FormInput(
-                        value = state.morada,
-                        onValueChange = { viewModel.onMoradaChange(it) },
-                        placeholder = "Morada"
-                    )
+                    FormInput(value = state.morada, onValueChange = { viewModel.onMoradaChange(it) }, placeholder = "Morada")
                     Spacer(modifier = Modifier.height(8.dp))
-                    FormInput(
-                        value = state.codPostal,
-                        onValueChange = { viewModel.onCodPostalChange(it) },
-                        placeholder = "Código Postal"
-                    )
+                    FormInput(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, placeholder = "Código Postal")
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // --- BOTÃO TROCAR SENHA ---
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showPasswordDialog = true }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Trocar Senha",
+                            color = Color.Black,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
 
                 // --- BOTÃO APAGAR CONTA ---
                 Card(
@@ -165,7 +167,7 @@ fun ProfileView(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showDeleteDialog = true } // Abre o Dialog
+                        .clickable { showDeleteDialog = true }
                 ) {
                     Box(
                         modifier = Modifier
@@ -182,12 +184,31 @@ fun ProfileView(
                     }
                 }
 
-                // Espaço extra para o FAB
                 Spacer(modifier = Modifier.height(80.dp))
             }
         }
 
-        // --- DIALOG DE CONFIRMAÇÃO ---
+        // --- DIALOG DE MUDANÇA DE SENHA ---
+        if (showPasswordDialog) {
+            ChangePasswordDialog(
+                onDismiss = { showPasswordDialog = false },
+                onConfirm = { old, new ->
+                    viewModel.changePassword(
+                        oldPass = old,
+                        newPass = new,
+                        onSuccess = {
+                            showPasswordDialog = false
+                            Toast.makeText(context, "Senha alterada com sucesso!", Toast.LENGTH_LONG).show()
+                        },
+                        onError = { errorMsg ->
+                            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
+            )
+        }
+
+        // --- DIALOG DE APAGAR CONTA ---
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
@@ -198,10 +219,7 @@ fun ProfileView(
                         onClick = {
                             showDeleteDialog = false
                             viewModel.deleteAccount {
-                                // Navega para o Login e limpa tudo da pilha
-                                navController.navigate("login") {
-                                    popUpTo(0)
-                                }
+                                navController.navigate("login") { popUpTo(0) }
                             }
                         },
                         colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
@@ -223,7 +241,81 @@ fun ProfileView(
     }
 }
 
-// Componente auxiliar para campos de leitura (cinzentos e não editáveis)
+// --- COMPONENTE DIALOG DE SENHA ---
+@Composable
+fun ChangePasswordDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    var oldPass by remember { mutableStateOf("") }
+    var newPass by remember { mutableStateOf("") }
+    var confirmPass by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Alterar Senha") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (error != null) {
+                    Text(error!!, color = Color.Red, fontSize = 12.sp)
+                }
+
+                OutlinedTextField(
+                    value = oldPass,
+                    onValueChange = { oldPass = it },
+                    label = { Text("Senha Antiga") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = newPass,
+                    onValueChange = { newPass = it },
+                    label = { Text("Nova Senha") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = confirmPass,
+                    onValueChange = { confirmPass = it },
+                    label = { Text("Repetir Nova Senha") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (oldPass.isEmpty() || newPass.isEmpty() || confirmPass.isEmpty()) {
+                        error = "Preencha todos os campos."
+                    } else if (newPass != confirmPass) {
+                        error = "As novas senhas não coincidem."
+                    } else if (newPass.length < 6) {
+                        error = "A nova senha deve ter pelo menos 6 caracteres."
+                    } else {
+                        onConfirm(oldPass, newPass)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = GreenIPCA)
+            ) {
+                Text("Alterar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar", color = Color.Black)
+            }
+        },
+        containerColor = Color.White
+    )
+}
+
+// --- COMPONENTES ÚNICOS DESTE FICHEIRO ---
+
+// NOTA: FormSection e FormInput não estão aqui porque já existem no CreateProfileView.kt.
+// Como estão no mesmo package, o Kotlin reconhece-os automaticamente.
+
 @Composable
 fun ReadOnlyInput(value: String, placeholder: String) {
     BasicTextField(
@@ -237,14 +329,13 @@ fun ReadOnlyInput(value: String, placeholder: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
-                    .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp)) // Fundo mais escuro para indicar ReadOnly
+                    .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp)) // Fundo mais escuro
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
                     Text(text = placeholder, color = Color.Gray, fontSize = 16.sp)
                 }
-                // Agora isto já deve funcionar porque importamos o BasicTextField
                 innerTextField()
             }
         }
