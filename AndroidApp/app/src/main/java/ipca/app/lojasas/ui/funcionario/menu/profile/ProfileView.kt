@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.profile
+package ipca.app.lojasas.ui.funcionario.menu.profile
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -306,7 +307,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
         value = value,
         onValueChange = {},
         enabled = false, // Desativa a edição
-        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 16.sp, color = Color.Gray),
+        textStyle = TextStyle(fontSize = 16.sp, color = Color.Gray),
         singleLine = true,
         decorationBox = { innerTextField ->
             Box(

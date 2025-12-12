@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.profile
+package ipca.app.lojasas.ui.funcionario.menu.profile
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel

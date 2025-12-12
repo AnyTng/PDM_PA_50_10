@@ -6,7 +6,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -14,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,8 +32,8 @@ import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
 import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
-import ipca.app.lojasas.ui.funcionario.profile.CreateProfileView // Adicionar import
-import ipca.app.lojasas.ui.funcionario.profile.ProfileView // <--- Import
+import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView // Adicionar import
+import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView // <--- Import
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
