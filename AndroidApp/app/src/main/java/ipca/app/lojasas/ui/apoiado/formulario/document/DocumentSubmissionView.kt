@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material3.*
@@ -36,7 +35,6 @@ import java.util.Locale
 val GreenSas = Color(0xFF094E33)
 
 // --- 1. ECRÃ COM LÓGICA (ViewModel, Firebase) ---
-// Este componente não pode ter @Preview porque usa ViewModel()
 @Composable
 fun DocumentSubmissionView(
     navController: NavController,
@@ -65,7 +63,6 @@ fun DocumentSubmissionView(
         viewModel.loadSubmissionStatus()
     }
 
-    // Função de lógica para abrir o ficheiro
     fun openPreview(storagePath: String) {
         viewModel.getFileUrl(storagePath) { uri ->
             if (uri != null) {
@@ -81,7 +78,6 @@ fun DocumentSubmissionView(
         }
     }
 
-    // Chama o conteúdo visual passando apenas os dados e funções
     DocumentSubmissionContent(
         state = state,
         onUploadRequest = { docType, description ->
@@ -92,7 +88,6 @@ fun DocumentSubmissionView(
         onPreviewRequest = { path -> openPreview(path) },
         onFinishRequest = {
             if (viewModel.hasAllMandatoryFiles()) {
-                // CHAMA A NOVA FUNÇÃO PARA ATUALIZAR A BD
                 viewModel.finalizeSubmission {
                     Toast.makeText(context, "Entrega concluída!", Toast.LENGTH_SHORT).show()
                     navController.navigate("apoiadoHome") {
@@ -107,8 +102,7 @@ fun DocumentSubmissionView(
     )
 }
 
-// --- 2. CONTEÚDO VISUAL (Sem Lógica de Firebase) ---
-// Este componente é que é visualizado no Preview
+// --- 2. CONTEÚDO VISUAL ---
 @Composable
 fun DocumentSubmissionContent(
     state: SubmissionState,
@@ -122,6 +116,9 @@ fun DocumentSubmissionContent(
     var pendingDocType by remember { mutableStateOf<DocumentItem?>(null) }
 
     fun initiateUpload(docType: DocumentItem) {
+        // Impede clique se já estiver a carregar
+        if (state.uploadProgress) return
+
         if (docType.id == "outros") {
             pendingDocType = docType
             showOtherDescriptionDialog = true
@@ -153,90 +150,111 @@ fun DocumentSubmissionContent(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (checkMandatory()) GreenSas else Color.Gray
                 ),
-                enabled = !state.isLoading,
+                // Desativa o botão se estiver a carregar
+                enabled = !state.uploadProgress && !state.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                } else {
-                    Text("Concluir e Voltar")
-                }
+                Text("Concluir e Voltar")
             }
         }
     ) { innerPadding ->
-        Column(
+
+        // BOX PRINCIPAL para permitir o Overlay
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color(0xFFF8F8F8))
-                .padding(horizontal = 16.dp)
         ) {
 
-            if (state.uploadProgress) {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    color = GreenSas
-                )
-            }
-            if (state.error != null) {
-                Text(state.error!!, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(vertical = 8.dp))
-            }
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+            // CONTEÚDO DA LISTA
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
             ) {
-                item {
-                    Text("Selecione o tipo para adicionar:", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                if (state.error != null) {
+                    Text(state.error!!, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(vertical = 8.dp))
                 }
 
-                items(state.docTypes) { docType ->
-                    val hasSubmitted = state.uploadedFiles.any { it.typeId == docType.id }
-                    UploadTypeCard(
-                        docType = docType,
-                        hasSubmitted = hasSubmitted,
-                        onClick = { initiateUpload(docType) }
-                    )
-                }
-
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Documentos Submetidos (${state.uploadedFiles.size})",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = GreenSas
-                    )
-                    Text(
-                        text = "(Clique num documento para visualizar)",
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
-                }
-
-                if (state.uploadedFiles.isEmpty()) {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
+                ) {
                     item {
-                        Text("Ainda não submeteu documentos.", color = Color.Gray, fontSize = 14.sp)
+                        Text("Selecione o tipo para adicionar:", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
-                } else {
-                    items(state.uploadedFiles) { file ->
-                        UploadedFileRow(
-                            file = file,
-                            onPreviewClick = { onPreviewRequest(file.storagePath) }
+
+                    items(state.docTypes) { docType ->
+                        val hasSubmitted = state.uploadedFiles.any { it.typeId == docType.id }
+                        UploadTypeCard(
+                            docType = docType,
+                            hasSubmitted = hasSubmitted,
+                            onClick = { initiateUpload(docType) }
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Documentos Submetidos (${state.uploadedFiles.size})",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GreenSas
+                        )
+                        Text(
+                            text = "(Clique num documento para visualizar)",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+                    }
+
+                    if (state.uploadedFiles.isEmpty()) {
+                        item {
+                            Text("Ainda não submeteu documentos.", color = Color.Gray, fontSize = 14.sp)
+                        }
+                    } else {
+                        items(state.uploadedFiles) { file ->
+                            UploadedFileRow(
+                                file = file,
+                                onPreviewClick = { onPreviewRequest(file.storagePath) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // --- OVERLAY DE CARREGAMENTO (Tela Esbranquiçada) ---
+            if (state.uploadProgress || state.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White.copy(alpha = 0.7f)) // Fundo branco transparente
+                        .clickable(enabled = false) {}, // Bloqueia cliques por baixo
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = GreenSas)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = if (state.uploadProgress) "A carregar documento..." else "A finalizar...",
+                            color = GreenSas,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
         }
 
+        // Dialog Descrição
         if (showOtherDescriptionDialog) {
             AlertDialog(
-                onDismissRequest = { showOtherDescriptionDialog = false },
+                onDismissRequest = { /* Não fecha ao clicar fora para evitar erros */ },
                 title = { Text("Descrição do Documento") },
                 text = {
                     Column {
@@ -277,8 +295,7 @@ fun DocumentSubmissionContent(
     }
 }
 
-// --- COMPONENTES AUXILIARES ---
-
+// ... (Resto dos componentes auxiliares UploadTypeCard, UploadedFileRow mantêm-se iguais) ...
 @Composable
 fun UploadTypeCard(
     docType: DocumentItem,
@@ -326,7 +343,7 @@ fun UploadedFileRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp)
-            .clickable { onPreviewClick() }, // Clique no cartão todo
+            .clickable { onPreviewClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -359,23 +376,18 @@ fun UploadedFileRow(
     }
 }
 
-// --- 3. PREVIEW ---
 @Preview(showBackground = true, name = "Document Submission Preview")
 @Composable
 fun DocumentSubmissionPreview() {
-    // Dados falsos para teste visual
     val fakeState = SubmissionState(
         docTypes = listOf(
             DocumentItem("despesas", "Despesas Permanentes", "Recibos de habitação, etc.", true),
             DocumentItem("outros", "Outros Documentos", "Outros comprovativos.", false)
         ),
-        uploadedFiles = listOf(
-            UploadedFile("1", "despesas", "Despesas Permanentes", "recibo_jan.pdf", "", System.currentTimeMillis(), null),
-            UploadedFile("2", "outros", "Outros Documentos", "declaracao.jpg", "", System.currentTimeMillis(), "Declaração de Junta")
-        )
+        uploadedFiles = listOf(),
+        uploadProgress = true // Testa o loading
     )
 
-    // Agora chamamos o Componente Visual (Content) e não a View com lógica
     DocumentSubmissionContent(
         state = fakeState,
         onUploadRequest = { _, _ -> },
