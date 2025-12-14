@@ -29,7 +29,11 @@ fun ApoiadoHomeScreen(
 ) {
     val state by viewModel.uiState
 
-    // 1. Loading State
+    // Recarrega o estado sempre que o ecrã ganha foco (caso volte de trás)
+    LaunchedEffect(Unit) {
+        viewModel.checkStatus()
+    }
+
     if (state.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color(0xFF094E33))
@@ -37,70 +41,84 @@ fun ApoiadoHomeScreen(
         return
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    // --- PRIORIDADE DE NAVEGAÇÃO / BLOQUEIO ---
 
-        // 2. Verifica prioridades: Senha > Dados Incompletos > Home Normal
-        if (state.showMandatoryPasswordChange) {
-            // Fica vazio ou mostra um fundo, o Dialog sobrepõe-se
-        } else if (state.dadosIncompletos) {
-            CompleteDataView(
-                docId = state.docId,
-                onSuccess = { viewModel.checkStatus() }
-            )
-        } else {
-            // --- CONTEÚDO NORMAL DA HOME ---
-            Scaffold(
-                contentWindowInsets = WindowInsets(0, 0, 0, 0)
-            ) { innerPadding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(16.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "Bem-vindo, Apoiado!")
-                    }
+    // 1. Mudar Password (Prioridade Máxima)
+    if (state.showMandatoryPasswordChange) {
+        MandatoryPasswordChangeDialog(
+            isLoading = state.isLoading,
+            errorMessage = state.error,
+            onConfirm = { old, new ->
+                viewModel.changePassword(old, new) { viewModel.checkStatus() }
+            }
+        )
+        return // Retorna para não desenhar o resto
+    }
 
-                    // Botão Logout
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                try { FirebaseAuth.getInstance().signOut() } catch (e: Exception) {}
-                                navController.navigate("login") { popUpTo(0) }
-                            }
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Terminar Sessão", color = Color.Red, fontSize = 18.sp, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                }
+    // 2. Dados Incompletos
+    else if (state.dadosIncompletos) {
+        CompleteDataView(
+            docId = state.docId,
+            onSuccess = { viewModel.checkStatus() },
+            navController = navController
+        )
+        return
+    }
+
+    // 3. Falta Documentos (Obrigatório)
+    else if (state.faltaDocumentos) {
+        // Redireciona automaticamente
+        LaunchedEffect(Unit) {
+            navController.navigate("documentSubmission") {
+                // Remove a Home da pilha para que o botão "Voltar" do telemóvel saia da app ou vá para login,
+                // impedindo que ele volte para a Home sem documentos.
+                popUpTo("apoiadoHome") { inclusive = true }
             }
         }
+        // Mostra um loading enquanto navega
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color(0xFF094E33))
+        }
+        return
+    }
 
-        // 3. DIÁLOGO DE MUDANÇA DE SENHA (Sobrepõe tudo)
-        if (state.showMandatoryPasswordChange) {
-            MandatoryPasswordChangeDialog(
-                isLoading = state.isLoading,
-                errorMessage = state.error,
-                onConfirm = { old, new ->
-                    viewModel.changePassword(old, new) {
-                        // Ao concluir, o estado atualiza e o dialog fecha sozinho
+    // --- CONTEÚDO NORMAL DA HOME ---
+    // (Só chega aqui se tudo estiver false)
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Bem-vindo, Apoiado!\n(Situação Regularizada)", style = MaterialTheme.typography.headlineMedium)
+            }
+
+            // Botão Logout (código existente...)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        try { FirebaseAuth.getInstance().signOut() } catch (e: Exception) {}
+                        navController.navigate("login") { popUpTo(0) }
                     }
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Terminar Sessão", color = Color.Red, fontSize = 18.sp, fontWeight = FontWeight.Medium)
                 }
-            )
+            }
         }
     }
 }

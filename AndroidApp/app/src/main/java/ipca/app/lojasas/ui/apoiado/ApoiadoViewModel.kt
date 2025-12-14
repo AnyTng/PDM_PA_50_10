@@ -11,7 +11,8 @@ import com.google.firebase.firestore.firestore
 
 data class ApoiadoState(
     val dadosIncompletos: Boolean = false,
-    val showMandatoryPasswordChange: Boolean = false, // Novo campo
+    val faltaDocumentos: Boolean = false, // <--- NOVO CAMPO
+    val showMandatoryPasswordChange: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
     val docId: String = ""
@@ -40,13 +41,16 @@ class ApoiadoViewModel : ViewModel() {
                 .addOnSuccessListener { documents ->
                     if (!documents.isEmpty) {
                         val doc = documents.documents[0]
+
                         val isIncomplete = doc.getBoolean("dadosIncompletos") ?: false
-                        val mudarPass = doc.getBoolean("mudarPass") ?: false // Verifica a flag
+                        val mudarPass = doc.getBoolean("mudarPass") ?: false
+                        val faltaDocs = doc.getBoolean("faltaDocumentos") ?: false // <--- LÊ DA BD
 
                         uiState.value = uiState.value.copy(
                             isLoading = false,
                             dadosIncompletos = isIncomplete,
-                            showMandatoryPasswordChange = mudarPass, // Atualiza o estado
+                            faltaDocumentos = faltaDocs, // <--- ATUALIZA ESTADO
+                            showMandatoryPasswordChange = mudarPass,
                             docId = doc.id
                         )
                     } else {

@@ -28,13 +28,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import androidx.navigation.NavController
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompleteDataView(
     docId: String,
-    onSuccess: () -> Unit
-) {
+    onSuccess: () -> Unit,
+    navController: NavController,
+
+    ) {
     val viewModel: CompleteDataViewModel = viewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
@@ -218,7 +222,17 @@ fun CompleteDataView(
 
         // --- BOTÃO SUBMETER ---
         Button(
-            onClick = { viewModel.submitData(docId, onSuccess) },
+            onClick = {
+                viewModel.submitData(docId) {
+                    // Verifique se precisa de documentos
+                    if (!viewModel.uiState.value.apoioEmergencia) {
+                        navController.navigate("documentSubmission")
+                    } else {
+                        // Se tem apoio, vai direto para a home
+                        onSuccess()
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),

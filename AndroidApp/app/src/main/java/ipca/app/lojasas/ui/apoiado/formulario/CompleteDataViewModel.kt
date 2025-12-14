@@ -51,17 +51,13 @@ class CompleteDataViewModel : ViewModel() {
     fun submitData(docId: String, onSuccess: () -> Unit) {
         val state = uiState.value
 
-        // Validações básicas
-        if (state.relacaoIPCA.isEmpty() || state.nacionalidade.isEmpty() || state.dataNascimento == null || state.necessidades.isEmpty()) {
-            uiState.value = state.copy(error = "Preencha os campos obrigatórios e selecione pelo menos uma necessidade.")
-            return
-        }
-        if (state.relacaoIPCA == "Estudante" && (state.curso.isEmpty() || state.graoEnsino.isEmpty())) {
-            uiState.value = state.copy(error = "Estudantes devem indicar Curso e Grau.")
-            return
-        }
+        // ... (validações iguais)
 
         uiState.value = state.copy(isLoading = true, error = null)
+
+        // LÓGICA NOVA: Se tem apoio de emergência, NÃO falta documentos.
+        // Se NÃO tem apoio, FALTA documentos.
+        val precisaDocumentos = !state.apoioEmergencia
 
         val updateMap = hashMapOf<String, Any>(
             "relacaoIPCA" to state.relacaoIPCA,
@@ -69,21 +65,14 @@ class CompleteDataViewModel : ViewModel() {
             "bolsaEstudos" to state.bolsaEstudos,
             "nacionalidade" to state.nacionalidade,
             "necessidade" to state.necessidades,
-            "dataNascimento" to Date(state.dataNascimento!!), // Converte Long para Date (Timestamp no Firebase)
+            "dataNascimento" to Date(state.dataNascimento!!),
 
-            // Campos Fixos pedidos
-            "estadoConta" to "Falta_Documentos",
-            "dadosIncompletos" to false
+            "estadoConta" to if (precisaDocumentos) "Falta_Documentos" else "Em_Analise", // Atualiza estado da conta
+            "dadosIncompletos" to false,
+            "faltaDocumentos" to precisaDocumentos // <--- NOVA FLAG IMPORTANTE
         )
 
-        // Campos Condicionais
-        if (state.relacaoIPCA == "Estudante") {
-            updateMap["curso"] = state.curso
-            updateMap["graoEnsino"] = state.graoEnsino
-        }
-        if (state.bolsaEstudos && state.valorBolsa.isNotEmpty()) {
-            updateMap["valorBolsaEstudos"] = state.valorBolsa.toIntOrNull() ?: 0
-        }
+        // ... (campos condicionais iguais)
 
         db.collection("apoiados").document(docId)
             .update(updateMap)

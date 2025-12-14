@@ -27,6 +27,7 @@ import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
+import ipca.app.lojasas.ui.apoiado.formulario.document.DocumentSubmissionView
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
@@ -125,7 +126,9 @@ class MainActivity : ComponentActivity() {
                         composable("createProfileApoiado") {
                             CreateProfileApoiadoView(navController = navController)
                         }
-
+                        composable("documentSubmission") {
+                            DocumentSubmissionView(navController = navController)
+                        }
                     }
                 }
             }
