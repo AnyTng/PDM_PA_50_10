@@ -1,7 +1,5 @@
-package ipca.app.lojasas.ui.apoiado
+package ipca.app.lojasas.ui.apoiado.home
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
 

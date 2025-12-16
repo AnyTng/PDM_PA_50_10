@@ -45,9 +45,9 @@ fun MenuApoiadoView(
             ) {
                 Column {
                     // Reutiliza a rota "profile" existente. O ProfileViewModel já sabe lidar com Apoiados.
-                    MenuApoiadoRow(title = "O meu Perfil") { navController.navigate("profile") }
+                    MenuApoiadoRow(title = "O meu Perfil") { navController.navigate("profileApoiado") }
                     MenuApoiadoDivider()
-                    MenuApoiadoRow(title = "Alterar Senha") { /* Implementar navegação ou Dialog se necessário */ }
+                    //MenuApoiadoRow(title = "Alterar Senha") { /* Implementar navegação ou Dialog se necessário */ }
                 }
             }
 

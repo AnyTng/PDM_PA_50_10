@@ -26,7 +26,7 @@ import ipca.app.lojasas.ui.login.LoginView
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
-import ipca.app.lojasas.ui.apoiado.ApoiadoHomeScreen
+import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.formulario.document.DocumentSubmissionView
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
@@ -36,6 +36,9 @@ import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView // Adicionar import
 import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView // <--- Import
 import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
+import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView // Importe a nova view
+
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,22 +55,41 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+
+                // 1. CONFIGURAÇÃO DO FOOTER
                 val footerType = when (currentRoute) {
-                    "funcionarioHome", "menu", "createProfile", "profile" -> FooterType.FUNCIONARIO
-                    // ADICIONAR "menuApoiado" AQUI:
-                    "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
+                    "funcionarioHome", "menu", "createProfile", "profileFuncionario" -> FooterType.FUNCIONARIO
+                    "apoiadoHome", "menuApoiado", "profileApoiado", "documentSubmission" -> FooterType.APOIADO
                     else -> null
                 }
 
+                // 2. CONFIGURAÇÃO DO HEADER
                 val headerConfig = when (currentRoute) {
                     "apoiadoHome" -> HeaderConfig(title = "Home")
                     "funcionarioHome" -> HeaderConfig(title = "Calendário")
                     "menu" -> HeaderConfig(title = "Menu")
-                    // ADICIONAR CONFIGURAÇÃO DO MENU APOIADO:
                     "menuApoiado" -> HeaderConfig(title = "Menu")
+
+                    // Rota Funcionario
+                    "profileFuncionario" -> HeaderConfig(
+                        title = "Perfil Gestor",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    // Rota Apoiado
+                    "profileApoiado" -> HeaderConfig(
+                        title = "Meu Perfil",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
 
                     "createProfile" -> HeaderConfig(
                         title = "Criar Perfil",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "documentSubmission" -> HeaderConfig(
+                        title = "Entrega Docs",
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
@@ -120,9 +142,9 @@ class MainActivity : ComponentActivity() {
                         composable("createProfile") {
                             CreateProfileView(navController = navController)
                         }
-                        composable("profile") {
+                        /*composable("profile") {
                             ProfileView(navController = navController)
-                        }
+                        }*/
                         composable("createProfileApoiado") {
                             CreateProfileApoiadoView(navController = navController)
                         }
@@ -132,6 +154,15 @@ class MainActivity : ComponentActivity() {
                         composable("menuApoiado") {
                             // Importe o MenuApoiadoView que criamos no passo 1
                             ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView(navController = navController)
+                        }
+                        // Perfil do Funcionario (Usa a view antiga)
+                        composable("profileFuncionario") {
+                            ProfileView(navController = navController)
+                        }
+
+                        // Perfil do Apoiado (Usa a NOVA view)
+                        composable("profileApoiado") {
+                            ApoiadoProfileView(navController = navController)
                         }
                     }
                 }

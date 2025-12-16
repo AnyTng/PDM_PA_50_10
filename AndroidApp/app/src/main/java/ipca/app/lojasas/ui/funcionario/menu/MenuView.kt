@@ -47,7 +47,7 @@ fun MenuView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Gerir o meu Perfil") { navController.navigate("profile") }
+                    MenuRow(title = "Gerir o meu Perfil") { navController.navigate("profileFuncionario") }
                     MenuDivider()
                     MenuRow(title = "Criar novo Perfil") { navController.navigate("createProfile")}
                     MenuDivider()

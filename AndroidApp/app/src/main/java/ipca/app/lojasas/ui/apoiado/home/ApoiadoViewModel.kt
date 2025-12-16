@@ -1,6 +1,6 @@
 // Ficheiro: lojasas/ui/apoiado/ApoiadoViewModel.kt
 
-package ipca.app.lojasas.ui.apoiado
+package ipca.app.lojasas.ui.apoiado.home
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
