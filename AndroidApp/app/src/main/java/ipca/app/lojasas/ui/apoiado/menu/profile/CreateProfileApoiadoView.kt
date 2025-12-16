@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.login
+package ipca.app.lojasas.ui.apoiado.menu.profile
 
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
@@ -204,8 +204,8 @@ fun CreateProfileApoiadoView(
                 }
 
                 FormInput(
-                    value = state.nif,
-                    onValueChange = { viewModel.onNifChange(it) },
+                    value = state.documentNumber,
+                    onValueChange = { viewModel.onDocumentNumberChange(it) },
                     placeholder = if (state.documentType == "NIF") "NIF" else "Nº Passaporte",
                     keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text,
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })

@@ -11,11 +11,12 @@ import com.google.firebase.firestore.firestore
 
 data class ApoiadoState(
     val dadosIncompletos: Boolean = false,
-    val faltaDocumentos: Boolean = false, // <--- NOVO CAMPO
+    val faltaDocumentos: Boolean = false,
     val showMandatoryPasswordChange: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null,
-    val docId: String = ""
+    val docId: String = "",
+    val nome: String = "" // <--- NOVO CAMPO
 )
 
 class ApoiadoViewModel : ViewModel() {
@@ -44,14 +45,16 @@ class ApoiadoViewModel : ViewModel() {
 
                         val isIncomplete = doc.getBoolean("dadosIncompletos") ?: false
                         val mudarPass = doc.getBoolean("mudarPass") ?: false
-                        val faltaDocs = doc.getBoolean("faltaDocumentos") ?: false // <--- LÊ DA BD
+                        val faltaDocs = doc.getBoolean("faltaDocumentos") ?: false
+                        val nomeUser = doc.getString("nome") ?: "Utilizador" // <--- LER O NOME
 
                         uiState.value = uiState.value.copy(
                             isLoading = false,
                             dadosIncompletos = isIncomplete,
-                            faltaDocumentos = faltaDocs, // <--- ATUALIZA ESTADO
+                            faltaDocumentos = faltaDocs,
                             showMandatoryPasswordChange = mudarPass,
-                            docId = doc.id
+                            docId = doc.id,
+                            nome = nomeUser // <--- ATUALIZAR ESTADO
                         )
                     } else {
                         uiState.value = uiState.value.copy(isLoading = false, error = "Utilizador não encontrado.")

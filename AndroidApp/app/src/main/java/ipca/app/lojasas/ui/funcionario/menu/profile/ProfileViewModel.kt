@@ -13,8 +13,8 @@ data class ProfileState(
     var nome: String = "",
     var contacto: String = "",
     var email: String = "",
-    var nif: String = "",
-    var documentType: String = "NIF", // Novo campo para leitura
+    var documentNumber: String = "", // <--- MUDADO DE 'nif' PARA 'documentNumber'
+    var documentType: String = "NIF",
     var morada: String = "",
     var codPostal: String = "",
     var role: UserRole? = null,
@@ -75,8 +75,11 @@ class ProfileViewModel : ViewModel() {
             nome = data["nome"] as? String ?: "",
             contacto = data["contacto"] as? String ?: "",
             email = data["email"] as? String ?: data["emailApoiado"] as? String ?: "",
-            nif = data["nif"] as? String ?: "",
-            documentType = data["documentType"] as? String ?: "NIF", // Lê o tipo, default é NIF
+
+            // CORREÇÃO CRÍTICA: Lê "documentNumber" da BD
+            documentNumber = data["documentNumber"] as? String ?: "",
+
+            documentType = data["documentType"] as? String ?: "NIF",
             morada = data["morada"] as? String ?: "",
             codPostal = data["codPostal"] as? String ?: "",
             role = role,

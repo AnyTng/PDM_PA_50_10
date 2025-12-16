@@ -224,13 +224,14 @@ fun CompleteDataView(
         Button(
             onClick = {
                 viewModel.submitData(docId) {
-                    // Verifique se precisa de documentos
-                    if (!viewModel.uiState.value.apoioEmergencia) {
-                        navController.navigate("documentSubmission")
-                    } else {
-                        // Se tem apoio, vai direto para a home
-                        onSuccess()
-                    }
+                    // ALTERAÇÃO: Removemos a verificação de apoioEmergencia e a navegação forçada.
+                    // Agora, ao ter sucesso, chamamos apenas onSuccess() para recarregar a Home.
+                    onSuccess()
+
+                    // Se preferir garantir a navegação, pode manter:
+                    // navController.navigate("apoiadoHome") {
+                    //     popUpTo("apoiadoHome") { inclusive = true }
+                    // }
                 }
             },
             modifier = Modifier
@@ -240,7 +241,7 @@ fun CompleteDataView(
             enabled = !state.isLoading
         ) {
             if (state.isLoading) CircularProgressIndicator(color = Color.White)
-            else Text("Seguinte")
+            else Text("Concluir") // Mudamos de "Seguinte" para "Concluir" pois vai para a Home
         }
 
         Spacer(modifier = Modifier.height(50.dp))

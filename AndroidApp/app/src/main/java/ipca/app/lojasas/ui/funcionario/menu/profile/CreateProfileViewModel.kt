@@ -13,7 +13,7 @@ data class CreateProfileState(
     var contacto: String = "",
     var email: String = "",
     var password: String = "",
-    var nif: String = "",
+    var documentNumber: String = "", // <--- MUDADO
     var documentType: String = "NIF",
     var morada: String = "",
     var codPostal: String = "",
@@ -34,7 +34,8 @@ class CreateProfileViewModel : ViewModel() {
     fun onContactoChange(newValue: String) { uiState.value = uiState.value.copy(contacto = newValue) }
     fun onEmailChange(newValue: String) { uiState.value = uiState.value.copy(email = newValue) }
     fun onPasswordChange(newValue: String) { uiState.value = uiState.value.copy(password = newValue) }
-    fun onNifChange(newValue: String) { uiState.value = uiState.value.copy(nif = newValue) }
+
+    fun onDocumentNumberChange(newValue: String) {uiState.value = uiState.value.copy(documentNumber = newValue) }
     fun onDocumentTypeChange(newValue: String) { uiState.value = uiState.value.copy(documentType = newValue) }
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
     fun onCodPostalChange(newValue: String) { uiState.value = uiState.value.copy(codPostal = newValue) }
@@ -81,7 +82,7 @@ class CreateProfileViewModel : ViewModel() {
             "numMecanografico" to state.numMecanografico,
             "nome" to state.nome,
             "contacto" to state.contacto,
-            "documentNumber" to state.nif,
+            "documentNumber" to state.documentNumber,
             "documentType" to state.documentType,
             "morada" to state.morada,
             "codPostal" to state.codPostal,

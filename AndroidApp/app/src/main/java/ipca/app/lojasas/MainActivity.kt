@@ -35,7 +35,7 @@ import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView // Adicionar import
 import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView // <--- Import
-import ipca.app.lojasas.ui.login.CreateProfileApoiadoView
+import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,9 +51,11 @@ class MainActivity : ComponentActivity() {
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
+
                 val footerType = when (currentRoute) {
                     "funcionarioHome", "menu", "createProfile", "profile" -> FooterType.FUNCIONARIO
-                    "apoiadoHome" -> FooterType.APOIADO
+                    // ADICIONAR "menuApoiado" AQUI:
+                    "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
                     else -> null
                 }
 
@@ -61,13 +63,11 @@ class MainActivity : ComponentActivity() {
                     "apoiadoHome" -> HeaderConfig(title = "Home")
                     "funcionarioHome" -> HeaderConfig(title = "Calendário")
                     "menu" -> HeaderConfig(title = "Menu")
+                    // ADICIONAR CONFIGURAÇÃO DO MENU APOIADO:
+                    "menuApoiado" -> HeaderConfig(title = "Menu")
+
                     "createProfile" -> HeaderConfig(
                         title = "Criar Perfil",
-                        showBack = true,
-                        onBack = { navController.popBackStack() }
-                    )
-                    "profile" -> HeaderConfig(
-                        title = "O meu Perfil",
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
@@ -128,6 +128,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("documentSubmission") {
                             DocumentSubmissionView(navController = navController)
+                        }
+                        composable("menuApoiado") {
+                            // Importe o MenuApoiadoView que criamos no passo 1
+                            ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView(navController = navController)
                         }
                     }
                 }

@@ -113,7 +113,8 @@ fun ProfileView(
                 // --- DOCUMENTO (Dinâmico: NIF ou Passaporte) ---
                 val documentLabel = if (state.documentType == "Passaporte") "Passaporte" else "NIF"
                 FormSection(title = documentLabel) {
-                    ReadOnlyInput(value = state.nif, placeholder = documentLabel)
+                    // ALTERADO: state.documentNumber
+                    ReadOnlyInput(value = state.documentNumber, placeholder = documentLabel)
                 }
 
                 // --- MORADA E CÓDIGO POSTAL (Editável) ---

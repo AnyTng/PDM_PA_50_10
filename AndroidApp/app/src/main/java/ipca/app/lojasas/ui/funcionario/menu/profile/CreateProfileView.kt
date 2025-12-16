@@ -190,9 +190,8 @@ fun CreateProfileView(
                 }
 
                 FormInput(
-                    value = state.nif,
-                    onValueChange = { viewModel.onNifChange(it) },
-                    // Placeholder e Teclado dinâmicos
+                    value = state.documentNumber, // <--- MUDADO
+                    onValueChange = { viewModel.onDocumentNumberChange(it) }, // <--- MUDADO                    // Placeholder e Teclado dinâmicos
                     placeholder = if (state.documentType == "NIF") "NIF" else "Nº Passaporte",
                     keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text,
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
