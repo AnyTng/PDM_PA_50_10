@@ -73,7 +73,9 @@ fun MenuView(
                 Column {
                     MenuRow(title = "Apoiados") { /* Navegar */ }
                     MenuDivider()
-                    MenuRow(title = "Pedidos de Apoio") { /* Navegar */ }
+                    MenuRow(title = "Pedidos Urgentes") { /* Navegar */ }
+                    MenuDivider()
+                    MenuRow(title = "Validar Contas") { /* Navegar */ }
                     MenuDivider()
                     MenuRow(title = "Campanhas") { /* Navegar */ }
                 }
