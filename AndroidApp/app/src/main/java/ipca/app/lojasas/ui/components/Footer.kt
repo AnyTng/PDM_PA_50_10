@@ -72,7 +72,9 @@ fun Footer(
                     painterRes = R.drawable.grocery,
                     contentDescription = "Mercearia",
                     onClick = {
-                        // Exemplo: navController.navigate("inventario")
+                        navController.navigate("stockProducts") {
+                            launchSingleTop = true
+                        }
                     },
                     modifier = itemModifier
                 )

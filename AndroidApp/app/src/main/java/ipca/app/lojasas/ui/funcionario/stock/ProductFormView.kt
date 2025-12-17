@@ -1,0 +1,285 @@
+package ipca.app.lojasas.ui.funcionario.stock
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
+import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
+import ipca.app.lojasas.ui.theme.GreenSas
+import ipca.app.lojasas.ui.theme.IntroFontFamily
+import java.text.SimpleDateFormat
+import java.util.*
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductFormView(
+    navController: NavController,
+    productId: String? = null,
+    prefillSubCategoria: String? = null,
+    viewModel: ProductFormViewModel = viewModel()
+) {
+    val state by viewModel.uiState
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    val startScan = rememberBarcodeScanner(
+        onScanned = { code -> viewModel.setCodBarras(code) },
+        onError = { /* Lidar com erro se necessário */ }
+    )
+
+    LaunchedEffect(productId, prefillSubCategoria) {
+        viewModel.start(productId, prefillSubCategoria)
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = state.validade?.time ?: System.currentTimeMillis()
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        viewModel.setValidade(Date(millis))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK", color = GreenSas)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancelar", color = Color.Gray)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(StockBackground)
+            .padding(16.dp)
+    ) {
+        if (state.isLoading) {
+            CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Título
+                Text(
+                    text = if (productId == null) "Novo Produto" else "Editar Produto",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontFamily = IntroFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    ),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // 1. Campos Principais (Identificação)
+                StockInput(
+                    label = "Produto (Ex: Arroz)",
+                    value = state.nomeProduto,
+                    onValueChange = { viewModel.setNomeProduto(it) }
+                )
+
+                StockInput(
+                    label = "Tipo / Variedade (Ex: Carolino)",
+                    value = state.subCategoria,
+                    onValueChange = { viewModel.setSubCategoria(it) }
+                )
+
+                StockInput(
+                    label = "Marca",
+                    value = state.marca,
+                    onValueChange = { viewModel.setMarca(it) }
+                )
+
+                // 2. Detalhes de Origem (Campanha e Doador) - NOVOS CAMPOS
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StockInput(
+                        label = "Campanha",
+                        value = state.campanha,
+                        onValueChange = { viewModel.setCampanha(it) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    StockInput(
+                        label = "Origem / Doador",
+                        value = state.doado,
+                        onValueChange = { viewModel.setDoado(it) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // 3. Características Físicas
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StockInput(
+                        label = "Tamanho (Valor)",
+                        value = state.tamanhoValor,
+                        onValueChange = { viewModel.setTamanhoValor(it) },
+                        keyboardType = KeyboardType.Number,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StockInput(
+                        label = "Unidade (Kg, L...)",
+                        value = state.tamanhoUnidade,
+                        onValueChange = { viewModel.setTamanhoUnidade(it) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                // 4. Validade
+                StockDateInput(
+                    label = "Validade",
+                    date = state.validade,
+                    onClick = { showDatePicker = true }
+                )
+
+                // 5. Descrição - NOVO CAMPO
+                StockInput(
+                    label = "Descrição / Notas",
+                    value = state.descProduto,
+                    onValueChange = { viewModel.setDescProduto(it) },
+                    singleLine = false // Permite escrever texto maior
+                )
+
+                // 6. Código de Barras
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StockInput(
+                        label = "Código de Barras",
+                        value = state.codBarras,
+                        onValueChange = { viewModel.setCodBarras(it) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = startScan,
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .background(GreenSas, shape = RoundedCornerShape(8.dp))
+                    ) {
+                        Icon(Icons.Default.PhotoCamera, contentDescription = "Scan", tint = Color.White)
+                    }
+                }
+
+                // Botão de Guardar
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        viewModel.save {
+                            navController.popBackStack()
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GreenSas,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        if (state.isSaving) "A guardar..." else "Guardar Produto",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun StockInput(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    singleLine: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        singleLine = singleLine,
+        maxLines = if (singleLine) 1 else 3, // Limita a descrição a 3 linhas visíveis
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = GreenSas,
+            focusedLabelColor = GreenSas,
+            focusedTextColor = Color.Black,
+            cursorColor = GreenSas,
+            unfocusedBorderColor = Color.Gray,
+            unfocusedLabelColor = Color.Black,
+            unfocusedTextColor = Color.Black
+        )
+    )
+}
+
+@Composable
+fun StockDateInput(
+    label: String,
+    date: Date?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dateText = remember(date) {
+        if (date != null) SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date) else ""
+    }
+
+    Box(modifier = modifier.clickable { onClick() }) {
+        OutlinedTextField(
+            value = dateText,
+            onValueChange = {},
+            label = { Text(label) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(10.dp),
+            readOnly = true,
+            trailingIcon = {
+                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.Gray)
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = GreenSas,
+                focusedLabelColor = GreenSas,
+                focusedTextColor = Color.Black,
+                cursorColor = GreenSas,
+                unfocusedBorderColor = Color.Gray,
+                unfocusedLabelColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            )
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { onClick() }
+        )
+    }
+}

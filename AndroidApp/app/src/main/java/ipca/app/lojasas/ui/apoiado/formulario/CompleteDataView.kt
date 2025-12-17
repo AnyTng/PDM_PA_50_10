@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +47,6 @@ fun CompleteDataView(
 
     // 1. Gestor de Foco para controlar o "Enter"
     val focusManager = LocalFocusManager.current
-
     // Configuração do DatePicker
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
