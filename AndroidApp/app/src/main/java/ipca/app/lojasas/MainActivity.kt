@@ -1,5 +1,6 @@
 package ipca.app.lojasas
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -14,6 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -35,10 +38,15 @@ import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView
 import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView
 import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
+import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView // Importe a nova view
+import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
+import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
+import ipca.app.lojasas.ui.funcionario.stock.ProductView
+import ipca.app.lojasas.ui.funcionario.stock.ProductsView
 import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
-
+import androidx.navigation.navArgument
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,11 +63,18 @@ class MainActivity : ComponentActivity() {
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
+                val subCategoryArg = navBackStackEntry?.arguments?.getString("subCategory")?.let { Uri.decode(it) }
 
                 // 1. CONFIGURAÇÃO DO FOOTER
                 // REMOVIDO: "documentSubmission" desta lista
                 val footerType = when (currentRoute) {
-                    "funcionarioHome", "menu"   -> FooterType.FUNCIONARIO
+                    "funcionarioHome",
+                    "menu",
+                    "stockProducts",
+                    "stockProducts/{subCategory}",
+                    "stockProduct/{productId}",
+                    "stockProductEdit/{productId}",
+                    "stockProductCreate?subCategory={subCategory}"-> FooterType.FUNCIONARIO
                     "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
                     else -> null // "completeData" e "documentSubmission" cairão aqui (sem footer)
                 }
@@ -69,12 +84,33 @@ class MainActivity : ComponentActivity() {
                 val headerConfig = when (currentRoute) {
                     "apoiadoHome" -> HeaderConfig(title = "Home")
                     "funcionarioHome" -> HeaderConfig(title = "Calendário")
+                    "stockProducts" -> HeaderConfig(title = "Stock")
                     "menu" -> HeaderConfig(title = "Menu")
                     "menuApoiado" -> HeaderConfig(title = "Menu")
                     "profileFuncionario" -> HeaderConfig(title = "Perfil Gestor", showBack = true, onBack = { navController.popBackStack() })
                     "profileApoiado" -> HeaderConfig(title = "Meu Perfil", showBack = true, onBack = { navController.popBackStack() })
                     "createProfile" -> HeaderConfig(title = "Criar Perfil", showBack = true, onBack = { navController.popBackStack() })
                     // "completeData" e "documentSubmission" cairão aqui (sem header)
+                    "stockProducts/{subCategory}" -> HeaderConfig(
+                        title = subCategoryArg ?: "Stock",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "stockProduct/{productId}" -> HeaderConfig(
+                        title = "Detalhes",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "stockProductEdit/{productId}" -> HeaderConfig(
+                        title = "Editar Produto",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "stockProductCreate?subCategory={subCategory}" -> HeaderConfig(
+                        title = "Novo Produto",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     else -> null
                 }
 
@@ -124,6 +160,68 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 navController = navController
+                            )
+                        }
+                        composable("documentSubmission") {
+                            DocumentSubmissionView(navController = navController)
+                        }
+                        composable("menuApoiado") {
+                            // Importe o MenuApoiadoView que criamos no passo 1
+                            ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView(navController = navController)
+                        }
+                        // Perfil do Funcionario (Usa a view antiga)
+                        composable("profileFuncionario") {
+                            ProfileView(navController = navController)
+                        }
+
+                        // Perfil do Apoiado (Usa a NOVA view)
+                        composable("profileApoiado") {
+                            ApoiadoProfileView(navController = navController)
+                        }
+
+                        composable("stockProducts") {
+                            ProductsView(navController = navController)
+                        }
+                        composable(
+                            route = "stockProducts/{subCategory}",
+                            arguments = listOf(navArgument("subCategory") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val subCategory = backStackEntry.arguments?.getString("subCategory")?.let { Uri.decode(it) }.orEmpty()
+                            ProductDetailsView(navController = navController, subCategoria = subCategory)
+                        }
+                        composable(
+                            route = "stockProduct/{productId}",
+                            arguments = listOf(navArgument("productId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val productId = backStackEntry.arguments?.getString("productId").orEmpty()
+                            ProductView(navController = navController, productId = productId)
+                        }
+                        composable(
+                            route = "stockProductEdit/{productId}",
+                            arguments = listOf(navArgument("productId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val productId = backStackEntry.arguments?.getString("productId").orEmpty()
+                            ProductFormView(
+                                navController = navController,
+                                productId = productId,
+                                prefillSubCategoria = null
+                            )
+                        }
+                        composable(
+                            route = "stockProductCreate?subCategory={subCategory}",
+                            arguments = listOf(
+                                navArgument("subCategory") {
+                                    type = NavType.StringType
+                                    nullable = true
+                                    defaultValue = ""
+                                }
+                            )
+                        ) { backStackEntry ->
+                            val subCategory = backStackEntry.arguments?.getString("subCategory").orEmpty()
+                            ProductFormView(
+                                navController = navController,
+                                productId = null,
+                                prefillSubCategoria = Uri.decode(subCategory).takeIf { it.isNotBlank() }
                             )
                         }
                     }
