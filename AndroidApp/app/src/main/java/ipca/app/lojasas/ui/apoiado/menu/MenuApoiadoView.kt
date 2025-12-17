@@ -61,7 +61,9 @@ fun MenuApoiadoView(
                 Column {
                     MenuApoiadoRow(title = "Meus Pedidos") { /* Futuro: Navegar para histórico */ }
                     MenuApoiadoDivider()
-                    MenuApoiadoRow(title = "Documentos Entregues") { navController.navigate("documentSubmission") }
+                    MenuApoiadoRow(title = "Entregar Documentos") { navController.navigate("documentSubmission") }
+                    MenuApoiadoDivider()
+                    MenuApoiadoRow(title = "Documentos Entregues") { }
                 }
             }
 

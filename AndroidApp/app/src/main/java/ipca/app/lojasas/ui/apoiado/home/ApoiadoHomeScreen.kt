@@ -58,9 +58,9 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        if (state.estadoConta == "Falta_Documentos" && state.faltaDocumentos) {
+        /*if (state.estadoConta == "Falta_Documentos" && state.faltaDocumentos) {
             navController.navigate("documentSubmission")
-        }
+        }*/
     }
 
     if (state.isLoading) {

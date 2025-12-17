@@ -211,12 +211,12 @@ fun CompleteDataView(
         Spacer(modifier = Modifier.height(20.dp))
 
         // --- BOTÃO SUBMETER ---
-        val buttonText = if (state.apoioEmergencia) "Finalizar Pedido" else "Seguinte: Documentos"
+        val buttonText = "Guardar Dados"
 
         Button(
             onClick = {
                 viewModel.submitData(docId) {
-                    onSuccess() // Chama o callback da Home
+                    onSuccess() // Isto vai acionar o navController.popBackStack() ou similar na MainActivity
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),

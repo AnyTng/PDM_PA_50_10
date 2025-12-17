@@ -61,8 +61,8 @@ class MainActivity : ComponentActivity() {
                 // 1. CONFIGURAÇÃO DO FOOTER
                 // REMOVIDO: "documentSubmission" desta lista
                 val footerType = when (currentRoute) {
-                    "funcionarioHome", "menu", "createProfile", "profileFuncionario", "validateAccounts" -> FooterType.FUNCIONARIO
-                    "apoiadoHome", "menuApoiado", "profileApoiado" -> FooterType.APOIADO
+                    "funcionarioHome", "menu"   -> FooterType.FUNCIONARIO
+                    "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
                     else -> null // "completeData" e "documentSubmission" cairão aqui (sem footer)
                 }
 
