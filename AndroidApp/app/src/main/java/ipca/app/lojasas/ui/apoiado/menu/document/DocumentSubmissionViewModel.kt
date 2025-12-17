@@ -1,6 +1,6 @@
 // Ficheiro: lojasas/ui/apoiado/formulario/document/DocumentSubmissionViewModel.kt
 
-package ipca.app.lojasas.ui.apoiado.formulario.document
+package ipca.app.lojasas.ui.apoiado.menu.document
 
 import android.content.Context
 import android.net.Uri
@@ -11,6 +11,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import com.google.firebase.storage.storage
+import java.util.Date
 import java.util.UUID
 
 // ... (Data Classes DocumentItem, UploadedFile, SubmissionState mantêm-se iguais) ...
@@ -194,7 +195,7 @@ class DocumentSubmissionViewModel : ViewModel() {
                             // Marca todos os ficheiros como submetidos
                             for (doc in batchSnapshot.documents) {
                                 batch.update(doc.reference, "submetido", true)
-                                batch.update(doc.reference, "dataSubmissao", java.util.Date())
+                                batch.update(doc.reference, "dataSubmissao", Date())
                             }
 
                             // Atualiza estado do utilizador para "Analise"

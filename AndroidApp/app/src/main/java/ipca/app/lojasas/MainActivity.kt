@@ -9,13 +9,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,7 +24,7 @@ import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
-import ipca.app.lojasas.ui.apoiado.formulario.document.DocumentSubmissionView
+import ipca.app.lojasas.ui.apoiado.menu.document.DocumentSubmissionView
 import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView // Import necessário
 import ipca.app.lojasas.ui.components.AppHeader
@@ -40,6 +37,7 @@ import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView
 import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
 import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
+import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
 
 
 class MainActivity : ComponentActivity() {
@@ -113,7 +111,7 @@ class MainActivity : ComponentActivity() {
                         composable("profileApoiado") { ApoiadoProfileView(navController = navController) }
                         composable("validateAccounts") { ValidateAccountsView(navController = navController) }
                         composable("accountBlocked") { BlockedAccountScreen(navController = navController) }
-
+                        composable("submittedDocuments") {SubmittedDocumentsView(navController = navController)}
                         // --- NOVA ROTA PARA O FORMULÁRIO DE DADOS ---
                         composable("completeData/{docId}") { backStackEntry ->
                             val docId = backStackEntry.arguments?.getString("docId") ?: ""
