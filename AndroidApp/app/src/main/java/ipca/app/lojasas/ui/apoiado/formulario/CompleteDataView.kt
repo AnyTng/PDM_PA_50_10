@@ -12,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,22 +30,24 @@ import java.util.Calendar
 import java.util.Locale
 import androidx.navigation.NavController
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CompleteDataView(
     docId: String,
     onSuccess: () -> Unit,
     navController: NavController,
-
-    ) {
+) {
     val viewModel: CompleteDataViewModel = viewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-
-    // 1. Gestor de Foco para controlar o "Enter"
     val focusManager = LocalFocusManager.current
+
+    // --- CARREGAR DADOS EXISTENTES ---
+    LaunchedEffect(docId) {
+        viewModel.loadData(docId)
+    }
+
     // Configuração do DatePicker
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
@@ -64,19 +65,22 @@ fun CompleteDataView(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            // 2. imePadding faz o ecrã encolher quando o teclado abre
             .imePadding()
             .padding(16.dp)
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Completar Registo",
+            text = "Completar / Corrigir Dados", // Texto atualizado
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF094E33)
         )
-        Text("Por favor preencha os dados em falta para continuar.", color = Color.Gray)
+        Text("Verifique os seus dados e corrija o necessário.", color = Color.Gray)
+
+        if (state.isLoading) {
+            CircularProgressIndicator(color = Color(0xFF094E33))
+        }
 
         if (state.error != null) {
             Text(state.error!!, color = Color.Red, fontSize = 14.sp)
@@ -88,12 +92,9 @@ fun CompleteDataView(
             onValueChange = { viewModel.onNacionalidadeChange(it) },
             label = { Text("Nacionalidade") },
             modifier = Modifier.fillMaxWidth(),
-            // 3. Configuração para Single Line e Next
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
-            )
+            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
         )
 
         // --- DATA DE NASCIMENTO ---
@@ -141,12 +142,9 @@ fun CompleteDataView(
                         onValueChange = { viewModel.onCursoChange(it) },
                         label = { Text("Curso (ex: LESI)") },
                         modifier = Modifier.fillMaxWidth(),
-                        // Configuração Single Line
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
-                        )
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text("Grau de Ensino:")
@@ -185,28 +183,20 @@ fun CompleteDataView(
                 onValueChange = { viewModel.onValorBolsaChange(it) },
                 label = { Text("Valor da Bolsa (€)") },
                 modifier = Modifier.fillMaxWidth(),
-                // Configuração Numérica e Done
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() }
-                )
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
             )
         }
 
         Divider()
 
-        // --- NECESSIDADES (Multi-select) ---
+        // --- NECESSIDADES ---
         Text("Necessidades (Selecione pelo menos uma):", fontWeight = FontWeight.Bold)
         val options = listOf("Produtos Alimentares", "Produtos de higiene", "Produtos de Limpeza")
         options.forEach { item ->
             Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.toggleNecessidade(item) },
+                Modifier.fillMaxWidth().clickable { viewModel.toggleNecessidade(item) },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Checkbox(
@@ -221,29 +211,21 @@ fun CompleteDataView(
         Spacer(modifier = Modifier.height(20.dp))
 
         // --- BOTÃO SUBMETER ---
+        val buttonText = "Guardar Dados"
+
         Button(
             onClick = {
                 viewModel.submitData(docId) {
-                    // ALTERAÇÃO: Removemos a verificação de apoioEmergencia e a navegação forçada.
-                    // Agora, ao ter sucesso, chamamos apenas onSuccess() para recarregar a Home.
-                    onSuccess()
-
-                    // Se preferir garantir a navegação, pode manter:
-                    // navController.navigate("apoiadoHome") {
-                    //     popUpTo("apoiadoHome") { inclusive = true }
-                    // }
+                    onSuccess() // Isto vai acionar o navController.popBackStack() ou similar na MainActivity
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
+            modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF094E33)),
             enabled = !state.isLoading
         ) {
             if (state.isLoading) CircularProgressIndicator(color = Color.White)
-            else Text("Concluir") // Mudamos de "Seguinte" para "Concluir" pois vai para a Home
+            else Text(buttonText)
         }
-
         Spacer(modifier = Modifier.height(50.dp))
     }
 }

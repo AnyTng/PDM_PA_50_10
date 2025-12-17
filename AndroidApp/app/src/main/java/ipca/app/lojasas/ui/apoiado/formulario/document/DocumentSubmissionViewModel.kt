@@ -1,3 +1,5 @@
+// Ficheiro: lojasas/ui/apoiado/formulario/document/DocumentSubmissionViewModel.kt
+
 package ipca.app.lojasas.ui.apoiado.formulario.document
 
 import android.content.Context
@@ -8,11 +10,10 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.Query
 import com.google.firebase.storage.storage
 import java.util.UUID
 
-// ... (DocumentItem e UploadedFile mantêm-se iguais) ...
+// ... (Data Classes DocumentItem, UploadedFile, SubmissionState mantêm-se iguais) ...
 data class DocumentItem(
     val id: String,
     val title: String,
@@ -27,19 +28,21 @@ data class UploadedFile(
     val fileName: String,
     val storagePath: String,
     val date: Long,
-    val customDescription: String? = null
+    val customDescription: String? = null,
+    val numeroEntrega: Int,
+    val submetido: Boolean
 )
 
-// ... (SubmissionState mantém-se igual) ...
 data class SubmissionState(
     val docTypes: List<DocumentItem> = listOf(
-        DocumentItem("despesas", "Despesas Permanentes", "Habitação, saúde, transportes.", isMandatory = true),
-        DocumentItem("rendimentos", "Rendimentos", "Recibos de vencimento/pensões.", isMandatory = true),
-        DocumentItem("extratos", "Extratos Bancários", "Extratos dos últimos 3 meses.", isMandatory = true),
-        DocumentItem("internacional", "Estatuto Internacional/PALOP", "Apenas se aplicável.", isMandatory = false),
-        DocumentItem("outros", "Outros Documentos", "Outros comprovativos relevantes.", isMandatory = false)
+        DocumentItem("despesas", "Despesas Permanentes", "Recibos de habitação, etc.", true),
+        DocumentItem("rendimentos", "Rendimentos", "Recibos de vencimento/pensões.", true),
+        DocumentItem("extratos", "Extratos Bancários", "Extratos dos últimos 3 meses.", true),
+        DocumentItem("internacional", "Estatuto Internacional/PALOP", "Apenas se aplicável.", false),
+        DocumentItem("outros", "Outros Documentos", "Outros comprovativos relevantes.", false)
     ),
     val uploadedFiles: List<UploadedFile> = emptyList(),
+    val currentDeliveryNumber: Int = 1,
     val isLoading: Boolean = false,
     val error: String? = null,
     val uploadProgress: Boolean = false,
@@ -55,45 +58,63 @@ class DocumentSubmissionViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val storage = Firebase.storage
 
-    // ... (loadSubmissionStatus e listenToUploadedFiles mantêm-se iguais) ...
     fun loadSubmissionStatus() {
         val user = auth.currentUser ?: return
+        uiState.value = uiState.value.copy(isLoading = true)
+
         db.collection("apoiados").whereEqualTo("uid", user.uid).get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     val numMecanografico = documents.documents[0].id
-                    listenToUploadedFiles(numMecanografico)
+                    calculateDeliveryNumber(numMecanografico)
                 }
             }
     }
 
-    private fun listenToUploadedFiles(numMecanografico: String) {
+    // LÓGICA DE ENTREGA: Baseada no nº de negações
+    private fun calculateDeliveryNumber(numMecanografico: String) {
         db.collection("apoiados").document(numMecanografico)
-            .collection("Submissoes").document("Entrega1")
-            .collection("ficheiros")
-            .orderBy("date", Query.Direction.DESCENDING)
+            .collection("JustificacoesNegacao")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val denialCount = snapshot.size()
+                val currentDelivery = denialCount + 1
+
+                uiState.value = uiState.value.copy(currentDeliveryNumber = currentDelivery)
+                listenToCurrentFiles(numMecanografico, currentDelivery)
+            }
+            .addOnFailureListener {
+                uiState.value = uiState.value.copy(currentDeliveryNumber = 1, isLoading = false)
+            }
+    }
+
+    private fun listenToCurrentFiles(numMecanografico: String, deliveryNumber: Int) {
+        db.collection("apoiados").document(numMecanografico)
+            .collection("Submissoes")
+            .whereEqualTo("numeroEntrega", deliveryNumber)
             .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    uiState.value = uiState.value.copy(error = "Erro ao carregar: ${e.message}")
+                if (e != null || snapshot == null) {
+                    uiState.value = uiState.value.copy(isLoading = false)
                     return@addSnapshotListener
                 }
 
-                if (snapshot != null) {
-                    val files = snapshot.documents.mapNotNull { doc ->
-                        try {
-                            UploadedFile(
-                                id = doc.id,
-                                typeId = doc.getString("typeId") ?: "",
-                                typeTitle = doc.getString("typeTitle") ?: "Desconhecido",
-                                fileName = doc.getString("fileName") ?: "Sem nome",
-                                storagePath = doc.getString("storagePath") ?: "",
-                                date = doc.getLong("date") ?: 0L,
-                                customDescription = doc.getString("customDescription")
-                            )
-                        } catch (e: Exception) { null }
-                    }
-                    uiState.value = uiState.value.copy(uploadedFiles = files)
-                }
+                val files = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        UploadedFile(
+                            id = doc.id,
+                            typeId = doc.getString("typeId") ?: "",
+                            typeTitle = doc.getString("typeTitle") ?: "Desconhecido",
+                            fileName = doc.getString("fileName") ?: "Sem nome",
+                            storagePath = doc.getString("storagePath") ?: "",
+                            date = doc.getLong("date") ?: 0L,
+                            customDescription = doc.getString("customDescription"),
+                            numeroEntrega = doc.getLong("numeroEntrega")?.toInt() ?: 1,
+                            submetido = doc.getBoolean("submetido") ?: false
+                        )
+                    } catch (e: Exception) { null }
+                }.sortedByDescending { it.date }
+
+                uiState.value = uiState.value.copy(uploadedFiles = files, isLoading = false)
             }
     }
 
@@ -105,7 +126,6 @@ class DocumentSubmissionViewModel : ViewModel() {
         }
     }
 
-    // ... (uploadDocument e performUpload mantêm-se iguais) ...
     fun uploadDocument(context: Context, uri: Uri, docType: DocumentItem, customDescription: String? = null) {
         val user = auth.currentUser ?: return
         uiState.value = uiState.value.copy(uploadProgress = true, error = null)
@@ -117,15 +137,14 @@ class DocumentSubmissionViewModel : ViewModel() {
                     performUpload(context, uri, docType, numMecanografico, customDescription)
                 }
             }
-            .addOnFailureListener {
-                uiState.value = uiState.value.copy(uploadProgress = false, error = "Erro ao buscar perfil.")
-            }
     }
 
     private fun performUpload(context: Context, uri: Uri, docItem: DocumentItem, numMecanografico: String, customDesc: String?) {
         val originalName = getFileName(context, uri) ?: "doc_${System.currentTimeMillis()}"
         val uniqueName = "${UUID.randomUUID()}_$originalName"
-        val storageRef = storage.reference.child("$numMecanografico/${docItem.id}/$uniqueName")
+        val currentDelivery = uiState.value.currentDeliveryNumber
+
+        val storageRef = storage.reference.child("$numMecanografico/Entrega$currentDelivery/${docItem.id}/$uniqueName")
 
         storageRef.putFile(uri)
             .addOnSuccessListener {
@@ -138,18 +157,16 @@ class DocumentSubmissionViewModel : ViewModel() {
                     "customDescription" to customDesc,
                     "fileName" to originalName,
                     "storagePath" to path,
-                    "date" to System.currentTimeMillis()
+                    "date" to System.currentTimeMillis(),
+                    "numeroEntrega" to currentDelivery,
+                    "submetido" to false // Rascunho até finalizar
                 )
 
                 db.collection("apoiados").document(numMecanografico)
-                    .collection("Submissoes").document("Entrega1")
-                    .collection("ficheiros")
+                    .collection("Submissoes")
                     .add(fileData)
                     .addOnSuccessListener {
                         uiState.value = uiState.value.copy(uploadProgress = false)
-                    }
-                    .addOnFailureListener { e ->
-                        uiState.value = uiState.value.copy(uploadProgress = false, error = "Erro BD: ${e.message}")
                     }
             }
             .addOnFailureListener { e ->
@@ -157,41 +174,40 @@ class DocumentSubmissionViewModel : ViewModel() {
             }
     }
 
-    // --- NOVA FUNÇÃO PARA FINALIZAR A SUBMISSÃO ---
+    // FINALIZAR: Fecha a entrega e notifica o funcionário
     fun finalizeSubmission(onSuccess: () -> Unit) {
         val user = auth.currentUser ?: return
+        val currentDelivery = uiState.value.currentDeliveryNumber
 
-        // Ativa o loading
         uiState.value = uiState.value.copy(isLoading = true)
 
         db.collection("apoiados").whereEqualTo("uid", user.uid).get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     val docId = documents.documents[0].id
+                    val submissoesRef = db.collection("apoiados").document(docId).collection("Submissoes")
 
-                    // Atualiza os campos na BD:
-                    // 1. faltaDocumentos -> false (já não falta nada)
-                    // 2. estadoConta -> "Analise" (pedido explícito)
-                    val updates = hashMapOf<String, Any>(
-                        "faltaDocumentos" to false,
-                        "estadoConta" to "Analise"
-                    )
+                    submissoesRef.whereEqualTo("numeroEntrega", currentDelivery).get()
+                        .addOnSuccessListener { batchSnapshot ->
+                            val batch = db.batch()
 
-                    db.collection("apoiados").document(docId)
-                        .update(updates)
-                        .addOnSuccessListener {
-                            uiState.value = uiState.value.copy(isLoading = false, submissionSuccess = true)
-                            onSuccess()
+                            // Marca todos os ficheiros como submetidos
+                            for (doc in batchSnapshot.documents) {
+                                batch.update(doc.reference, "submetido", true)
+                                batch.update(doc.reference, "dataSubmissao", java.util.Date())
+                            }
+
+                            // Atualiza estado do utilizador para "Analise"
+                            val userRef = db.collection("apoiados").document(docId)
+                            batch.update(userRef, "faltaDocumentos", false)
+                            batch.update(userRef, "estadoConta", "Analise")
+
+                            batch.commit().addOnSuccessListener {
+                                uiState.value = uiState.value.copy(isLoading = false, submissionSuccess = true)
+                                onSuccess()
+                            }
                         }
-                        .addOnFailureListener { e ->
-                            uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao finalizar: ${e.message}")
-                        }
-                } else {
-                    uiState.value = uiState.value.copy(isLoading = false, error = "Utilizador não encontrado")
                 }
-            }
-            .addOnFailureListener {
-                uiState.value = uiState.value.copy(isLoading = false, error = "Erro de rede: ${it.message}")
             }
     }
 

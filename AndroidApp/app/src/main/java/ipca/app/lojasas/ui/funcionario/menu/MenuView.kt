@@ -75,7 +75,7 @@ fun MenuView(
                     MenuDivider()
                     MenuRow(title = "Pedidos Urgentes") { /* Navegar */ }
                     MenuDivider()
-                    MenuRow(title = "Validar Contas") { /* Navegar */ }
+                    MenuRow(title = "Validar Contas") { navController.navigate("validateAccounts") }
                     MenuDivider()
                     MenuRow(title = "Campanhas") { /* Navegar */ }
                 }

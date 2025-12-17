@@ -31,19 +31,23 @@ import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.formulario.document.DocumentSubmissionView
+import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
+import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView // Import necessário
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
 import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
-import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView // Adicionar import
-import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView // <--- Import
+import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView
+import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView
 import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
 import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView // Importe a nova view
 import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
 import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
 import ipca.app.lojasas.ui.funcionario.stock.ProductView
 import ipca.app.lojasas.ui.funcionario.stock.ProductsView
+import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
+import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
 
 
 class MainActivity : ComponentActivity() {
@@ -63,8 +67,8 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
                 val subCategoryArg = navBackStackEntry?.arguments?.getString("subCategory")?.let { Uri.decode(it) }
 
-
                 // 1. CONFIGURAÇÃO DO FOOTER
+                // REMOVIDO: "documentSubmission" desta lista
                 val footerType = when (currentRoute) {
                     "funcionarioHome",
                     "menu",
@@ -76,40 +80,23 @@ class MainActivity : ComponentActivity() {
                     "stockProductEdit/{productId}",
                     "stockProductCreate?subCategory={subCategory}" -> FooterType.FUNCIONARIO
                     "apoiadoHome", "menuApoiado", "profileApoiado", "documentSubmission" -> FooterType.APOIADO
-                    else -> null
+                    "funcionarioHome", "menu"   -> FooterType.FUNCIONARIO
+                    "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
+                    else -> null // "completeData" e "documentSubmission" cairão aqui (sem footer)
                 }
 
                 // 2. CONFIGURAÇÃO DO HEADER
+                // REMOVIDO: "documentSubmission" desta lista
                 val headerConfig = when (currentRoute) {
                     "apoiadoHome" -> HeaderConfig(title = "Home")
                     "funcionarioHome" -> HeaderConfig(title = "Calendário")
                     "stockProducts" -> HeaderConfig(title = "Stock")
                     "menu" -> HeaderConfig(title = "Menu")
                     "menuApoiado" -> HeaderConfig(title = "Menu")
-
-                    // Rota Funcionario
-                    "profileFuncionario" -> HeaderConfig(
-                        title = "Perfil Gestor",
-                        showBack = true,
-                        onBack = { navController.popBackStack() }
-                    )
-                    // Rota Apoiado
-                    "profileApoiado" -> HeaderConfig(
-                        title = "Meu Perfil",
-                        showBack = true,
-                        onBack = { navController.popBackStack() }
-                    )
-
-                    "createProfile" -> HeaderConfig(
-                        title = "Criar Perfil",
-                        showBack = true,
-                        onBack = { navController.popBackStack() }
-                    )
-                    "documentSubmission" -> HeaderConfig(
-                        title = "Entrega Docs",
-                        showBack = true,
-                        onBack = { navController.popBackStack() }
-                    )
+                    "profileFuncionario" -> HeaderConfig(title = "Perfil Gestor", showBack = true, onBack = { navController.popBackStack() })
+                    "profileApoiado" -> HeaderConfig(title = "Meu Perfil", showBack = true, onBack = { navController.popBackStack() })
+                    "createProfile" -> HeaderConfig(title = "Criar Perfil", showBack = true, onBack = { navController.popBackStack() })
+                    // "completeData" e "documentSubmission" cairão aqui (sem header)
                     "stockProducts/{subCategory}" -> HeaderConfig(
                         title = subCategoryArg ?: "Stock",
                         showBack = true,
@@ -139,11 +126,7 @@ class MainActivity : ComponentActivity() {
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     topBar = {
                         headerConfig?.let {
-                            AppHeader(
-                                title = it.title,
-                                showBack = it.showBack,
-                                onBack = it.onBack
-                            )
+                            AppHeader(title = it.title, showBack = it.showBack, onBack = it.onBack)
                         }
                     },
                     bottomBar = {
@@ -158,32 +141,32 @@ class MainActivity : ComponentActivity() {
                         startDestination = "login",
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable("login") {
-                            LoginView(navController = navController)
-                        }
+                        composable("login") { LoginView(navController = navController) }
+                        composable("apoiadoHome") { ApoiadoHomeScreen(navController = navController) }
+                        composable("funcionarioHome") { CalendarView(navController = navController) }
+                        composable("menu") { MenuView(navController = navController) }
+                        composable("createProfile") { CreateProfileView(navController = navController) }
+                        composable("createProfileApoiado") { CreateProfileApoiadoView(navController = navController) }
+                        composable("documentSubmission") { DocumentSubmissionView(navController = navController) }
+                        composable("menuApoiado") { ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView(navController = navController) }
+                        composable("profileFuncionario") { ProfileView(navController = navController) }
+                        composable("profileApoiado") { ApoiadoProfileView(navController = navController) }
+                        composable("validateAccounts") { ValidateAccountsView(navController = navController) }
+                        composable("accountBlocked") { BlockedAccountScreen(navController = navController) }
 
-                        // Se o ApoiadoHomeScreen também precisar de navegação, adiciona lá também
-                        composable("apoiadoHome") {
-                            ApoiadoHomeScreen(navController = navController)
-                        }
-
-                        // CORREÇÃO AQUI: Passar o navController
-                        composable("funcionarioHome") {
-                            CalendarView(navController = navController)
-                        }
-
-                        composable("menu") {
-                            MenuView(navController = navController)
-                        }
-
-                        composable("createProfile") {
-                            CreateProfileView(navController = navController)
-                        }
-                        /*composable("profile") {
-                            ProfileView(navController = navController)
-                        }*/
-                        composable("createProfileApoiado") {
-                            CreateProfileApoiadoView(navController = navController)
+                        // --- NOVA ROTA PARA O FORMULÁRIO DE DADOS ---
+                        composable("completeData/{docId}") { backStackEntry ->
+                            val docId = backStackEntry.arguments?.getString("docId") ?: ""
+                            CompleteDataView(
+                                docId = docId,
+                                onSuccess = {
+                                    // Ao terminar, volta para a Home
+                                    navController.navigate("apoiadoHome") {
+                                        popUpTo("completeData/{docId}") { inclusive = true }
+                                    }
+                                },
+                                navController = navController
+                            )
                         }
                         composable("documentSubmission") {
                             DocumentSubmissionView(navController = navController)
@@ -251,7 +234,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Verifica se o utilizador já está logado
+            // ... (resto do código igual) ...
             LaunchedEffect(Unit) {
                 val user = Firebase.auth.currentUser
                 val email = user?.email
@@ -263,41 +246,17 @@ class MainActivity : ComponentActivity() {
                                 popUpTo("login") { inclusive = true }
                             }
                         },
-                        onNotFound = {
-                            navController.navigate("login") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        onError = {
-                            navController.navigate("login") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        }
+                        onNotFound = { navController.navigate("login") { popUpTo("login") { inclusive = true } } },
+                        onError = { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
                     )
                 }
             }
         }
     }
 }
-
+// ... (classes auxiliares HeaderConfig e Greeting mantêm-se)
 private data class HeaderConfig(
     val title: String,
     val showBack: Boolean = false,
     val onBack: (() -> Unit)? = null
 )
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name! (Login efetuado)",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LojaSocialIPCATheme {
-        Greeting("Android")
-    }
-}
