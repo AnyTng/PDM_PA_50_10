@@ -1,0 +1,218 @@
+package ipca.app.lojasas.ui.funcionario.menu.validate
+
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.ViewModel
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.firestore
+import java.util.Calendar
+import java.util.Date
+
+// ... (Mantenha as data classes ValidateState, ApoiadoSummary, ApoiadoDetails, DocumentSummary iguais) ...
+data class ValidateState(
+    val pendingAccounts: List<ApoiadoSummary> = emptyList(),
+    val selectedApoiadoDetails: ApoiadoDetails? = null,
+    val apoaidoDocuments: List<DocumentSummary> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+data class ApoiadoSummary(
+    val id: String,
+    val nome: String,
+    val dataPedido: Date?
+)
+
+data class ApoiadoDetails(
+    val id: String,
+    val nome: String,
+    val email: String,
+    val contacto: String,
+    val nif: String,
+    val morada: String,
+    val tipo: String,
+    val dadosIncompletos: Boolean
+)
+
+data class DocumentSummary(
+    val typeTitle: String,
+    val fileName: String,
+    val url: String,
+    val date: Date?,
+    val entrega: Int
+)
+
+class ValidateAccountsViewModel : ViewModel() {
+
+    var uiState = mutableStateOf(ValidateState())
+        private set
+
+    private val db = Firebase.firestore
+    private val auth = Firebase.auth
+
+    init {
+        loadPendingAccounts()
+    }
+
+    fun loadPendingAccounts() {
+        uiState.value = uiState.value.copy(isLoading = true)
+
+        db.collection("apoiados")
+            .whereEqualTo("estadoConta", "Analise")
+            .get()
+            .addOnSuccessListener { result ->
+                val list = result.documents.map { doc ->
+                    ApoiadoSummary(
+                        id = doc.id,
+                        nome = doc.getString("nome") ?: "Sem Nome",
+                        dataPedido = null
+                    )
+                }
+                uiState.value = uiState.value.copy(pendingAccounts = list, isLoading = false)
+            }
+            .addOnFailureListener {
+                uiState.value = uiState.value.copy(isLoading = false, error = it.message)
+            }
+    }
+
+    // --- CORREÇÃO AQUI ---
+    fun selectApoiado(apoiadoId: String) {
+        uiState.value = uiState.value.copy(isLoading = true)
+
+        db.collection("apoiados").document(apoiadoId).get()
+            .addOnSuccessListener { doc ->
+                val details = ApoiadoDetails(
+                    id = doc.id,
+                    nome = doc.getString("nome") ?: "",
+                    email = doc.getString("email") ?: doc.getString("emailApoiado") ?: "",
+                    contacto = doc.getString("contacto") ?: "",
+                    nif = doc.getString("documentNumber") ?: "",
+                    morada = "${doc.getString("morada")}, ${doc.getString("codPostal")}",
+                    tipo = doc.getString("relacaoIPCA") ?: "N/A",
+                    dadosIncompletos = doc.getBoolean("dadosIncompletos") ?: false
+                )
+
+                // CORREÇÃO: Removemos o .orderBy("date") da query para evitar erro de índice
+                db.collection("apoiados").document(apoiadoId)
+                    .collection("Submissoes")
+                    .orderBy("numeroEntrega", Query.Direction.DESCENDING)
+                    .get()
+                    .addOnSuccessListener { docsSnapshot ->
+                        val docsList = docsSnapshot.documents.map { fileDoc ->
+                            DocumentSummary(
+                                typeTitle = fileDoc.getString("typeTitle") ?: "Doc",
+                                fileName = fileDoc.getString("fileName") ?: "",
+                                url = fileDoc.getString("storagePath") ?: "",
+                                date = fileDoc.getLong("date")?.let { Date(it) },
+                                entrega = fileDoc.getLong("numeroEntrega")?.toInt() ?: 1
+                            )
+                        }
+                            // CORREÇÃO: Ordenamos a lista em memória (Kotlin)
+                            .sortedWith(compareByDescending<DocumentSummary> { it.entrega }.thenByDescending { it.date })
+
+                        uiState.value = uiState.value.copy(
+                            selectedApoiadoDetails = details,
+                            apoaidoDocuments = docsList,
+                            isLoading = false
+                        )
+                    }
+                    .addOnFailureListener { // Adicionado tratamento de erro
+                        uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar docs: ${it.message}")
+                    }
+            }
+            .addOnFailureListener { // Adicionado tratamento de erro
+                uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar perfil: ${it.message}")
+            }
+    }
+
+    fun clearSelection() {
+        uiState.value = uiState.value.copy(selectedApoiadoDetails = null, apoaidoDocuments = emptyList())
+    }
+
+    // ... (Mantenha as funções approveAccount, denyAccount, blockAccount, updateApoiadoStatus, etc. iguais) ...
+
+    fun approveAccount(apoiadoId: String, onSuccess: () -> Unit) {
+        getCurrentFuncionarioId { funcionarioId ->
+            val nextAugust = getNextAugust31()
+            val updates = hashMapOf<String, Any>(
+                "estadoConta" to "Aprovado",
+                "validadoPor" to funcionarioId,
+                "dataValidacao" to Date(),
+                "validadeConta" to nextAugust
+            )
+            updateApoiadoStatus(apoiadoId, updates, onSuccess)
+        }
+    }
+
+    fun denyAccount(apoiadoId: String, reason: String, onSuccess: () -> Unit) {
+        getCurrentFuncionarioId { funcionarioId ->
+            val denialData = hashMapOf(
+                "motivo" to reason,
+                "negadoPor" to funcionarioId,
+                "data" to Date()
+            )
+            db.collection("apoiados").document(apoiadoId)
+                .collection("JustificacoesNegacao")
+                .add(denialData)
+                .addOnSuccessListener {
+                    val updates = hashMapOf<String, Any>(
+                        "estadoConta" to "Negado",
+                        "negadoPor" to funcionarioId
+                    )
+                    updateApoiadoStatus(apoiadoId, updates, onSuccess)
+                }
+        }
+    }
+
+    fun blockAccount(apoiadoId: String, onSuccess: () -> Unit) {
+        getCurrentFuncionarioId { funcionarioId ->
+            val updates = hashMapOf<String, Any>(
+                "estadoConta" to "Bloqueado",
+                "bloqueadoPor" to funcionarioId
+            )
+            updateApoiadoStatus(apoiadoId, updates, onSuccess)
+        }
+    }
+
+    private fun updateApoiadoStatus(id: String, updates: Map<String, Any>, onSuccess: () -> Unit) {
+        uiState.value = uiState.value.copy(isLoading = true)
+        db.collection("apoiados").document(id).update(updates)
+            .addOnSuccessListener {
+                loadPendingAccounts()
+                uiState.value = uiState.value.copy(selectedApoiadoDetails = null)
+                onSuccess()
+            }
+            .addOnFailureListener {
+                uiState.value = uiState.value.copy(isLoading = false, error = "Erro: ${it.message}")
+            }
+    }
+
+    private fun getCurrentFuncionarioId(onResult: (String) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("funcionarios").whereEqualTo("uid", uid).get()
+            .addOnSuccessListener {
+                if (!it.isEmpty) onResult(it.documents[0].id)
+                else onResult("unknown_staff")
+            }
+    }
+
+    private fun getNextAugust31(): Date {
+        val calendar = Calendar.getInstance()
+        val currentYear = calendar.get(Calendar.YEAR)
+        val thisYearAug = Calendar.getInstance().apply {
+            set(currentYear, Calendar.AUGUST, 31, 23, 59, 59)
+        }
+        return if (calendar.time.after(thisYearAug.time)) {
+            thisYearAug.apply { add(Calendar.YEAR, 1) }.time
+        } else {
+            thisYearAug.time
+        }
+    }
+
+    fun getFileUri(path: String, onResult: (android.net.Uri?) -> Unit) {
+        com.google.firebase.storage.FirebaseStorage.getInstance().reference.child(path).downloadUrl
+            .addOnSuccessListener { onResult(it) }
+            .addOnFailureListener { onResult(null) }
+    }
+}
