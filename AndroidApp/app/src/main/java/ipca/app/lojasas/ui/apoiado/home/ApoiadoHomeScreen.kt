@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,7 +24,6 @@ import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
-
 
 // Cores...
 val TextGreen = Color(0xFF094E33)
@@ -45,11 +45,8 @@ fun ApoiadoHomeScreen(
 
     // 2. Navegação automática baseada no estado da conta
     LaunchedEffect(state.estadoConta, state.faltaDocumentos, state.dadosIncompletos, state.docId) {
-
-        // --- ALTERAÇÃO AQUI: Se dados incompletos, NAVEGAR para a nova rota ---
         if (state.dadosIncompletos && state.docId.isNotEmpty()) {
             navController.navigate("completeData/${state.docId}")
-            // Não fazemos popUpTo aqui para permitir que o utilizador "veja" a transição ou por lógica de navegação
         }
 
         if (state.estadoConta == "Bloqueado") {
@@ -57,10 +54,6 @@ fun ApoiadoHomeScreen(
                 popUpTo("apoiadoHome") { inclusive = true }
             }
         }
-
-        /*if (state.estadoConta == "Falta_Documentos" && state.faltaDocumentos) {
-            navController.navigate("documentSubmission")
-        }*/
     }
 
     if (state.isLoading) {
@@ -79,9 +72,6 @@ fun ApoiadoHomeScreen(
         return
     }
 
-    // --- REMOVIDO O BLOCO QUE CHAMAVA CompleteDataView AQUI ---
-    // (A navegação acima trata disso agora)
-
     // 4. DASHBOARD NORMAL
     Scaffold(contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
         Column(
@@ -97,7 +87,6 @@ fun ApoiadoHomeScreen(
             HeaderSection(state.nome, state.estadoConta, state.faltaDocumentos, navController)
             SectionDivider(text = "Estado da Conta")
 
-            // ... (Resto do código do when(state.estadoConta) mantém-se igual) ...
             when (state.estadoConta) {
                 "Aprovado" -> {
                     ActionCard(
@@ -108,14 +97,15 @@ fun ApoiadoHomeScreen(
                         onClick = { }
                     )
                 }
+                "Suspenso" -> {
+                    // --- NOVO ESTADO: PAUSADO ---
+                    PausedCard()
+                }
                 "Negado" -> {
                     DeniedCard(
                         reason = state.motivoNegacao ?: "Sem motivo especificado.",
                         onTryAgain = {
-                            viewModel.resetToTryAgain {
-                                // O reset define 'dadosIncompletos=true',
-                                // O LaunchedEffect em cima vai detetar isso e navegar para o formulário.
-                            }
+                            viewModel.resetToTryAgain { }
                         }
                     )
                 }
@@ -163,12 +153,41 @@ fun ApoiadoHomeScreen(
         }
     }
 }
-// ... (Resto das funções auxiliares BlockedAccountScreen, DeniedCard, etc mantêm-se iguais)
 
 // ... COMPONENTES AUXILIARES ...
 
 @Composable
+fun PausedCard() {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = WarningOrange),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, contentDescription = null, tint = Color.White)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Apoio Pausado",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Para voltar com as cestas entre em contacto com o SAS:\nsas@ipca.pt",
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
 fun BlockedAccountScreen(navController: NavController) {
+    // ... (Mantém-se igual ao teu código original)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -206,6 +225,7 @@ fun BlockedAccountScreen(navController: NavController) {
 
 @Composable
 fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
+    // ... (Mantém-se igual ao teu código original)
     Card(
         colors = CardDefaults.cardColors(containerColor = RedError),
         shape = RoundedCornerShape(12.dp),
@@ -239,15 +259,21 @@ fun HeaderSection(nome: String, estado: String, faltaDocumentos: Boolean, navCon
             Text(text = "Olá, $nome", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = TextGreen)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "Estado: ", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                // --- ATUALIZADO PARA LIGAR "Suspenso" -> Laranja ---
                 val statusColor = when(estado) {
                     "Aprovado" -> TextGreen
                     "Negado", "Bloqueado" -> RedError
+                    "Suspenso" -> WarningOrange // Adicionado
                     "Analise", "Em_Analise" -> CardDarkBlue
                     else -> if (faltaDocumentos) WarningOrange else Color.Gray
                 }
+
+                // --- ATUALIZADO PARA TEXTO "Apoio Pausado" ---
                 val statusText = when(estado) {
                     "Aprovado" -> "Regularizado"
                     "Negado" -> "Não Aprovado"
+                    "Suspenso" -> "Apoio Pausado" // Adicionado
                     "Analise", "Em_Analise" -> "Em Análise"
                     else -> if (faltaDocumentos) "Faltam Documentos" else "Pendente"
                 }
@@ -268,6 +294,7 @@ fun HeaderSection(nome: String, estado: String, faltaDocumentos: Boolean, navCon
 
 @Composable
 fun SectionDivider(text: String) {
+    // ... (Mantém-se igual)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         HorizontalDivider(modifier = Modifier.weight(1f), color = Color.Gray)
         Text(text = text, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(horizontal = 8.dp))
@@ -277,6 +304,7 @@ fun SectionDivider(text: String) {
 
 @Composable
 fun ActionCard(title: String, subtitle: String, buttonText: String, backgroundColor: Color, onClick: () -> Unit) {
+    // ... (Mantém-se igual)
     Card(
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         shape = RoundedCornerShape(12.dp),
