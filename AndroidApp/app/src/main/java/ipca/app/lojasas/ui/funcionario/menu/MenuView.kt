@@ -49,7 +49,7 @@ fun MenuView(
                 Column {
                     MenuRow(title = "Gerir o meu Perfil") { navController.navigate("profileFuncionario") }
                     MenuDivider()
-                    MenuRow(title = "Criar novo Perfil") { navController.navigate("createProfile")}
+                    MenuRow(title = "Criar novo Colaborador") { navController.navigate("createProfile")}
                     MenuDivider()
                 }
             }

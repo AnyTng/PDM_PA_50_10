@@ -150,8 +150,8 @@ class CreateApoiadoViewModel : ViewModel() {
             "necessidade" to s.necessidades,
 
             // Estados da Conta
-            "estadoConta" to "Analise",
-            "faltaDocumentos" to !s.apoioEmergencia,
+            "estadoConta" to "Aprovado",
+            "faltaDocumentos" to false,
             "dadosIncompletos" to false,
             "mudarPass" to true
         )

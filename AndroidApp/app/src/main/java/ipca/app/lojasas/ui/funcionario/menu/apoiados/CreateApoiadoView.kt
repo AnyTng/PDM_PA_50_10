@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -44,6 +45,10 @@ fun CreateApoiadoView(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
+    // --- ESTADO DO POP-UP DE AVISO ---
+    // Começa a true para aparecer logo ao abrir
+    var showInfoDialog by remember { mutableStateOf(true) }
+
     // Configuração DatePicker
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
@@ -60,12 +65,38 @@ fun CreateApoiadoView(
     // Efeitos de Sucesso/Erro
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
-            Toast.makeText(context, "Apoiado criado com sucesso!", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Apoiado criado com sucesso (Estado: Aprovado)!", Toast.LENGTH_LONG).show()
             navController.popBackStack()
         }
     }
     LaunchedEffect(state.error) {
         state.error?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
+    }
+
+    // --- DIALOG DE AVISO ---
+    if (showInfoDialog) {
+        AlertDialog(
+            onDismissRequest = { showInfoDialog = false },
+            icon = { Icon(Icons.Default.Info, contentDescription = null, tint = GreenSas) },
+            title = {
+                Text(text = "Atenção", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(
+                    text = "Apenas registe apoiados que foram aprovados com a documentação em papel!\n\nApós a submissão, o estado do utilizador será automaticamente definido como 'Aprovado'.",
+                    fontSize = 16.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showInfoDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                ) {
+                    Text("Entendido")
+                }
+            },
+            containerColor = Color.White
+        )
     }
 
     Scaffold(
@@ -135,10 +166,9 @@ fun CreateApoiadoView(
 
                     CustomTextField(value = state.nacionalidade, onValueChange = { viewModel.onNacionalidadeChange(it) }, label = "Nacionalidade")
 
-                    // --- DATA DE NASCIMENTO (CORRIGIDO) ---
+                    // --- DATA DE NASCIMENTO ---
                     val dateText = state.dataNascimento?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it) } ?: ""
 
-                    // Envolvemos tudo num Box para o matchParentSize funcionar
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
                             value = dateText,
@@ -147,7 +177,7 @@ fun CreateApoiadoView(
                             readOnly = true,
                             trailingIcon = { Icon(Icons.Default.CalendarToday, null) },
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = false, // Desativado visualmente
+                            enabled = false,
                             colors = OutlinedTextFieldDefaults.colors(
                                 disabledTextColor = Color.Black,
                                 disabledBorderColor = Color.Gray,
@@ -155,7 +185,6 @@ fun CreateApoiadoView(
                                 disabledTrailingIconColor = Color.Gray
                             )
                         )
-                        // Agora este Box está dentro de outro Box, logo matchParentSize funciona
                         Box(
                             Modifier
                                 .matchParentSize()
@@ -214,7 +243,7 @@ fun CreateApoiadoView(
                         Checkbox(checked = state.apoioEmergencia, onCheckedChange = { viewModel.onApoioEmergenciaChange(it) }, colors = CheckboxDefaults.colors(checkedColor = GreenSas))
                         Text("Apoio de Emergência Social?", fontWeight = FontWeight.Bold)
                     }
-                    Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = Color.Gray)
+                    //Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = Color.Gray)
 
                     Divider(Modifier.padding(vertical = 8.dp))
                     Text("Tipos de Cabaz:", fontWeight = FontWeight.Bold)
@@ -240,7 +269,7 @@ fun CreateApoiadoView(
                     enabled = !state.isLoading
                 ) {
                     if (state.isLoading) CircularProgressIndicator(color = Color.White)
-                    else Text("Criar Conta Apoiado", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    else Text("Criar Conta Aprovada", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(Modifier.height(30.dp))
@@ -250,7 +279,7 @@ fun CreateApoiadoView(
 }
 
 // --- Componentes Auxiliares Locais ---
-
+// (SectionCard e CustomTextField mantêm-se iguais)
 @Composable
 fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     Card(
