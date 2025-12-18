@@ -73,7 +73,7 @@ fun ProductDetailsView(
 
                 state.groups.isEmpty() -> {
                     Text(
-                        text = "Sem produtos nesta subcategoria.",
+                        text = "Sem produtos nesta categoria.",
                         modifier = Modifier.padding(top = 16.dp),
                         color = Color(0xFF333333)
                     )

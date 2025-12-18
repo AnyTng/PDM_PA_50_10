@@ -13,7 +13,11 @@ data class ProductFormUiState(
     val isSaving: Boolean = false,
     val error: String? = null,
     val productId: String? = null,
+
+    val availableCategories: List<String> = emptyList(), // Lista para o dropdown
+
     val nomeProduto: String = "",
+    val categoria: String = "", // Campo selecionado
     val subCategoria: String = "",
     val marca: String = "",
     val campanha: String = "",
@@ -40,8 +44,11 @@ class ProductFormViewModel(
         if (initializedKey == key) return
         initializedKey = key
 
+        // Carregar categorias ao iniciar
+        loadCategories()
+
         if (productId.isNullOrBlank()) {
-            _uiState.value = ProductFormUiState(
+            _uiState.value = _uiState.value.copy(
                 subCategoria = prefillSubCategoria?.trim().orEmpty()
             )
             return
@@ -67,6 +74,7 @@ class ProductFormViewModel(
                     error = null,
                     productId = product.id,
                     nomeProduto = product.nomeProduto,
+                    categoria = product.categoria.orEmpty(), // Preencher categoria
                     subCategoria = product.subCategoria,
                     marca = product.marca.orEmpty(),
                     campanha = product.campanha.orEmpty(),
@@ -88,7 +96,20 @@ class ProductFormViewModel(
         )
     }
 
+    private fun loadCategories() {
+        repository.getUniqueCategories(
+            onSuccess = { categories ->
+                _uiState.value = _uiState.value.copy(availableCategories = categories)
+            },
+            onError = {
+                // Erro silencioso ou log, para não bloquear o utilizador
+                println("Erro ao carregar categorias: ${it.message}")
+            }
+        )
+    }
+
     fun setNomeProduto(value: String) = update { copy(nomeProduto = value) }
+    fun setCategoria(value: String) = update { copy(categoria = value) } // Setter Categoria
     fun setSubCategoria(value: String) = update { copy(subCategoria = value) }
     fun setMarca(value: String) = update { copy(marca = value) }
     fun setCampanha(value: String) = update { copy(campanha = value) }
@@ -106,6 +127,8 @@ class ProductFormViewModel(
 
         val nomeProduto = current.nomeProduto.trim()
         val subCategoria = current.subCategoria.trim()
+
+        // Validação básica
         if (nomeProduto.isBlank() || subCategoria.isBlank()) {
             _uiState.value = current.copy(error = "Preenche pelo menos Nome e Subcategoria.")
             return
@@ -116,6 +139,7 @@ class ProductFormViewModel(
 
         val upsert = ProductUpsert(
             nomeProduto = nomeProduto,
+            categoria = current.categoria.normalizedOrNull(), // Incluir Categoria
             subCategoria = subCategoria,
             marca = current.marca.normalizedOrNull(),
             campanha = current.campanha.normalizedOrNull(),
@@ -169,4 +193,3 @@ class ProductFormViewModel(
 }
 
 private fun String.normalizedOrNull(): String? = trim().takeIf { it.isNotBlank() }
-

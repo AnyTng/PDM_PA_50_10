@@ -101,6 +101,15 @@ fun ProductFormView(
                 )
 
                 // 1. Campos Principais (Identificação)
+
+                // NOVO: Autocomplete para Categoria
+                StockAutocomplete(
+                    label = "Categoria (Ex: Alimentar)",
+                    value = state.categoria,
+                    suggestions = state.availableCategories,
+                    onValueChange = { viewModel.setCategoria(it) }
+                )
+
                 StockInput(
                     label = "Produto (Ex: Arroz)",
                     value = state.nomeProduto,
@@ -119,7 +128,7 @@ fun ProductFormView(
                     onValueChange = { viewModel.setMarca(it) }
                 )
 
-                // 2. Detalhes de Origem (Campanha e Doador) - NOVOS CAMPOS
+                // 2. Detalhes de Origem (Campanha e Doador)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     StockInput(
                         label = "Campanha",
@@ -159,12 +168,12 @@ fun ProductFormView(
                     onClick = { showDatePicker = true }
                 )
 
-                // 5. Descrição - NOVO CAMPO
+                // 5. Descrição
                 StockInput(
                     label = "Descrição / Notas",
                     value = state.descProduto,
                     onValueChange = { viewModel.setDescProduto(it) },
-                    singleLine = false // Permite escrever texto maior
+                    singleLine = false
                 )
 
                 // 6. Código de Barras
@@ -214,6 +223,77 @@ fun ProductFormView(
     }
 }
 
+// --- COMPONENTE AUTOCOMPLETE ---
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StockAutocomplete(
+    label: String,
+    value: String,
+    suggestions: List<String>,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Filtra sugestões (ignora case)
+    val filteredSuggestions = suggestions.filter {
+        it.contains(value, ignoreCase = true)
+    }
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {
+                    onValueChange(it)
+                    expanded = true
+                },
+                label = { Text(label) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(), // Ancorar menu
+                shape = RoundedCornerShape(10.dp),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GreenSas,
+                    focusedLabelColor = GreenSas,
+                    focusedTextColor = Color.Black,
+                    cursorColor = GreenSas,
+                    unfocusedBorderColor = Color.Gray,
+                    unfocusedLabelColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                ),
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            )
+
+            // Só mostrar menu se houver sugestões e o utilizador estiver a editar
+            if (filteredSuggestions.isNotEmpty() && expanded) {
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(Color.White)
+                ) {
+                    filteredSuggestions.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption, color = Color.Black) },
+                            onClick = {
+                                onValueChange(selectionOption)
+                                expanded = false
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun StockInput(
     label: String,
@@ -230,7 +310,7 @@ fun StockInput(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
         singleLine = singleLine,
-        maxLines = if (singleLine) 1 else 3, // Limita a descrição a 3 linhas visíveis
+        maxLines = if (singleLine) 1 else 3,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = GreenSas,

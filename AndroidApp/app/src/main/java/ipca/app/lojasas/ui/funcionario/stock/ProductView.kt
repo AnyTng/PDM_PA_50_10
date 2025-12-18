@@ -102,81 +102,95 @@ fun ProductView(
 
                             Divider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                            // 2. Informações Principais (Linha 1)
+                            // 2. Linha 1: Categoria e Tipo
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 DetailItem(
                                     icon = Icons.Default.Category,
+                                    label = "Categoria",
+                                    value = prod.categoria ?: "-",
+                                    modifier = Modifier.weight(1f)
+                                )
+                                DetailItem(
+                                    icon = Icons.Default.Style, // Mudei para Style para diferenciar da Categoria
                                     label = "Tipo",
                                     value = prod.subCategoria,
                                     modifier = Modifier.weight(1f)
                                 )
+                            }
+
+                            // 3. Linha 2: Marca e Tamanho
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 DetailItem(
                                     icon = Icons.Default.Label,
                                     label = "Marca",
                                     value = prod.marca ?: "-",
                                     modifier = Modifier.weight(1f)
                                 )
-                            }
-
-                            // 3. Informações Principais (Linha 2)
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
                                 DetailItem(
                                     icon = Icons.Default.Scale,
                                     label = "Tamanho",
                                     value = "${prod.tamanhoValor ?: ""} ${prod.tamanhoUnidade ?: ""}",
                                     modifier = Modifier.weight(1f)
                                 )
+                            }
+
+                            // 4. Linha 3: Validade e Campanha
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 DetailItem(
                                     icon = Icons.Default.CalendarToday,
                                     label = "Validade",
                                     value = formatDate(prod.validade),
                                     modifier = Modifier.weight(1f)
                                 )
+                                DetailItem(
+                                    icon = Icons.Default.Star,
+                                    label = "Campanha",
+                                    value = prod.campanha ?: "-",
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
 
-                            // 4. Informações de Origem (Linha 3 - NOVA)
+                            // 5. Linha 4: Origem
+                            // Lógica para mostrar Parceiro ou Doador
+                            val origemTexto = when {
+                                !prod.parceiroExternoNome.isNullOrBlank() -> prod.parceiroExternoNome
+                                !prod.doado.isNullOrBlank() -> prod.doado
+                                else -> "-"
+                            }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 DetailItem(
-                                    icon = Icons.Default.Star, // Ícone para Campanha
-                                    label = "Campanha",
-                                    value = prod.campanha ?: "-",
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                // Lógica para mostrar Parceiro ou Doador
-                                val origemTexto = when {
-                                    !prod.parceiroExternoNome.isNullOrBlank() -> prod.parceiroExternoNome
-                                    !prod.doado.isNullOrBlank() -> prod.doado
-                                    else -> "-"
-                                }
-
-                                DetailItem(
-                                    icon = Icons.Default.Person, // Ícone para Origem/Doador
+                                    icon = Icons.Default.Person,
                                     label = "Origem",
                                     value = origemTexto,
                                     modifier = Modifier.weight(1f)
                                 )
+                                // Espaço vazio à direita para alinhar, se quiseres podes pôr outro campo aqui
+                                Spacer(modifier = Modifier.weight(1f))
                             }
 
                             Divider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                            // 5. Código de Barras
+                            // 6. Código de Barras
                             DetailItemHorizontal(
                                 icon = Icons.Default.PhotoCamera,
                                 label = "Código de Barras",
                                 value = prod.codBarras ?: "Sem código"
                             )
 
-                            // 6. Descrição
+                            // 7. Descrição
                             if (!prod.descProduto.isNullOrBlank()) {
                                 Column {
                                     Text(

@@ -3,6 +3,7 @@ package ipca.app.lojasas.data.products
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
+import kotlin.text.get
 
 class ProductsRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -99,6 +100,19 @@ class ProductsRepository(
             .addOnFailureListener { onError(it) }
     }
 
+    fun getUniqueCategories(onSuccess: (List<String>) -> Unit, onError: (Exception) -> Unit) {
+        collection.get()
+            .addOnSuccessListener { result ->
+                val categories = result.documents
+                    .mapNotNull { it.getString("categoria")?.trim() } // O nome do campo tem de ser igual ao do toFirestoreMap
+                    .filter { it.isNotBlank() }
+                    .distinct()
+                    .sorted()
+                onSuccess(categories)
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
     fun deleteProduct(
         productId: String,
         onSuccess: () -> Unit,
@@ -116,6 +130,7 @@ private fun ProductUpsert.toFirestoreMap(): Map<String, Any> {
         "nomeProduto" to nomeProduto.trim(),
         "subCategoria" to subCategoria.trim(),
         "marca" to marca?.trim(),
+        "categoria" to categoria?.trim(),
         "campanha" to campanha?.trim(),
         "doado" to doado?.trim(),
         "codBarras" to codBarras?.trim(),
@@ -137,3 +152,4 @@ private fun ProductUpsert.toFirestoreMap(): Map<String, Any> {
 
     return base.filterValues { it != null } as Map<String, Any>
 }
+

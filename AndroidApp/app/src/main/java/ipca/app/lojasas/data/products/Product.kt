@@ -18,7 +18,8 @@ data class Product(
     val descProduto: String? = null,
     val estadoProduto: String? = null,
     val parceiroExternoNome: String? = null,
-    val idFunc: String? = null
+    val idFunc: String? = null,
+    val categoria: String? = null
 )
 
 data class ProductUpsert(
@@ -34,7 +35,8 @@ data class ProductUpsert(
     val descProduto: String? = null,
     val estadoProduto: String? = null,
     val parceiroExternoNome: String? = null,
-    val idFunc: String? = null
+    val idFunc: String? = null,
+    val categoria: String? = null
 )
 
 fun DocumentSnapshot.toProductOrNull(): Product? {
@@ -52,6 +54,9 @@ fun DocumentSnapshot.toProductOrNull(): Product? {
         else -> getTimestamp("validade")?.toDate()
     }
 
+    val categoria = getStringTrimmed("categoria")
+
+
     return Product(
         id = id,
         nomeProduto = nomeProduto,
@@ -66,7 +71,8 @@ fun DocumentSnapshot.toProductOrNull(): Product? {
         descProduto = getStringTrimmed("descProduto"),
         estadoProduto = getStringTrimmed("estadoProduto"),
         parceiroExternoNome = getStringTrimmed("ParceiroExternoNome"),
-        idFunc = getStringTrimmed("idFunc")
+        idFunc = getStringTrimmed("idFunc"),
+        categoria = getStringTrimmed("categoria")
     )
 }
 

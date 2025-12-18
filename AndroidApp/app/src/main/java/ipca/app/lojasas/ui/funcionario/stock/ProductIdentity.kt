@@ -15,7 +15,9 @@ data class ProductIdentity(
     val tamanhoUnidade: String,
     val descProduto: String,
     val estadoProduto: String,
-    val parceiroExternoNome: String
+    val parceiroExternoNome: String,
+    val categoria: String
+
 )
 
 fun Product.identity(): ProductIdentity {
@@ -31,6 +33,8 @@ fun Product.identity(): ProductIdentity {
         tamanhoUnidade = tamanhoUnidade?.trim()?.lowercase().orEmpty(),
         descProduto = descProduto?.trim()?.lowercase().orEmpty(),
         estadoProduto = estadoProduto?.trim()?.lowercase().orEmpty(),
-        parceiroExternoNome = parceiroExternoNome?.trim()?.lowercase().orEmpty()
+        parceiroExternoNome = parceiroExternoNome?.trim()?.lowercase().orEmpty(),
+        categoria = categoria?.trim()?.lowercase().orEmpty()
     )
 }
+
