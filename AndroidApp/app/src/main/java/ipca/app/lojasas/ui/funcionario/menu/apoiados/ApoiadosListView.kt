@@ -1,7 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,13 +43,13 @@ fun ApoiadosListView(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Add manual se necessário */ },
+                onClick = { navController.navigate("createApoiado") },
                 containerColor = GreenSas,
                 contentColor = Color.White,
                 shape = CircleShape,
                 modifier = Modifier.size(64.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Add, contentDescription = "Criar Apoiado", modifier = Modifier.size(32.dp))
             }
         }
     ) { padding ->
@@ -83,7 +82,7 @@ fun ApoiadosListView(
                     }
                 )
 
-                // Botão FILTRO
+                // Filtros
                 Box {
                     IconButton(onClick = { showFilterMenu = true }) {
                         Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = if(state.currentFilter != "Todos") GreenSas else Color.Black)
@@ -92,7 +91,6 @@ fun ApoiadosListView(
                         expanded = showFilterMenu,
                         onDismissRequest = { showFilterMenu = false }
                     ) {
-                        // "Suspenso" alterado para "Apoio Pausado"
                         val filters = listOf("Todos", "Aprovado", "Bloqueado", "Negado", "Apoio Pausado", "Analise", "Por Submeter")
                         filters.forEach { filter ->
                             DropdownMenuItem(
@@ -109,7 +107,7 @@ fun ApoiadosListView(
                     }
                 }
 
-                // Botão ORDENAR
+                // Ordenação
                 Box {
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color.Black)
@@ -125,6 +123,7 @@ fun ApoiadosListView(
                     }
                 }
 
+                // Download
                 IconButton(onClick = { viewModel.exportToCSV(context) }) {
                     Icon(Icons.Default.FileDownload, contentDescription = "Download CSV", tint = Color.Black)
                 }
@@ -159,7 +158,7 @@ fun ApoiadosListView(
         }
     }
 
-    // --- MODAL DETALHES ---
+    // Modal de Detalhes
     if (state.selectedApoiado != null) {
         val user = state.selectedApoiado!!
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -198,6 +197,15 @@ fun ApoiadosListView(
 
 @Composable
 fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
+    // Definir a cor do cabeçalho baseada no status
+    val statusColor = when(apoiado.displayStatus) {
+        "Aprovado" -> GreenSas
+        "Bloqueado", "Negado" -> Color(0xFFD32F2F) // Vermelho Escuro
+        "Apoio Pausado" -> Color(0xFFF57C00) // Laranja
+        "Analise" -> Color(0xFF1976D2) // Azul
+        else -> Color.Gray // Cinzento para outros (Por Submeter, etc)
+    }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -205,7 +213,8 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            Box(Modifier.fillMaxWidth().background(GreenSas).padding(horizontal = 16.dp, vertical = 10.dp)) {
+            // Fundo do cabeçalho agora usa a cor dinâmica 'statusColor'
+            Box(Modifier.fillMaxWidth().background(statusColor).padding(horizontal = 16.dp, vertical = 10.dp)) {
                 Text(text = apoiado.nome, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             Column(modifier = Modifier.padding(16.dp)) {
@@ -218,14 +227,7 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Status:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-
-                        // Laranja para Apoio Pausado (antigo Suspenso)
-                        val statusColor = when(apoiado.displayStatus) {
-                            "Aprovado" -> GreenSas
-                            "Bloqueado", "Negado" -> Color.Red
-                            "Apoio Pausado" -> Color(0xFFD88C28)
-                            else -> Color.Gray
-                        }
+                        // Texto do status também usa a mesma cor para consistência
                         Text(text = apoiado.displayStatus, color = statusColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
@@ -234,12 +236,11 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
                     TextButton(onClick = { onAction("details") }) { Text("Detalhes", color = Color.Gray) }
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Lógica dos Botões
+                    // Botões de ação dinâmica
                     when (apoiado.rawStatus) {
                         "Bloqueado" -> ActionButton("Desbloquear", GreenSas) { onAction("unblock") }
                         "Aprovado" -> {
-                            // Botão agora diz "Pausar Apoio"
-                            ActionButton("Pausar Apoio", Color(0xFFD88C28)) { onAction("suspend") }
+                            ActionButton("Pausar Apoio", Color(0xFFF57C00)) { onAction("suspend") }
                             Spacer(modifier = Modifier.width(8.dp))
                             ActionButton("Bloquear", Color.Black) { onAction("block") }
                         }

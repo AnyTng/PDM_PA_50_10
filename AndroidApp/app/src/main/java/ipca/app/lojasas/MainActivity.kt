@@ -51,6 +51,7 @@ import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignsView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
+import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
 
 
 class MainActivity : ComponentActivity() {
@@ -170,6 +171,9 @@ class MainActivity : ComponentActivity() {
                         composable("submittedDocuments") {SubmittedDocumentsView(navController = navController)}
                         composable("campaigns") {
                             CampaignsView(navController = navController)
+                        }
+                        composable("createApoiado") {
+                            CreateApoiadoView(navController = navController)
                         }
                         composable("apoiadosList") {
                             ApoiadosListView(navController = navController)

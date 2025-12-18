@@ -13,11 +13,11 @@ data class CreateProfileState(
     var contacto: String = "",
     var email: String = "",
     var password: String = "",
-    var documentNumber: String = "", // <--- MUDADO
+    var documentNumber: String = "",
     var documentType: String = "NIF",
     var morada: String = "",
     var codPostal: String = "",
-    var role: UserRole = UserRole.FUNCIONARIO,
+    // var role: UserRole = UserRole.FUNCIONARIO, // Removido do State público ou fixado internamente
     var isLoading: Boolean = false,
     var error: String? = null,
     var success: Boolean = false
@@ -34,23 +34,21 @@ class CreateProfileViewModel : ViewModel() {
     fun onContactoChange(newValue: String) { uiState.value = uiState.value.copy(contacto = newValue) }
     fun onEmailChange(newValue: String) { uiState.value = uiState.value.copy(email = newValue) }
     fun onPasswordChange(newValue: String) { uiState.value = uiState.value.copy(password = newValue) }
-
-    fun onDocumentNumberChange(newValue: String) {uiState.value = uiState.value.copy(documentNumber = newValue) }
+    fun onDocumentNumberChange(newValue: String) { uiState.value = uiState.value.copy(documentNumber = newValue) }
     fun onDocumentTypeChange(newValue: String) { uiState.value = uiState.value.copy(documentType = newValue) }
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
     fun onCodPostalChange(newValue: String) { uiState.value = uiState.value.copy(codPostal = newValue) }
-    fun onRoleChange(newValue: UserRole) { uiState.value = uiState.value.copy(role = newValue) }
+
+    // Removido onRoleChange
 
     fun createProfile(onSuccess: () -> Unit) {
         val state = uiState.value
 
-        // 1. Validação de Campos Vazios
         if (state.email.isEmpty() || state.password.isEmpty() || state.nome.isEmpty() || state.numMecanografico.isEmpty()) {
             uiState.value = state.copy(error = "Preencha os campos obrigatórios.")
             return
         }
 
-        // 2. Validação do Formato do Nº Mecanográfico
         val mecanograficoRegex = Regex("^[a-zA-Z]\\d+$")
         if (!state.numMecanografico.matches(mecanograficoRegex)) {
             uiState.value = state.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: f12345).")
@@ -60,7 +58,6 @@ class CreateProfileViewModel : ViewModel() {
         uiState.value = state.copy(isLoading = true, error = null)
 
         val auth = Firebase.auth
-
         auth.createUserWithEmailAndPassword(state.email, state.password)
             .addOnSuccessListener { result ->
                 val userId = result.user?.uid
@@ -77,6 +74,7 @@ class CreateProfileViewModel : ViewModel() {
         val state = uiState.value
         val db = Firebase.firestore
 
+        // Criação exclusiva de FUNCIONÁRIOS
         val userMap = hashMapOf(
             "uid" to authUid,
             "numMecanografico" to state.numMecanografico,
@@ -87,24 +85,19 @@ class CreateProfileViewModel : ViewModel() {
             "morada" to state.morada,
             "codPostal" to state.codPostal,
             "email" to state.email,
-            "role" to state.role.name,
-            "mudarPass" to true // Força a mudança de senha no próximo login
+            "role" to "Funcionario", // Fixado
+            "mudarPass" to true
         )
 
-        val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
-
-        // Lógica específica para Apoiados
-        if (state.role == UserRole.APOIADO) {
-            userMap["emailApoiado"] = state.email
-            // --- VARIÁVEL PARA LEMBRAR DE PREENCHER DADOS ---
-            userMap["dadosIncompletos"] = true
-        }
-
-        db.collection(collectionName).document(state.numMecanografico)
+        db.collection("funcionarios").document(state.numMecanografico)
             .set(userMap)
             .addOnSuccessListener {
-                uiState.value = state.copy(isLoading = false, success = true)
-                onSuccess()
+                // Também guardar na coleção 'users' para Login rápido se necessário
+                db.collection("users").document(authUid).set(mapOf("role" to "Funcionario", "email" to state.email))
+                    .addOnSuccessListener {
+                        uiState.value = state.copy(isLoading = false, success = true)
+                        onSuccess()
+                    }
             }
             .addOnFailureListener { e ->
                 uiState.value = state.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")

@@ -3,56 +3,34 @@ package ipca.app.lojasas.ui.funcionario.menu.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding // Importante
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions // Importante
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection // Importante
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager // Importante
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction // Importante
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.IntroFontFamily
 import ipca.app.lojasas.ui.login.GreenIPCA
 
@@ -64,12 +42,13 @@ fun CreateProfileView(
     val viewModel: CreateProfileViewModel = viewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
-
-    // 1. Gestor de Foco
     val focusManager = LocalFocusManager.current
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            // Opcional: Adicionar Header se não existir no NavHost
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -99,7 +78,7 @@ fun CreateProfileView(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color(0xFFF8F8F8))
-                .imePadding() // 2. Adiciona espaço quando o teclado abre
+                .imePadding()
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -121,7 +100,6 @@ fun CreateProfileView(
                     onValueChange = { viewModel.onNumMecanograficoChange(it) },
                     placeholder = "Nº Mecanográfico (ex: f12345)",
                     keyboardType = KeyboardType.Text,
-                    // 3. Passar foco para o próximo
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }
@@ -166,10 +144,8 @@ fun CreateProfileView(
                 )
             }
 
-            // --- NIF / PASSAPORTE E MORADA ---
+            // --- DOCUMENTO E MORADA ---
             FormSection(title = "Documento e Morada") {
-
-                // Escolha entre NIF e Passaporte
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -190,8 +166,8 @@ fun CreateProfileView(
                 }
 
                 FormInput(
-                    value = state.documentNumber, // <--- MUDADO
-                    onValueChange = { viewModel.onDocumentNumberChange(it) }, // <--- MUDADO                    // Placeholder e Teclado dinâmicos
+                    value = state.documentNumber,
+                    onValueChange = { viewModel.onDocumentNumberChange(it) },
                     placeholder = if (state.documentType == "NIF") "NIF" else "Nº Passaporte",
                     keyboardType = if (state.documentType == "NIF") KeyboardType.Number else KeyboardType.Text,
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
@@ -206,7 +182,6 @@ fun CreateProfileView(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Último campo de texto: Ação Done
                 FormInput(
                     value = state.codPostal,
                     onValueChange = { viewModel.onCodPostalChange(it) },
@@ -216,89 +191,39 @@ fun CreateProfileView(
                 )
             }
 
-            // --- TIPO ---
-            FormSection(title = "Tipo?") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    RoleRadioButton(
-                        selected = state.role == UserRole.FUNCIONARIO,
-                        text = "Gestor",
-                        onClick = { viewModel.onRoleChange(UserRole.FUNCIONARIO) }
-                    )
-                    RoleRadioButton(
-                        selected = state.role == UserRole.APOIADO,
-                        text = "Apoiado",
-                        onClick = { viewModel.onRoleChange(UserRole.APOIADO) }
-                    )
-                }
-            }
+            // REMOVIDA A SECÇÃO "TIPO?" (Role Selection)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
 
-// --- COMPONENTES AUXILIARES ---
-
+// ... (Manter os componentes auxiliares FormSection, FormInput, RoleRadioButton iguais)
 @Composable
-fun FormSection(
-    title: String,
-    content: @Composable () -> Unit
-) {
+fun FormSection(title: String, content: @Composable () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black,
-            fontFamily = IntroFontFamily
-        )
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
-            thickness = 1.dp,
-            color = Color.Gray
-        )
+        Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black, fontFamily = IntroFontFamily)
+        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 12.dp), thickness = 1.dp, color = Color.Gray)
         content()
     }
 }
 
 @Composable
-fun FormInput(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false,
-    imeAction: ImeAction = ImeAction.Next, // 4. Parâmetro novo (default Next)
-    keyboardActions: KeyboardActions = KeyboardActions.Default // 5. Parâmetro novo
-) {
+fun FormInput(value: String, onValueChange: (String) -> Unit, placeholder: String, keyboardType: KeyboardType = KeyboardType.Text, isPassword: Boolean = false, imeAction: ImeAction = ImeAction.Next, keyboardActions: KeyboardActions = KeyboardActions.Default) {
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-        keyboardOptions = KeyboardOptions(
-            keyboardType = keyboardType,
-            imeAction = imeAction // Define a tecla Enter
-        ),
-        keyboardActions = keyboardActions, // Define a ação
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = keyboardActions,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-        singleLine = true, // Garante que é só uma linha
+        singleLine = true,
         decorationBox = { innerTextField ->
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .background(Color.White, RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                    .padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp).background(Color.White, RoundedCornerShape(8.dp)).border(1.dp, Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (value.isEmpty()) {
-                    Text(text = placeholder, color = Color.Gray, fontSize = 16.sp)
-                }
+                if (value.isEmpty()) Text(text = placeholder, color = Color.Gray, fontSize = 16.sp)
                 innerTextField()
             }
         }
@@ -306,26 +231,9 @@ fun FormInput(
 }
 
 @Composable
-fun RoleRadioButton(
-    selected: Boolean,
-    text: String,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable { onClick() }
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(selectedColor = GreenIPCA)
-        )
+fun RoleRadioButton(selected: Boolean, text: String, onClick: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onClick() }) {
+        RadioButton(selected = selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = GreenIPCA))
         Text(text = text, fontSize = 16.sp, color = Color.Black)
     }
-}
-
-@Preview
-@Composable
-fun CreateProfilePreview() {
-    CreateProfileView(navController = rememberNavController())
 }
