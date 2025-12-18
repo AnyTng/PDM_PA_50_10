@@ -71,7 +71,7 @@ fun MenuView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Apoiados") { /* Navegar */ }
+                    MenuRow(title = "Apoiados") { navController.navigate("apoiadosList") }
                     MenuDivider()
                     MenuRow(title = "Pedidos Urgentes") { /* Navegar */ }
                     MenuDivider()

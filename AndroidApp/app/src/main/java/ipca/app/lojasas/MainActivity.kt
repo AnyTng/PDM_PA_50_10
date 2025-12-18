@@ -50,7 +50,7 @@ import androidx.navigation.navArgument
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignsView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
-
+import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
 
 
 class MainActivity : ComponentActivity() {
@@ -171,7 +171,9 @@ class MainActivity : ComponentActivity() {
                         composable("campaigns") {
                             CampaignsView(navController = navController)
                         }
-
+                        composable("apoiadosList") {
+                            ApoiadosListView(navController = navController)
+                        }
 // 2. Rota de Criação
                         composable("campaignCreate") {
                             CampaignCreateView(navController = navController)
