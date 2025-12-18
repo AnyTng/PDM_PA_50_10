@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,7 +25,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.funcionario.menu.validate.DetailRow // Reutiliza se possível, ou recria abaixo
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -32,7 +34,9 @@ fun ApoiadosListView(
     viewModel: ApoiadosListViewModel = viewModel()
 ) {
     val state by viewModel.uiState
+    val context = LocalContext.current
     var showFilterMenu by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -40,11 +44,11 @@ fun ApoiadosListView(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Lógica futura de adicionar manualmente se necessário */ },
+                onClick = { /* Add manual se necessário */ },
                 containerColor = GreenSas,
                 contentColor = Color.White,
                 shape = CircleShape,
-                modifier = Modifier.size(64.dp) // Tamanho grande como na imagem
+                modifier = Modifier.size(64.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add", modifier = Modifier.size(32.dp))
             }
@@ -56,7 +60,7 @@ fun ApoiadosListView(
                 .padding(padding)
                 .background(Color(0xFFF2F2F2))
         ) {
-            // --- BARRA DE PESQUISA E FILTROS (Estilo da Imagem) ---
+            // --- BARRA DE FERRAMENTAS ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -66,18 +70,30 @@ fun ApoiadosListView(
             ) {
                 Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Pesquisar...", color = Color.Gray, modifier = Modifier.weight(1f))
 
-                // Filtro
+                BasicTextField(
+                    value = state.searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    modifier = Modifier.weight(1f),
+                    textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                    singleLine = true,
+                    decorationBox = { innerTextField ->
+                        if (state.searchQuery.isEmpty()) Text("Pesquisar...", color = Color.Gray)
+                        innerTextField()
+                    }
+                )
+
+                // Botão FILTRO
                 Box {
                     IconButton(onClick = { showFilterMenu = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color.Black)
+                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = if(state.currentFilter != "Todos") GreenSas else Color.Black)
                     }
                     DropdownMenu(
                         expanded = showFilterMenu,
                         onDismissRequest = { showFilterMenu = false }
                     ) {
-                        val filters = listOf("Todos", "Aprovado", "Bloqueado", "Negado", "Suspenso", "Analise", "Por Submeter")
+                        // "Suspenso" alterado para "Apoio Pausado"
+                        val filters = listOf("Todos", "Aprovado", "Bloqueado", "Negado", "Apoio Pausado", "Analise", "Por Submeter")
                         filters.forEach { filter ->
                             DropdownMenuItem(
                                 text = { Text(filter) },
@@ -92,11 +108,25 @@ fun ApoiadosListView(
                         }
                     }
                 }
-                IconButton(onClick = { /* Ordenar */ }) {
-                    Icon(Icons.Default.Sort, contentDescription = "Sort", tint = Color.Black)
+
+                // Botão ORDENAR
+                Box {
+                    IconButton(onClick = { showSortMenu = true }) {
+                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color.Black)
+                    }
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
+                    ) {
+                        DropdownMenuItem(text = { Text("Nome (A-Z)") }, onClick = { viewModel.applySort(SortOrder.NOME_ASC); showSortMenu = false })
+                        DropdownMenuItem(text = { Text("Nome (Z-A)") }, onClick = { viewModel.applySort(SortOrder.NOME_DESC); showSortMenu = false })
+                        DropdownMenuItem(text = { Text("Nº Mec. (A-Z)") }, onClick = { viewModel.applySort(SortOrder.ID_ASC); showSortMenu = false })
+                        DropdownMenuItem(text = { Text("Status") }, onClick = { viewModel.applySort(SortOrder.STATUS_ASC); showSortMenu = false })
+                    }
                 }
-                IconButton(onClick = { /* Download */ }) {
-                    Icon(Icons.Default.FileDownload, contentDescription = "Download", tint = Color.Black)
+
+                IconButton(onClick = { viewModel.exportToCSV(context) }) {
+                    Icon(Icons.Default.FileDownload, contentDescription = "Download CSV", tint = Color.Black)
                 }
             }
 
@@ -123,14 +153,13 @@ fun ApoiadosListView(
                             }
                         )
                     }
-                    // Espaço extra para o FAB não tapar o último item
                     item { Spacer(Modifier.height(80.dp)) }
                 }
             }
         }
     }
 
-    // --- MODAL DE DETALHES ---
+    // --- MODAL DETALHES ---
     if (state.selectedApoiado != null) {
         val user = state.selectedApoiado!!
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -144,9 +173,7 @@ fun ApoiadosListView(
                 Column(Modifier.padding(16.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Detalhes do Apoiado", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSas)
-                        IconButton(onClick = { viewModel.selectApoiado(null) }) {
-                            Icon(Icons.Default.Close, null)
-                        }
+                        IconButton(onClick = { viewModel.selectApoiado(null) }) { Icon(Icons.Default.Close, null) }
                     }
                     HorizontalDivider(color = GreenSas, modifier = Modifier.padding(vertical = 8.dp))
 
@@ -170,10 +197,7 @@ fun ApoiadosListView(
 }
 
 @Composable
-fun ApoiadoCard(
-    apoiado: ApoiadoItem,
-    onAction: (String) -> Unit
-) {
+fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -181,74 +205,41 @@ fun ApoiadoCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            // --- HEADER VERDE (Como na imagem) ---
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(GreenSas)
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text = apoiado.nome,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+            Box(Modifier.fillMaxWidth().background(GreenSas).padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Text(text = apoiado.nome, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
-
-            // --- CORPO BRANCO ---
             Column(modifier = Modifier.padding(16.dp)) {
-
-                // Informações
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Name:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Text(apoiado.nome, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
-
                         Text("E-mail:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Text(apoiado.email, fontSize = 14.sp)
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Status:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
 
+                        // Laranja para Apoio Pausado (antigo Suspenso)
                         val statusColor = when(apoiado.displayStatus) {
                             "Aprovado" -> GreenSas
                             "Bloqueado", "Negado" -> Color.Red
-                            "Suspenso" -> Color(0xFFD88C28) // Laranja
+                            "Apoio Pausado" -> Color(0xFFD88C28)
                             else -> Color.Gray
                         }
-                        Text(
-                            text = apoiado.displayStatus,
-                            color = statusColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+                        Text(text = apoiado.displayStatus, color = statusColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
-
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // --- BOTÕES DE AÇÃO (Alinhados à direita) ---
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    // Botão Detalhes (Sempre visível, "More" na imagem)
-                    TextButton(onClick = { onAction("details") }) {
-                        Text("Detalhes", color = Color.Gray)
-                    }
-
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { onAction("details") }) { Text("Detalhes", color = Color.Gray) }
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Botões Condicionais por Estado
+                    // Lógica dos Botões
                     when (apoiado.rawStatus) {
-                        "Bloqueado" -> {
-                            ActionButton("Desbloquear", GreenSas) { onAction("unblock") }
-                        }
+                        "Bloqueado" -> ActionButton("Desbloquear", GreenSas) { onAction("unblock") }
                         "Aprovado" -> {
-                            ActionButton("Suspender", Color(0xFFD88C28)) { onAction("suspend") }
+                            // Botão agora diz "Pausar Apoio"
+                            ActionButton("Pausar Apoio", Color(0xFFD88C28)) { onAction("suspend") }
                             Spacer(modifier = Modifier.width(8.dp))
                             ActionButton("Bloquear", Color.Black) { onAction("block") }
                         }
@@ -257,11 +248,7 @@ fun ApoiadoCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             ActionButton("Bloquear", Color.Black) { onAction("block") }
                         }
-                        else -> {
-                            // "Negado", "Analise", "Falta_Documentos"
-                            // Apenas botão de Bloquear
-                            ActionButton("Bloquear", Color.Black) { onAction("block") }
-                        }
+                        else -> ActionButton("Bloquear", Color.Black) { onAction("block") }
                     }
                 }
             }
@@ -282,7 +269,6 @@ fun ActionButton(text: String, color: Color, onClick: () -> Unit) {
     }
 }
 
-// Pequeno helper para os detalhes se não quiseres importar de outro ficheiro
 @Composable
 private fun DetailRow(label: String, value: String) {
     Column(modifier = Modifier.padding(bottom = 6.dp)) {

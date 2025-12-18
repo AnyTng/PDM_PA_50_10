@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Event // Ícone para datas
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 @Composable
@@ -35,45 +37,66 @@ fun CampaignsView(navController: NavController) {
     val state by viewModel.uiState
     var campaignToEdit by remember { mutableStateOf<Campaign?>(null) }
 
-    // Layout principal
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF2F2F2))
             .padding(16.dp)
     ) {
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        if (state.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = GreenSas)
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 1. CAMPANHAS ATIVAS (A Decorrer)
+                if (state.activeCampaigns.isNotEmpty()) {
+                    item { SectionTitle("A Decorrer") }
+                    items(state.activeCampaigns) { campaign ->
+                        CampaignCard(
+                            campaign = campaign,
+                            isEditable = true, // Ativas podem ser editadas (estender prazo)
+                            showResults = false,
+                            onAction = { campaignToEdit = campaign }
+                        )
+                    }
+                }
 
-            // SECÇÃO ATIVAS
-            item { SectionTitle("Campanhas Ativas") }
-            if (state.activeCampaigns.isEmpty()) item { EmptyText() }
-            items(state.activeCampaigns) { campaign ->
-                CampaignCard(
-                    campaign = campaign,
-                    isActive = true,
-                    onAction = { campaignToEdit = campaign } // Abre Pop-up
-                )
-            }
+                // 2. CAMPANHAS FUTURAS (Agendadas)
+                if (state.futureCampaigns.isNotEmpty()) {
+                    item {
+                        Spacer(Modifier.height(8.dp))
+                        SectionTitle("Agendadas (Futuro)")
+                    }
+                    items(state.futureCampaigns) { campaign ->
+                        CampaignCard(
+                            campaign = campaign,
+                            isEditable = true, // Futuras são totalmente editáveis
+                            showResults = false,
+                            onAction = { campaignToEdit = campaign }
+                        )
+                    }
+                }
 
-            // SECÇÃO DESATIVADAS
-            item {
-                Spacer(Modifier.height(16.dp))
-                SectionTitle("Histórico (Desativadas)")
-            }
-            if (state.inactiveCampaigns.isEmpty()) item { EmptyText() }
-            items(state.inactiveCampaigns) { campaign ->
-                CampaignCard(
-                    campaign = campaign,
-                    isActive = false,
-                    onAction = { navController.navigate("campaignResults/${campaign.nomeCampanha}") } // Abre Resultados
-                )
+                // 3. HISTÓRICO
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    SectionTitle("Histórico (Terminadas)")
+                }
+                if (state.inactiveCampaigns.isEmpty()) item { EmptyText() }
+                items(state.inactiveCampaigns) { campaign ->
+                    CampaignCard(
+                        campaign = campaign,
+                        isEditable = false,
+                        showResults = true,
+                        onAction = { navController.navigate("campaignResults/${campaign.nomeCampanha}") }
+                    )
+                }
             }
         }
 
-        // FAB (Botão Flutuante) para criar nova campanha
+        // FAB
         FloatingActionButton(
             onClick = { navController.navigate("campaignCreate") },
             containerColor = GreenSas,
@@ -87,7 +110,7 @@ fun CampaignsView(navController: NavController) {
         }
     }
 
-    // POP-UP DE EDIÇÃO (Chama a função corrigida abaixo)
+    // POP-UP DE EDIÇÃO
     if (campaignToEdit != null) {
         EditCampaignDialog(
             campaign = campaignToEdit!!,
@@ -100,7 +123,12 @@ fun CampaignsView(navController: NavController) {
 }
 
 @Composable
-fun CampaignCard(campaign: Campaign, isActive: Boolean, onAction: () -> Unit) {
+fun CampaignCard(
+    campaign: Campaign,
+    isEditable: Boolean,
+    showResults: Boolean,
+    onAction: () -> Unit
+) {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -111,13 +139,19 @@ fun CampaignCard(campaign: Campaign, isActive: Boolean, onAction: () -> Unit) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(campaign.nomeCampanha, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GreenSas)
-                if (isActive) {
+                if (isEditable) {
                     Icon(Icons.Default.Edit, "Editar", tint = Color.Gray, modifier = Modifier.clickable { onAction() })
                 }
             }
             Text("${dateFormat.format(campaign.dataInicio)} até ${dateFormat.format(campaign.dataFim)}", fontSize = 12.sp, color = Color.Gray)
-            Spacer(Modifier.height(8.dp))
-            if (!isActive) {
+
+            if (campaign.descCampanha.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                Text(campaign.descCampanha, fontSize = 14.sp, maxLines = 2, color = Color.Black)
+            }
+
+            if (showResults) {
+                Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onAction,
                     colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
@@ -133,40 +167,27 @@ fun CampaignCard(campaign: Campaign, isActive: Boolean, onAction: () -> Unit) {
 }
 
 @Composable
-fun SectionTitle(text: String) {
-    Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-}
-
-@Composable
-fun EmptyText() {
-    Text("Nenhuma campanha encontrada.", color = Color.Gray, fontSize = 14.sp)
-}
-
-// --- COMPONENTE DE EDIÇÃO (CORRIGIDO E ÚNICO) ---
-@Composable
 fun EditCampaignDialog(
     campaign: Campaign,
     onDismiss: () -> Unit,
     onSave: (Campaign) -> Unit
 ) {
-    // Estados locais para edição
-    // Usamos 'remember(campaign)' para resetar os valores se a campanha mudar
     var nome by remember(campaign) { mutableStateOf(campaign.nomeCampanha) }
     var desc by remember(campaign) { mutableStateOf(campaign.descCampanha) }
+    var dataInicio by remember(campaign) { mutableStateOf(campaign.dataInicio) }
     var dataFim by remember(campaign) { mutableStateOf(campaign.dataFim) }
 
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
+    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    // Função auxiliar para mostrar o DatePicker
-    fun showDatePicker() {
-        calendar.time = dataFim // Inicia o calendário na data atual da campanha
+    fun showDatePicker(initialDate: Date, onDateSelected: (Date) -> Unit) {
+        calendar.time = initialDate
         DatePickerDialog(
             context,
             { _, year, month, dayOfMonth ->
                 calendar.set(year, month, dayOfMonth)
-                // Atualiza a dataFim
-                dataFim = calendar.time
+                onDateSelected(calendar.time)
             },
             calendar.get(Calendar.YEAR),
             calendar.get(Calendar.MONTH),
@@ -176,92 +197,91 @@ fun EditCampaignDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Editar Campanha",
-                fontWeight = FontWeight.Bold,
-                color = GreenSas
-            )
-        },
+        title = { Text("Editar Campanha", fontWeight = FontWeight.Bold, color = GreenSas) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Campo Nome
+                // Nome
                 OutlinedTextField(
                     value = nome,
                     onValueChange = { nome = it },
                     label = { Text("Nome da Campanha") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = GreenSas,
-                        cursorColor = GreenSas,
-                        focusedLabelColor = GreenSas
-                    )
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenSas, cursorColor = GreenSas, focusedLabelColor = GreenSas)
                 )
 
-                // Campo Data de Fim (Estender Campanha)
-                OutlinedButton(
-                    onClick = { showDatePicker() },
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.fillMaxWidth()
+                // Datas (Lado a Lado)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Botão Início
+                    OutlinedButton(
+                        onClick = { showDatePicker(dataInicio) { dataInicio = it } },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(
-                            text = "Data de Fim (Estender)",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(dataFim),
-                            color = Color.Black,
-                            fontSize = 16.sp
-                        )
+                        Column {
+                            Text("Início", fontSize = 10.sp, color = Color.Gray)
+                            Text(dateFormat.format(dataInicio), color = Color.Black, fontSize = 14.sp)
+                        }
+                    }
+
+                    // Botão Fim
+                    OutlinedButton(
+                        onClick = { showDatePicker(dataFim) { dataFim = it } },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Column {
+                            Text("Fim", fontSize = 10.sp, color = Color.Gray)
+                            Text(dateFormat.format(dataFim), color = Color.Black, fontSize = 14.sp)
+                        }
                     }
                 }
 
-                // Campo Descrição
+                // Validação visual simples
+                if (dataInicio.after(dataFim)) {
+                    Text("⚠️ A data de início deve ser anterior ao fim.", color = Color.Red, fontSize = 12.sp)
+                }
+
+                // Descrição
                 OutlinedTextField(
                     value = desc,
                     onValueChange = { desc = it },
                     label = { Text("Descrição") },
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = GreenSas,
-                        cursorColor = GreenSas,
-                        focusedLabelColor = GreenSas
-                    )
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenSas, cursorColor = GreenSas, focusedLabelColor = GreenSas)
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val updatedCampaign = campaign.copy(
-                        nomeCampanha = nome,
-                        descCampanha = desc,
-                        dataFim = dataFim // Guarda a nova data
-                    )
-                    onSave(updatedCampaign)
+                    val updated = campaign.copy(nomeCampanha = nome, descCampanha = desc, dataInicio = dataInicio, dataFim = dataFim)
+                    onSave(updated)
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
+                enabled = !dataInicio.after(dataFim) // Desativa botão se datas inválidas
             ) {
                 Text("Guardar")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = Color.Gray)
-            }
+            TextButton(onClick = onDismiss) { Text("Cancelar", color = Color.Gray) }
         },
         containerColor = Color.White,
         shape = RoundedCornerShape(12.dp)
     )
+}
+
+@Composable
+fun SectionTitle(text: String) {
+    Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(bottom = 8.dp))
+}
+
+@Composable
+fun EmptyText() {
+    Text("Nenhuma campanha encontrada.", color = Color.Gray, fontSize = 14.sp)
 }

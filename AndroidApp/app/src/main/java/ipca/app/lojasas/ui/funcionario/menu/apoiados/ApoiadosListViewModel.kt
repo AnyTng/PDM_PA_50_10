@@ -1,9 +1,20 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import android.content.Context
+import android.os.Environment
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import java.io.File
+import java.io.FileOutputStream
+
+enum class SortOrder {
+    NOME_ASC, NOME_DESC,
+    ID_ASC, ID_DESC,
+    STATUS_ASC, STATUS_DESC
+}
 
 data class ApoiadoListState(
     val apoiados: List<ApoiadoItem> = emptyList(),
@@ -11,16 +22,17 @@ data class ApoiadoListState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val currentFilter: String = "Todos",
-    val selectedApoiado: ApoiadoItem? = null // Para o modal de detalhes
+    val searchQuery: String = "",
+    val sortOrder: SortOrder = SortOrder.NOME_ASC,
+    val selectedApoiado: ApoiadoItem? = null
 )
 
 data class ApoiadoItem(
     val id: String,
     val nome: String,
     val email: String,
-    val rawStatus: String, // Estado real na BD (ex: "Falta_Documentos")
-    val displayStatus: String, // Estado visual (ex: "Por Submeter")
-    // Dados extra para o modal de detalhes
+    val rawStatus: String, // Estado real na BD
+    val displayStatus: String, // Estado visual (ex: "Apoio Pausado")
     val contacto: String = "",
     val documentType: String = "",
     val documentNumber: String = "",
@@ -53,9 +65,10 @@ class ApoiadosListViewModel : ViewModel() {
                 val list = value?.documents?.map { doc ->
                     val rawStatus = doc.getString("estadoConta") ?: ""
 
-                    // Lógica de Agrupamento visual "Por Submeter"
+                    // --- MAPEAMENTO DE ESTADOS ---
                     val displayStatus = when (rawStatus) {
                         "Falta_Documentos", "Correcao_Dados", "" -> "Por Submeter"
+                        "Suspenso" -> "Apoio Pausado" // Alterado aqui
                         else -> rawStatus
                     }
 
@@ -74,58 +87,93 @@ class ApoiadosListViewModel : ViewModel() {
                     )
                 } ?: emptyList()
 
-                uiState.value = uiState.value.copy(
-                    apoiados = list,
-                    isLoading = false
-                )
-                applyFilter(uiState.value.currentFilter)
+                uiState.value = uiState.value.copy(apoiados = list, isLoading = false)
+                applyFiltersAndSort()
             }
+    }
+
+    // --- FILTROS E PESQUISA ---
+
+    fun onSearchQueryChange(query: String) {
+        uiState.value = uiState.value.copy(searchQuery = query)
+        applyFiltersAndSort()
     }
 
     fun applyFilter(filter: String) {
-        val all = uiState.value.apoiados
-        val filtered = if (filter == "Todos") {
-            all
-        } else {
-            all.filter { it.displayStatus.equals(filter, ignoreCase = true) }
-        }
-        uiState.value = uiState.value.copy(filteredApoiados = filtered, currentFilter = filter)
+        uiState.value = uiState.value.copy(currentFilter = filter)
+        applyFiltersAndSort()
     }
 
-    fun selectApoiado(item: ApoiadoItem?) {
-        uiState.value = uiState.value.copy(selectedApoiado = item)
+    fun applySort(order: SortOrder) {
+        uiState.value = uiState.value.copy(sortOrder = order)
+        applyFiltersAndSort()
     }
+
+    private fun applyFiltersAndSort() {
+        val state = uiState.value
+        var result = state.apoiados
+
+        // 1. Filtrar por Estado (Dropdown)
+        if (state.currentFilter != "Todos") {
+            result = result.filter { it.displayStatus.equals(state.currentFilter, ignoreCase = true) }
+        }
+
+        // 2. Filtrar por Pesquisa
+        if (state.searchQuery.isNotBlank()) {
+            val q = state.searchQuery.trim().lowercase()
+            result = result.filter {
+                it.nome.lowercase().contains(q) ||
+                        it.id.lowercase().contains(q) ||
+                        it.displayStatus.lowercase().contains(q)
+            }
+        }
+
+        // 3. Ordenar
+        result = when (state.sortOrder) {
+            SortOrder.NOME_ASC -> result.sortedBy { it.nome.lowercase() }
+            SortOrder.NOME_DESC -> result.sortedByDescending { it.nome.lowercase() }
+            SortOrder.ID_ASC -> result.sortedBy { it.id.lowercase() }
+            SortOrder.ID_DESC -> result.sortedByDescending { it.id.lowercase() }
+            SortOrder.STATUS_ASC -> result.sortedBy { it.displayStatus.lowercase() }
+            SortOrder.STATUS_DESC -> result.sortedByDescending { it.displayStatus.lowercase() }
+        }
+
+        uiState.value = state.copy(filteredApoiados = result)
+    }
+
+    fun selectApoiado(item: ApoiadoItem?) { uiState.value = uiState.value.copy(selectedApoiado = item) }
 
     // --- AÇÕES DE ESTADO ---
 
-    // 1. Desbloquear: Volta a ter de preencher dados
-    fun unblockApoiado(id: String) {
-        updateStatus(id, mapOf(
-            "estadoConta" to "Correcao_Dados",
-            "dadosIncompletos" to true,
-            "bloqueadoPor" to null
-        ))
-    }
+    fun unblockApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Correcao_Dados", "dadosIncompletos" to true, "bloqueadoPor" to null)) }
 
-    // 2. Bloquear
-    fun blockApoiado(id: String) {
-        updateStatus(id, mapOf("estadoConta" to "Bloqueado"))
-    }
+    fun blockApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Bloqueado")) }
 
-    // 3. Suspender
-    fun suspendApoiado(id: String) {
-        updateStatus(id, mapOf("estadoConta" to "Suspenso"))
-    }
+    // Mantém na BD como "Suspenso", mas na UI mostra "Apoio Pausado"
+    fun suspendApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Suspenso")) }
 
-    // 4. Voltar a Ajudar (Reativar) -> Fica Aprovado
-    fun reactivateApoiado(id: String) {
-        updateStatus(id, mapOf("estadoConta" to "Aprovado"))
-    }
+    fun reactivateApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Aprovado")) }
 
     private fun updateStatus(id: String, updates: Map<String, Any?>) {
         db.collection("apoiados").document(id).update(updates)
-            .addOnFailureListener {
-                // Opcional: Tratar erro
-            }
+    }
+
+    fun exportToCSV(context: Context) {
+        val data = uiState.value.filteredApoiados
+        val csvHeader = "ID,Nome,Email,Status,Contacto,Nacionalidade\n"
+        val csvBody = data.joinToString("\n") {
+            "${it.id},\"${it.nome}\",${it.email},${it.displayStatus},${it.contacto},${it.nacionalidade}"
+        }
+        val csvContent = csvHeader + csvBody
+
+        try {
+            val fileName = "apoiados_export_${System.currentTimeMillis()}.csv"
+            val path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(path, fileName)
+            FileOutputStream(file).use { it.write(csvContent.toByteArray()) }
+            Toast.makeText(context, "Guardado em Downloads: $fileName", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(context, "Erro ao exportar: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
