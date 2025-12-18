@@ -47,6 +47,11 @@ import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
 import androidx.navigation.navArgument
+import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignsView
+import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
+import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +116,21 @@ class MainActivity : ComponentActivity() {
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
+                    "campaigns" -> HeaderConfig(
+                        title = "Campanhas",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "campaignCreate" -> HeaderConfig(
+                        title = "Nova Campanha",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "campaignResults/{campaignName}" -> HeaderConfig(
+                        title = "Resultados",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     else -> null
                 }
 
@@ -148,6 +168,23 @@ class MainActivity : ComponentActivity() {
                         composable("validateAccounts") { ValidateAccountsView(navController = navController) }
                         composable("accountBlocked") { BlockedAccountScreen(navController = navController) }
                         composable("submittedDocuments") {SubmittedDocumentsView(navController = navController)}
+                        composable("campaigns") {
+                            CampaignsView(navController = navController)
+                        }
+
+// 2. Rota de Criação
+                        composable("campaignCreate") {
+                            CampaignCreateView(navController = navController)
+                        }
+
+// 3. Rota de Resultados (passando o nome da campanha)
+                        composable(
+                            route = "campaignResults/{campaignName}",
+                            arguments = listOf(navArgument("campaignName") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val name = backStackEntry.arguments?.getString("campaignName") ?: ""
+                            CampaignResultsView(navController = navController, campaignName = name)
+                        }
                         // --- NOVA ROTA PARA O FORMUL ÁRIO DE DADOS ---
                         composable("completeData/{docId}") { backStackEntry ->
                             val docId = backStackEntry.arguments?.getString("docId") ?: ""
