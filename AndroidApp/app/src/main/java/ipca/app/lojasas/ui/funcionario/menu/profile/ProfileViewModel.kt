@@ -7,17 +7,31 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.data.UserRole
+import java.util.Date
 
 data class ProfileState(
     var numMecanografico: String = "",
     var nome: String = "",
     var contacto: String = "",
     var email: String = "",
-    var documentNumber: String = "", // <--- MUDADO DE 'nif' PARA 'documentNumber'
+    var documentNumber: String = "",
     var documentType: String = "NIF",
     var morada: String = "",
     var codPostal: String = "",
     var role: UserRole? = null,
+
+    // --- NOVOS CAMPOS DO FORMULÁRIO ---
+    var nacionalidade: String = "",
+    var dataNascimento: Date? = null,
+    var relacaoIPCA: String = "",
+    var curso: String = "",
+    var graoEnsino: String = "",
+    var apoioEmergencia: Boolean = false,
+    var bolsaEstudos: Boolean = false,
+    var valorBolsa: String = "",
+    var necessidades: List<String> = emptyList(),
+    // ----------------------------------
+
     var isLoading: Boolean = true,
     var error: String? = null,
     var success: Boolean = false
@@ -70,19 +84,34 @@ class ProfileViewModel : ViewModel() {
 
     private fun fillState(data: Map<String, Any>?, docId: String, role: UserRole) {
         if (data == null) return
+
+        // Conversão segura da data
+        val dtNasc = try {
+            (data["dataNascimento"] as? com.google.firebase.Timestamp)?.toDate()
+        } catch (e: Exception) { null }
+
         uiState.value = ProfileState(
             numMecanografico = docId,
             nome = data["nome"] as? String ?: "",
             contacto = data["contacto"] as? String ?: "",
             email = data["email"] as? String ?: data["emailApoiado"] as? String ?: "",
-
-            // CORREÇÃO CRÍTICA: Lê "documentNumber" da BD
             documentNumber = data["documentNumber"] as? String ?: "",
-
             documentType = data["documentType"] as? String ?: "NIF",
             morada = data["morada"] as? String ?: "",
             codPostal = data["codPostal"] as? String ?: "",
             role = role,
+
+            // Preenchimento dos novos campos
+            nacionalidade = data["nacionalidade"] as? String ?: "",
+            dataNascimento = dtNasc,
+            relacaoIPCA = data["relacaoIPCA"] as? String ?: "",
+            curso = data["curso"] as? String ?: "",
+            graoEnsino = data["graoEnsino"] as? String ?: "",
+            apoioEmergencia = data["apoioEmergenciaSocial"] as? Boolean ?: false,
+            bolsaEstudos = data["bolsaEstudos"] as? Boolean ?: false,
+            valorBolsa = (data["valorBolsa"] as? String) ?: "",
+            necessidades = (data["necessidade"] as? List<String>) ?: emptyList(),
+
             isLoading = false
         )
     }
@@ -97,6 +126,9 @@ class ProfileViewModel : ViewModel() {
         uiState.value = state.copy(isLoading = true)
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
 
+        // Nota: Apenas permitimos editar os dados básicos de contacto aqui.
+        // Os dados sensíveis (bolsa, curso, etc) continuam "read-only" neste ecrã
+        // para evitar inconsistências após validação.
         val updates = hashMapOf<String, Any>(
             "nome" to state.nome,
             "contacto" to state.contacto,
@@ -115,6 +147,7 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
+    // ... (restantes funções deleteAccount e changePassword mantêm-se iguais) ...
     fun deleteAccount(onSuccess: () -> Unit) {
         val state = uiState.value
         if (state.role == null || state.numMecanografico.isEmpty()) return

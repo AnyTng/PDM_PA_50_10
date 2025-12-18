@@ -113,7 +113,6 @@ fun ProfileView(
                 // --- DOCUMENTO (Dinâmico: NIF ou Passaporte) ---
                 val documentLabel = if (state.documentType == "Passaporte") "Passaporte" else "NIF"
                 FormSection(title = documentLabel) {
-                    // ALTERADO: state.documentNumber
                     ReadOnlyInput(value = state.documentNumber, placeholder = documentLabel)
                 }
 
@@ -126,61 +125,24 @@ fun ProfileView(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // --- BOTÃO TROCAR SENHA ---
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showPasswordDialog = true }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 18.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Trocar Senha",
-                            color = Color.Black,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
+                // --- BOTÕES DE AÇÃO (Refatorado para usar o novo componente) ---
+                ProfileOptionCard(
+                    text = "Trocar Senha",
+                    textColor = Color.Black,
+                    onClick = { showPasswordDialog = true }
+                )
 
-                // --- BOTÃO APAGAR CONTA ---
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showDeleteDialog = true }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 18.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Apagar Conta",
-                            color = Color.Red,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
+                ProfileOptionCard(
+                    text = "Apagar Conta",
+                    textColor = Color.Red,
+                    onClick = { showDeleteDialog = true }
+                )
 
                 Spacer(modifier = Modifier.height(80.dp))
             }
         }
 
-        // --- DIALOGS (MUDANÇA DE SENHA e APAGAR CONTA) ---
-        // (Mantém-se igual ao que já tinhas)
-
+        // --- DIALOGS ---
         if (showPasswordDialog) {
             ChangePasswordDialog(
                 onDismiss = { showPasswordDialog = false },
@@ -232,7 +194,38 @@ fun ProfileView(
     }
 }
 
-// ... (Resto dos componentes ChangePasswordDialog e ReadOnlyInput mantêm-se) ...
+// --- NOVO COMPONENTE (Adicionado para corrigir o erro) ---
+@Composable
+fun ProfileOptionCard(
+    text: String,
+    textColor: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = textColor,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+// ... (Resto dos componentes existentes) ...
 @Composable
 fun ChangePasswordDialog(
     onDismiss: () -> Unit,
@@ -331,6 +324,5 @@ fun ReadOnlyInput(value: String, placeholder: String) {
 @Preview
 @Composable
 fun ProfilePreview() {
-    ProfileView(navController = rememberNavController(
-   ))
+    ProfileView(navController = rememberNavController())
 }

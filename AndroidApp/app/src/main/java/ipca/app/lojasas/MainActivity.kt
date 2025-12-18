@@ -148,7 +148,7 @@ class MainActivity : ComponentActivity() {
                         composable("validateAccounts") { ValidateAccountsView(navController = navController) }
                         composable("accountBlocked") { BlockedAccountScreen(navController = navController) }
                         composable("submittedDocuments") {SubmittedDocumentsView(navController = navController)}
-                        // --- NOVA ROTA PARA O FORMULÁRIO DE DADOS ---
+                        // --- NOVA ROTA PARA O FORMUL ÁRIO DE DADOS ---
                         composable("completeData/{docId}") { backStackEntry ->
                             val docId = backStackEntry.arguments?.getString("docId") ?: ""
                             CompleteDataView(

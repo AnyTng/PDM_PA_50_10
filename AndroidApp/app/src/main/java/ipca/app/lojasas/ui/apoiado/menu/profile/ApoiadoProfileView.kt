@@ -1,6 +1,5 @@
 package ipca.app.lojasas.ui.apoiado.menu.profile
 
-
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -18,15 +16,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.ui.funcionario.menu.profile.* // Importa componentes reutilizáveis (FormInput, etc)
+import ipca.app.lojasas.ui.funcionario.menu.profile.*
 import ipca.app.lojasas.ui.login.GreenIPCA
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun ApoiadoProfileView(
@@ -37,6 +36,7 @@ fun ApoiadoProfileView(
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
@@ -98,9 +98,15 @@ fun ApoiadoProfileView(
                     FormInput(value = state.nome, onValueChange = { viewModel.onNomeChange(it) }, placeholder = "Nome")
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // NIF/Passaporte (Apenas Leitura aqui, pois é chave)
                     val docLabel = if(state.documentType == "Passaporte") "Passaporte" else "NIF"
                     ReadOnlyInput(value = state.documentNumber, placeholder = docLabel)
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ReadOnlyInput(value = state.nacionalidade, placeholder = "Nacionalidade")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val dataNascStr = state.dataNascimento?.let { dateFormatter.format(it) } ?: ""
+                    ReadOnlyInput(value = dataNascStr, placeholder = "Data de Nascimento")
                 }
 
                 // --- CONTACTOS ---
@@ -117,6 +123,31 @@ fun ApoiadoProfileView(
                     FormInput(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, placeholder = "Código Postal")
                 }
 
+                // --- DADOS SOCIAIS / ACADÉMICOS (NOVO) ---
+                FormSection(title = "Dados Sócio-Económicos") {
+                    ReadOnlyInput(value = state.relacaoIPCA, placeholder = "Relação com o IPCA")
+
+                    if (state.relacaoIPCA == "Estudante") {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ReadOnlyInput(value = state.curso, placeholder = "Curso")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ReadOnlyInput(value = state.graoEnsino, placeholder = "Grau de Ensino")
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        val bolsaTexto = if (state.bolsaEstudos) "Sim (${state.valorBolsa} €)" else "Não"
+                        ReadOnlyInput(value = bolsaTexto, placeholder = "Bolsa de Estudos")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val emergenciaTexto = if (state.apoioEmergencia) "Sim" else "Não"
+                    ReadOnlyInput(value = emergenciaTexto, placeholder = "Apoio de Emergência")
+
+                    if (state.necessidades.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        ReadOnlyInput(value = state.necessidades.joinToString(", "), placeholder = "Necessidades")
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // --- OPÇÕES DE CONTA ---
@@ -127,7 +158,7 @@ fun ApoiadoProfileView(
             }
         }
 
-        // --- DIALOGS (Reutilizados do pacote profile) ---
+        // --- DIALOGS (Mantêm-se iguais) ---
         if (showPasswordDialog) {
             ChangePasswordDialog(
                 onDismiss = { showPasswordDialog = false },
@@ -161,23 +192,6 @@ fun ApoiadoProfileView(
                 },
                 containerColor = Color.White
             )
-        }
-    }
-}
-
-@Composable
-fun ProfileOptionCard(text: String, textColor: Color, onClick: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth().clickable { onClick() }
-    ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = text, color = textColor, fontSize = 18.sp, fontWeight = FontWeight.Medium)
         }
     }
 }

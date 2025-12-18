@@ -9,7 +9,7 @@ import com.google.firebase.firestore.firestore
 import java.util.Calendar
 import java.util.Date
 
-// ... (Mantenha as data classes ValidateState, ApoiadoSummary, ApoiadoDetails, DocumentSummary iguais) ...
+// Estado da UI
 data class ValidateState(
     val pendingAccounts: List<ApoiadoSummary> = emptyList(),
     val selectedApoiadoDetails: ApoiadoDetails? = null,
@@ -18,23 +18,41 @@ data class ValidateState(
     val error: String? = null
 )
 
+// Resumo para a lista
 data class ApoiadoSummary(
     val id: String,
     val nome: String,
     val dataPedido: Date?
 )
 
+// Detalhes completos para o pop-up
 data class ApoiadoDetails(
     val id: String,
     val nome: String,
     val email: String,
     val contacto: String,
-    val nif: String,
+
+    // Identificação Civil
+    val documentNumber: String, // Substitui o antigo 'nif'
+    val documentType: String,   // "NIF" ou "Passaporte"
     val morada: String,
-    val tipo: String,
-    val dadosIncompletos: Boolean
+
+    // Relação com IPCA
+    val tipo: String, // Estudante, Funcionário, etc.
+    val dadosIncompletos: Boolean,
+
+    // Campos do Formulário "CompleteData"
+    val nacionalidade: String,
+    val dataNascimento: Date?,
+    val curso: String?,
+    val grauEnsino: String?,
+    val apoioEmergencia: Boolean,
+    val bolsaEstudos: Boolean,
+    val valorBolsa: String?,
+    val necessidades: List<String>
 )
 
+// Resumo dos documentos submetidos
 data class DocumentSummary(
     val typeTitle: String,
     val fileName: String,
@@ -66,7 +84,7 @@ class ValidateAccountsViewModel : ViewModel() {
                     ApoiadoSummary(
                         id = doc.id,
                         nome = doc.getString("nome") ?: "Sem Nome",
-                        dataPedido = null
+                        dataPedido = null // Pode-se adicionar data de pedido se existir no doc
                     )
                 }
                 uiState.value = uiState.value.copy(pendingAccounts = list, isLoading = false)
@@ -76,24 +94,43 @@ class ValidateAccountsViewModel : ViewModel() {
             }
     }
 
-    // --- CORREÇÃO AQUI ---
     fun selectApoiado(apoiadoId: String) {
         uiState.value = uiState.value.copy(isLoading = true)
 
         db.collection("apoiados").document(apoiadoId).get()
             .addOnSuccessListener { doc ->
+
+                // Tentar ler a data de nascimento como Timestamp (formato Firestore)
+                val dtNasc = try {
+                    doc.getTimestamp("dataNascimento")?.toDate()
+                } catch (e: Exception) { null }
+
                 val details = ApoiadoDetails(
                     id = doc.id,
                     nome = doc.getString("nome") ?: "",
                     email = doc.getString("email") ?: doc.getString("emailApoiado") ?: "",
                     contacto = doc.getString("contacto") ?: "",
-                    nif = doc.getString("documentNumber") ?: "",
+
+                    // Lê o tipo de documento e o número guardados no perfil
+                    documentNumber = doc.getString("documentNumber") ?: "",
+                    documentType = doc.getString("documentType") ?: "NIF",
+
                     morada = "${doc.getString("morada")}, ${doc.getString("codPostal")}",
                     tipo = doc.getString("relacaoIPCA") ?: "N/A",
-                    dadosIncompletos = doc.getBoolean("dadosIncompletos") ?: false
+                    dadosIncompletos = doc.getBoolean("dadosIncompletos") ?: false,
+
+                    // Lê os dados extra do formulário de preenchimento
+                    nacionalidade = doc.getString("nacionalidade") ?: "—",
+                    dataNascimento = dtNasc,
+                    curso = doc.getString("curso"),
+                    grauEnsino = doc.getString("graoEnsino"),
+                    apoioEmergencia = doc.getBoolean("apoioEmergenciaSocial") ?: false,
+                    bolsaEstudos = doc.getBoolean("bolsaEstudos") ?: false,
+                    valorBolsa = doc.getString("valorBolsa"),
+                    necessidades = (doc.get("necessidade") as? List<String>) ?: emptyList()
                 )
 
-                // CORREÇÃO: Removemos o .orderBy("date") da query para evitar erro de índice
+                // Buscar documentos submetidos (ordenados por entrega descrescente)
                 db.collection("apoiados").document(apoiadoId)
                     .collection("Submissoes")
                     .orderBy("numeroEntrega", Query.Direction.DESCENDING)
@@ -108,7 +145,7 @@ class ValidateAccountsViewModel : ViewModel() {
                                 entrega = fileDoc.getLong("numeroEntrega")?.toInt() ?: 1
                             )
                         }
-                            // CORREÇÃO: Ordenamos a lista em memória (Kotlin)
+                            // Ordenação secundária por data em memória
                             .sortedWith(compareByDescending<DocumentSummary> { it.entrega }.thenByDescending { it.date })
 
                         uiState.value = uiState.value.copy(
@@ -117,11 +154,11 @@ class ValidateAccountsViewModel : ViewModel() {
                             isLoading = false
                         )
                     }
-                    .addOnFailureListener { // Adicionado tratamento de erro
-                        uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar docs: ${it.message}")
+                    .addOnFailureListener {
+                        uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar documentos: ${it.message}")
                     }
             }
-            .addOnFailureListener { // Adicionado tratamento de erro
+            .addOnFailureListener {
                 uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar perfil: ${it.message}")
             }
     }
@@ -130,7 +167,7 @@ class ValidateAccountsViewModel : ViewModel() {
         uiState.value = uiState.value.copy(selectedApoiadoDetails = null, apoaidoDocuments = emptyList())
     }
 
-    // ... (Mantenha as funções approveAccount, denyAccount, blockAccount, updateApoiadoStatus, etc. iguais) ...
+    // --- AÇÕES DE VALIDAÇÃO ---
 
     fun approveAccount(apoiadoId: String, onSuccess: () -> Unit) {
         getCurrentFuncionarioId { funcionarioId ->
@@ -152,6 +189,7 @@ class ValidateAccountsViewModel : ViewModel() {
                 "negadoPor" to funcionarioId,
                 "data" to Date()
             )
+            // Guarda o histórico da negação
             db.collection("apoiados").document(apoiadoId)
                 .collection("JustificacoesNegacao")
                 .add(denialData)
@@ -197,6 +235,7 @@ class ValidateAccountsViewModel : ViewModel() {
             }
     }
 
+    // Calcula validade até 31 de Agosto do ano letivo seguinte/corrente
     private fun getNextAugust31(): Date {
         val calendar = Calendar.getInstance()
         val currentYear = calendar.get(Calendar.YEAR)
