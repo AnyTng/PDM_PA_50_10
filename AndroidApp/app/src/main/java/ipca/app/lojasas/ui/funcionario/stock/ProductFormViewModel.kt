@@ -4,8 +4,11 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import ipca.app.lojasas.data.campaigns.Campaign
+import ipca.app.lojasas.data.campaigns.CampaignRepository
 import ipca.app.lojasas.data.products.ProductUpsert
 import ipca.app.lojasas.data.products.ProductsRepository
+import java.util.Calendar
 import java.util.Date
 
 data class ProductFormUiState(
@@ -14,13 +17,14 @@ data class ProductFormUiState(
     val error: String? = null,
     val productId: String? = null,
 
-    val availableCategories: List<String> = emptyList(), // Lista para o dropdown
+    val availableCategories: List<String> = emptyList(),
+    val availableCampaigns: List<Campaign> = emptyList(),
 
     val nomeProduto: String = "",
-    val categoria: String = "", // Campo selecionado
+    val categoria: String = "",
     val subCategoria: String = "",
     val marca: String = "",
-    val campanha: String = "",
+    val campanha: String = "", // Guarda o ID da campanha
     val doado: String = "",
     val codBarras: String = "",
     val descProduto: String = "",
@@ -31,7 +35,8 @@ data class ProductFormUiState(
 )
 
 class ProductFormViewModel(
-    private val repository: ProductsRepository = ProductsRepository()
+    private val repository: ProductsRepository = ProductsRepository(),
+    private val campaignRepository: CampaignRepository = CampaignRepository()
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProductFormUiState())
@@ -39,13 +44,45 @@ class ProductFormViewModel(
 
     private var initializedKey: String? = null
 
+    init {
+        loadCategories()
+        fetchCampaigns()
+    }
+
+    private fun fetchCampaigns() {
+        campaignRepository.listenCampaigns(
+            onSuccess = { campaigns ->
+                val filtered = filterValidCampaigns(campaigns)
+                _uiState.value = _uiState.value.copy(availableCampaigns = filtered)
+            },
+            onError = {
+                println("Erro ao carregar campanhas: $it")
+            }
+        )
+    }
+
+    private fun filterValidCampaigns(campaigns: List<Campaign>): List<Campaign> {
+        val now = Date()
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.MONTH, -3)
+        val threeMonthsAgo = cal.time
+
+        return campaigns.filter { c ->
+            val inicio = c.dataInicio
+            val fim = c.dataFim
+
+            val hasStarted = !inicio.after(now)
+            // Se dataFim for null, assume-se que não expirou, caso contrário verifica a data
+            val isNotExpiredLongAgo = !fim.before(threeMonthsAgo)
+
+            hasStarted && isNotExpiredLongAgo
+        }
+    }
+
     fun start(productId: String?, prefillSubCategoria: String?) {
         val key = (productId ?: "NEW") + "|" + (prefillSubCategoria ?: "")
         if (initializedKey == key) return
         initializedKey = key
-
-        // Carregar categorias ao iniciar
-        loadCategories()
 
         if (productId.isNullOrBlank()) {
             _uiState.value = _uiState.value.copy(
@@ -69,12 +106,13 @@ class ProductFormViewModel(
                 val sizeValue = product.tamanhoValor?.let {
                     if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
                 }.orEmpty()
+
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = null,
                     productId = product.id,
                     nomeProduto = product.nomeProduto,
-                    categoria = product.categoria.orEmpty(), // Preencher categoria
+                    categoria = product.categoria.orEmpty(),
                     subCategoria = product.subCategoria,
                     marca = product.marca.orEmpty(),
                     campanha = product.campanha.orEmpty(),
@@ -101,15 +139,12 @@ class ProductFormViewModel(
             onSuccess = { categories ->
                 _uiState.value = _uiState.value.copy(availableCategories = categories)
             },
-            onError = {
-                // Erro silencioso ou log, para não bloquear o utilizador
-                println("Erro ao carregar categorias: ${it.message}")
-            }
+            onError = { println("Erro ao carregar categorias: ${it.message}") }
         )
     }
 
     fun setNomeProduto(value: String) = update { copy(nomeProduto = value) }
-    fun setCategoria(value: String) = update { copy(categoria = value) } // Setter Categoria
+    fun setCategoria(value: String) = update { copy(categoria = value) }
     fun setSubCategoria(value: String) = update { copy(subCategoria = value) }
     fun setMarca(value: String) = update { copy(marca = value) }
     fun setCampanha(value: String) = update { copy(campanha = value) }
@@ -128,62 +163,43 @@ class ProductFormViewModel(
         val nomeProduto = current.nomeProduto.trim()
         val subCategoria = current.subCategoria.trim()
 
-        // Validação básica
         if (nomeProduto.isBlank() || subCategoria.isBlank()) {
             _uiState.value = current.copy(error = "Preenche pelo menos Nome e Subcategoria.")
             return
         }
 
-        val tamanhoValor = current.tamanhoValor.trim().toDoubleOrNull()
-        val tamanhoUnidade = current.tamanhoUnidade.trim().takeIf { it.isNotBlank() }
-
+        // Correção Importante: Usar .trim() em vez de .normalizedOrNull()
+        // para permitir enviar strings vazias ("") e limpar o campo na BD.
         val upsert = ProductUpsert(
             nomeProduto = nomeProduto,
-            categoria = current.categoria.normalizedOrNull(), // Incluir Categoria
+            categoria = current.categoria.trim(),
             subCategoria = subCategoria,
-            marca = current.marca.normalizedOrNull(),
-            campanha = current.campanha.normalizedOrNull(),
-            doado = current.doado.normalizedOrNull(),
-            codBarras = current.codBarras.normalizedOrNull(),
+            marca = current.marca.trim(),
+            campanha = current.campanha.trim(), // Agora envia "" se estiver vazio
+            doado = current.doado.trim(),
+            codBarras = current.codBarras.trim(),
             validade = current.validade,
-            tamanhoValor = tamanhoValor,
-            tamanhoUnidade = tamanhoUnidade,
-            descProduto = current.descProduto.normalizedOrNull(),
-            estadoProduto = current.estadoProduto.normalizedOrNull() ?: "Disponivel",
+            tamanhoValor = current.tamanhoValor.trim().toDoubleOrNull(),
+            tamanhoUnidade = current.tamanhoUnidade.trim().takeIf { it.isNotBlank() },
+            descProduto = current.descProduto.trim(),
+            estadoProduto = current.estadoProduto.trim().ifBlank { "Disponivel" },
             idFunc = FirebaseAuth.getInstance().currentUser?.uid
         )
 
         _uiState.value = current.copy(isSaving = true, error = null)
-        val id = current.productId
-        if (id.isNullOrBlank()) {
-            repository.createProduct(
-                product = upsert,
-                onSuccess = { newId ->
-                    _uiState.value = _uiState.value.copy(isSaving = false, productId = newId)
-                    onSuccess(newId)
-                },
-                onError = { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        error = e.message ?: "Erro ao criar produto."
-                    )
-                }
-            )
+
+        val handlerSuccess = { _: String ->
+            _uiState.value = _uiState.value.copy(isSaving = false)
+            onSuccess(_uiState.value.productId ?: "")
+        }
+        val handlerError = { e: Exception ->
+            _uiState.value = _uiState.value.copy(isSaving = false, error = e.message)
+        }
+
+        if (current.productId.isNullOrBlank()) {
+            repository.createProduct(upsert, { id -> handlerSuccess(id) }, handlerError)
         } else {
-            repository.updateProduct(
-                productId = id,
-                product = upsert,
-                onSuccess = {
-                    _uiState.value = _uiState.value.copy(isSaving = false)
-                    onSuccess(id)
-                },
-                onError = { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isSaving = false,
-                        error = e.message ?: "Erro ao guardar produto."
-                    )
-                }
-            )
+            repository.updateProduct(current.productId!!, upsert, { handlerSuccess(current.productId) }, handlerError)
         }
     }
 
@@ -192,4 +208,5 @@ class ProductFormViewModel(
     }
 }
 
+// Mantido apenas para lógica interna se necessário, mas removido do uso no save()
 private fun String.normalizedOrNull(): String? = trim().takeIf { it.isNotBlank() }

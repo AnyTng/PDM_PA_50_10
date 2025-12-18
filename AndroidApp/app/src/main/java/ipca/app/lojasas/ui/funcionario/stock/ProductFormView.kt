@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
@@ -21,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
 import ipca.app.lojasas.ui.theme.GreenSas
@@ -33,7 +36,7 @@ import java.util.*
 fun ProductFormView(
     navController: NavController,
     productId: String? = null,
-    prefillSubCategoria: String? = null,
+    prefillSubCategoria: String? = null, // Parâmetro restaurado!
     viewModel: ProductFormViewModel = viewModel()
 ) {
     val state by viewModel.uiState
@@ -41,7 +44,7 @@ fun ProductFormView(
 
     val startScan = rememberBarcodeScanner(
         onScanned = { code -> viewModel.setCodBarras(code) },
-        onError = { /* Lidar com erro se necessário */ }
+        onError = { /* Log error */ }
     )
 
     LaunchedEffect(productId, prefillSubCategoria) {
@@ -100,9 +103,7 @@ fun ProductFormView(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // 1. Campos Principais (Identificação)
-
-                // NOVO: Autocomplete para Categoria
+                // 1. Campos Principais
                 StockAutocomplete(
                     label = "Categoria (Ex: Alimentar)",
                     value = state.categoria,
@@ -130,12 +131,15 @@ fun ProductFormView(
 
                 // 2. Detalhes de Origem (Campanha e Doador)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StockInput(
+                    // SELETOR DE CAMPANHA (Novo)
+                    StockCampaignSelector(
                         label = "Campanha",
-                        value = state.campanha,
-                        onValueChange = { viewModel.setCampanha(it) },
+                        selectedId = state.campanha,
+                        campaigns = state.availableCampaigns,
+                        onCampaignSelected = { viewModel.setCampanha(it) },
                         modifier = Modifier.weight(1f)
                     )
+
                     StockInput(
                         label = "Origem / Doador",
                         value = state.doado,
@@ -154,7 +158,7 @@ fun ProductFormView(
                         modifier = Modifier.weight(1f)
                     )
                     StockInput(
-                        label = "Unidade (Kg, L...)",
+                        label = "Unidade (Kg...)",
                         value = state.tamanhoUnidade,
                         onValueChange = { viewModel.setTamanhoUnidade(it) },
                         modifier = Modifier.weight(1f)
@@ -194,13 +198,14 @@ fun ProductFormView(
                     }
                 }
 
-                // Botão de Guardar
+                if (state.error != null) {
+                    Text(text = state.error!!, color = MaterialTheme.colorScheme.error)
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                        viewModel.save {
-                            navController.popBackStack()
-                        }
+                        viewModel.save { navController.popBackStack() }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -223,7 +228,79 @@ fun ProductFormView(
     }
 }
 
-// --- COMPONENTE AUTOCOMPLETE ---
+// --- COMPONENTES AUXILIARES ---
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StockCampaignSelector(
+    label: String,
+    selectedId: String,
+    campaigns: List<Campaign>,
+    onCampaignSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Mostra o nome da campanha se encontrada, senão mostra o ID ou "Nenhuma"
+    val displayText = campaigns.find { it.id == selectedId }?.nomeCampanha
+        ?: if (selectedId.isNotBlank()) "ID: $selectedId" else ""
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
+        ) {
+            OutlinedTextField(
+                value = displayText,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(label) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                shape = RoundedCornerShape(10.dp),
+                singleLine = true,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GreenSas,
+                    focusedLabelColor = GreenSas,
+                    focusedTextColor = Color.Black,
+                    unfocusedBorderColor = Color.Gray,
+                    unfocusedLabelColor = Color.Black,
+                    unfocusedTextColor = Color.Black
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color.White)
+            ) {
+                // Opção para limpar
+                DropdownMenuItem(
+                    text = { Text("Nenhuma", color = Color.Gray) },
+                    onClick = {
+                        onCampaignSelected("")
+                        expanded = false
+                    }
+                )
+
+                campaigns.forEach { campaign ->
+                    DropdownMenuItem(
+                        text = { Text(campaign.nomeCampanha, color = Color.Black) },
+                        onClick = {
+                            onCampaignSelected(campaign.id)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StockAutocomplete(
@@ -234,8 +311,6 @@ fun StockAutocomplete(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-
-    // Filtra sugestões (ignora case)
     val filteredSuggestions = suggestions.filter {
         it.contains(value, ignoreCase = true)
     }
@@ -254,7 +329,7 @@ fun StockAutocomplete(
                 label = { Text(label) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(), // Ancorar menu
+                    .menuAnchor(),
                 shape = RoundedCornerShape(10.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -267,11 +342,12 @@ fun StockAutocomplete(
                     unfocusedTextColor = Color.Black
                 ),
                 trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    if (filteredSuggestions.isNotEmpty()) {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    }
                 }
             )
 
-            // Só mostrar menu se houver sugestões e o utilizador estiver a editar
             if (filteredSuggestions.isNotEmpty() && expanded) {
                 ExposedDropdownMenu(
                     expanded = expanded,

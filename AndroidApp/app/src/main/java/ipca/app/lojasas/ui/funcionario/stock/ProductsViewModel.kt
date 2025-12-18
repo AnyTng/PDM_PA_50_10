@@ -69,10 +69,10 @@ class ProductsViewModel(
 
 private fun productsToGroups(products: List<Product>): List<StockGroupUi> {
     return products
-        .groupBy { it.subCategoria.trim() }
-        .map { (subCategoria, groupProducts) ->
+        .groupBy { it.nomeProduto.trim() } // Agrupa pelo nomeProduto (ex: Arroz)
+        .map { (nomeProduto, groupProducts) ->
             StockGroupUi(
-                name = subCategoria.ifBlank { "—" },
+                name = nomeProduto.ifBlank { "—" },
                 availableCount = groupProducts.count { it.isAvailable() }
             )
         }
@@ -84,4 +84,3 @@ private fun Product.isAvailable(): Boolean {
     if (status.isNullOrBlank()) return true
     return status.startsWith("dispon")
 }
-
