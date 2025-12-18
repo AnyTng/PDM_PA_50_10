@@ -71,8 +71,9 @@ class CampaignRepository {
                 val products = result.documents.mapNotNull { it.toProductOrNull() }
                 val total = products.size
 
-                // Agrupar por SubCategoria (Mercearia, Higiene, etc.)
-                val counts = products.groupingBy { it.subCategoria }.eachCount()
+                // CORREÇÃO: Agrupar por Categoria em vez de SubCategoria
+                // Se a categoria for nula, usamos string vazia "" (que a View mostra como "Outros")
+                val counts = products.groupingBy { it.categoria ?: "" }.eachCount()
 
                 // Calcular Percentagens
                 val percentages = counts.mapValues { (_, count) ->
