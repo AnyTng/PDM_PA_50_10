@@ -27,7 +27,7 @@ class MenuApoiadoViewModel : ViewModel() {
                         val doc = documents.documents[0]
                         val estado = doc.getString("estadoConta") ?: ""
                         // Se estiver aprovado, fica true
-                        isApproved.value = (estado == "Aprovado")
+                        isApproved.value = (estado == "Aprovado" || estado == "Suspenso")
                     }
                 }
         }

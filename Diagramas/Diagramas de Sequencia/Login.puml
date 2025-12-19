@@ -1,0 +1,46 @@
+@startuml
+title Login — Autenticar Utilizador (Colaborador / Beneficiário)
+
+actor "Utilizador" as U
+participant "App Mobile" as APP
+participant "Firebase Auth" as AUTH
+database "Firestore" as DB
+
+== Entrar (Login) ==
+U -> APP: Preenche Email + Password
+U -> APP: Toca em "Login"
+APP -> APP: Validar campos (vazios/formato email)
+
+alt Campos inválidos
+  APP -> U: Mostrar erro (ex.: "Email inválido" / "Password vazia")
+else Campos OK
+  APP -> AUTH: signInWithEmailAndPassword(email, password)
+
+  alt Credenciais inválidas / utilizador não existe / bloqueado
+    AUTH --> APP: Erro (auth/wrong-password,\nauth/user-not-found,\nauth/user-disabled...)
+    APP -> U: Mostrar mensagem de erro
+  else Login com sucesso
+    AUTH --> APP: Success (uid + idToken)
+
+    APP -> DB: get users/{uid} (perfil)
+    DB --> APP: perfil {role, estado, ...}
+
+    alt Perfil não existe / dados inconsistentes
+      APP -> U: Mostrar erro ("Conta sem perfil. Contacte o SAS.")
+    else Perfil existe
+      alt role = "COLABORADOR"
+        APP -> APP: Navegar para Home Colaborador
+        APP -> U: "Entrou na app"
+      else role = "BENEFICIARIO"
+        APP -> APP: Navegar para Home Beneficiário
+        APP -> U: "Entrou na app"
+      end
+    end
+  end
+end
+
+== Não tem conta? (Registo) ==
+U -> APP: Toca em "Não tens conta?"
+APP -> APP: Navegar para ecrã de Registo
+
+@enduml

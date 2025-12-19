@@ -1,0 +1,126 @@
+@startuml
+title Gestão de Apoiados — Listar, Filtrar, Ordenar, Detalhes, Bloquear/Desbloquear, Exportar CSV
+
+actor "Colaborador" as U
+boundary "ApoiadosListView (Compose UI)" as UI
+control "ApoiadosListViewModel" as VM
+database "Firestore\ncollection: apoiados" as DB
+collections "Storage (Downloads)" as FS
+entity "Toast" as TOAST
+
+== Abrir ecrã ==
+U -> UI: Abre "Gestão de Apoiados"
+UI -> VM: viewModel() (criação/obtenção)
+note right of VM
+init { loadApoiados() }
+end note
+
+VM -> DB: addSnapshotListener("apoiados")
+DB --> VM: callback(snapshot) [lista docs]
+VM -> VM: map docs -> ApoiadoItem\n- rawStatus = estadoConta\n- displayStatus mapping\n  * Suspenso -> "Apoio Pausado"\n  * Falta_Documentos/Correcao_Dados/"" -> "Por Submeter"
+VM -> VM: uiState.apoiados = list\nisLoading=false
+VM -> VM: applyFiltersAndSort()
+VM --> UI: uiState atualizado
+UI --> U: Renderiza lista (cards) + toolbar
+
+== Pesquisa (barra "Pesquisar...") ==
+U -> UI: Escreve texto (searchQuery)
+UI -> VM: onSearchQueryChange(query)
+VM -> VM: uiState.searchQuery = query
+VM -> VM: applyFiltersAndSort()\n(filtro local: nome/id/status)
+VM --> UI: uiState.filteredApoiados atualizado
+UI --> U: Lista filtrada (sem chamada à BD)
+
+== Filtro (ícone FilterList) ==
+U -> UI: Abre menu de filtros
+U -> UI: Seleciona filtro (ex.: "Aprovado", "Bloqueado"...)
+UI -> VM: applyFilter(filter)
+VM -> VM: uiState.currentFilter = filter
+VM -> VM: applyFiltersAndSort()\n(filtro local por displayStatus)
+VM --> UI: uiState.filteredApoiados atualizado
+UI --> U: Lista filtrada
+
+== Ordenação (ícone Sort) ==
+U -> UI: Seleciona ordenação (Nome A-Z, Z-A, ID, Status)
+UI -> VM: applySort(order)
+VM -> VM: uiState.sortOrder = order
+VM -> VM: applyFiltersAndSort()\n(ordenação local)
+VM --> UI: uiState.filteredApoiados atualizado
+UI --> U: Lista ordenada
+
+== Ver Detalhes (TextButton "Detalhes") ==
+U -> UI: Toca "Detalhes" num card
+UI -> VM: selectApoiado(apoiado)
+VM -> VM: uiState.selectedApoiado = apoiado
+VM --> UI: uiState atualizado
+UI --> U: Abre Dialog com dados do ApoiadoItem\n(sem fetch extra à BD)
+
+U -> UI: Fecha Dialog (X ou outside)
+UI -> VM: selectApoiado(null)
+VM -> VM: uiState.selectedApoiado = null
+VM --> UI: uiState atualizado
+UI --> U: Dialog fechado
+
+== Ações de estado (botões do card) ==
+alt rawStatus == "Bloqueado" (botão "Desbloquear")
+  U -> UI: Toca "Desbloquear"
+  UI -> VM: unblockApoiado(id)
+  VM -> VM: updateStatus(id,\n {estadoConta="Correcao_Dados",\n  dadosIncompletos=true,\n  bloqueadoPor=null})
+  VM -> DB: document(id).update(updates)
+  DB --> VM: OK
+  note right of VM
+  SnapshotListener recebe alteração e
+  atualiza lista automaticamente.
+  end note
+else rawStatus == "Aprovado" (botões "Pausar Apoio" e "Bloquear")
+  U -> UI: Toca "Pausar Apoio"
+  UI -> VM: suspendApoiado(id)
+  VM -> DB: document(id).update({estadoConta="Suspenso"})
+  DB --> VM: OK
+  note right of UI
+  UI mostra "Apoio Pausado"
+  porque displayStatus mapeia Suspenso.
+  end note
+
+  U -> UI: (ou) Toca "Bloquear"
+  UI -> VM: blockApoiado(id)
+  VM -> DB: document(id).update({estadoConta="Bloqueado"})
+  DB --> VM: OK
+else rawStatus == "Suspenso" (botões "Reativar" e "Bloquear")
+  U -> UI: Toca "Reativar"
+  UI -> VM: reactivateApoiado(id)
+  VM -> DB: document(id).update({estadoConta="Aprovado"})
+  DB --> VM: OK
+
+  U -> UI: (ou) Toca "Bloquear"
+  UI -> VM: blockApoiado(id)
+  VM -> DB: document(id).update({estadoConta="Bloqueado"})
+  DB --> VM: OK
+else Outros estados (ex.: "Analise", "Por Submeter", etc.) -> "Bloquear"
+  U -> UI: Toca "Bloquear"
+  UI -> VM: blockApoiado(id)
+  VM -> DB: document(id).update({estadoConta="Bloqueado"})
+  DB --> VM: OK
+end
+
+== Exportar CSV (ícone download) ==
+U -> UI: Toca ícone Download
+UI -> VM: exportToCSV(context)
+VM -> VM: Monta CSV\n(header + linhas de filteredApoiados)
+VM -> FS: Escrever ficheiro em Downloads\n(apoiados_export_<timestamp>.csv)
+alt Sucesso
+  FS --> VM: OK
+  VM -> TOAST: "Guardado em Downloads: <fileName>"
+  TOAST --> U: Mostra mensagem
+else Erro
+  FS --> VM: Exception
+  VM -> TOAST: "Erro ao exportar: <msg>"
+  TOAST --> U: Mostra mensagem
+end
+
+== Criar Apoiado (FAB "+") ==
+U -> UI: Toca FAB "+"
+UI -> UI: navController.navigate("createApoiado")
+UI --> U: Abre ecrã "createApoiado"
+
+@enduml
