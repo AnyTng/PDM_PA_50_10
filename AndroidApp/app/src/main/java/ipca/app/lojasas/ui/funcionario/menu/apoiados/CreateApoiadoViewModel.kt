@@ -153,7 +153,8 @@ class CreateApoiadoViewModel : ViewModel() {
             "estadoConta" to "Aprovado",
             "faltaDocumentos" to false,
             "dadosIncompletos" to false,
-            "mudarPass" to true
+            "mudarPass" to true,
+            "role" to "Apoiado"
         )
 
         // Guardar na coleção 'apoiados'
@@ -161,7 +162,7 @@ class CreateApoiadoViewModel : ViewModel() {
             .set(apoiadoMap)
             .addOnSuccessListener {
                 // Criar registo na coleção 'users'
-                db.collection("users").document(uid).set(mapOf("role" to "Apoiado", "email" to s.email))
+                //db.collection("users").document(uid).set(mapOf("role" to "Apoiado", "email" to s.email))
 
                 uiState.value = s.copy(isLoading = false, isSuccess = true)
             }
