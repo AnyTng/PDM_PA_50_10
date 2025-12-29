@@ -87,14 +87,6 @@ fun Footer(
             }
 
             FooterType.APOIADO -> {
-                FooterIcon(
-                    painterRes = R.drawable.shoppingbag,
-                    contentDescription = "Saco",
-                    onClick = {
-                        // Exemplo: navController.navigate("saco")
-                    },
-                    modifier = itemModifier
-                )
                 HeartHomeIcon(
                     onClick = {
                         navController.navigate("apoiadoHome") {
