@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Warning // Importante
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,6 +40,9 @@ fun ProfileView(
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    // Agora usamos o estado vindo do ViewModel
+    val isAdmin = state.isAdmin
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showPasswordDialog by remember { mutableStateOf(false) }
@@ -125,7 +130,7 @@ fun ProfileView(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // --- BOTÕES DE AÇÃO (Refatorado para usar o novo componente) ---
+                // --- BOTÕES DE AÇÃO ---
                 ProfileOptionCard(
                     text = "Trocar Senha",
                     textColor = Color.Black,
@@ -163,38 +168,66 @@ fun ProfileView(
         }
 
         if (showDeleteDialog) {
-            AlertDialog(
-                onDismissRequest = { showDeleteDialog = false },
-                title = { Text(text = "Apagar Conta") },
-                text = { Text("Tem a certeza que deseja apagar a sua conta? Esta ação é irreversível.") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showDeleteDialog = false
-                            viewModel.deleteAccount {
-                                navController.navigate("login") { popUpTo(0) }
-                            }
-                        },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
-                    ) {
-                        Text("Apagar")
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showDeleteDialog = false },
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-                    ) {
-                        Text("Cancelar")
-                    }
-                },
-                containerColor = Color.White
-            )
+            if (isAdmin) {
+                // --- DIÁLOGO PARA ADMIN (Apenas Aviso) ---
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFFA000)) },
+                    title = { Text(text = "Ação Não Permitida", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Text(
+                            "Por motivos de segurança um administrador não pode apagar a própria conta. " +
+                                    "Para isso deve procurar outro administrador para o fazer ou para o despromover para que o possa fazer. " +
+                                    "Caso não haja um outro administrador, deve promover um colaborador ao cargo.",
+                            textAlign = TextAlign.Justify
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showDeleteDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = GreenIPCA)
+                        ) {
+                            Text("Entendi")
+                        }
+                    },
+                    containerColor = Color.White
+                )
+            } else {
+                // --- DIÁLOGO PARA COLABORADOR/APOIADO (Confirmação de Apagar) ---
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text(text = "Apagar Conta") },
+                    text = { Text("Tem a certeza que deseja apagar a sua conta? Esta ação é irreversível.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showDeleteDialog = false
+                                viewModel.deleteAccount {
+                                    navController.navigate("login") { popUpTo(0) }
+                                }
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                        ) {
+                            Text("Apagar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showDeleteDialog = false },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                        ) {
+                            Text("Cancelar")
+                        }
+                    },
+                    containerColor = Color.White
+                )
+            }
         }
     }
 }
 
-// --- NOVO COMPONENTE (Adicionado para corrigir o erro) ---
+// --- COMPONENTES AUXILIARES ---
+
 @Composable
 fun ProfileOptionCard(
     text: String,
@@ -225,7 +258,6 @@ fun ProfileOptionCard(
     }
 }
 
-// ... (Resto dos componentes existentes) ...
 @Composable
 fun ChangePasswordDialog(
     onDismiss: () -> Unit,
@@ -300,7 +332,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
     BasicTextField(
         value = value,
         onValueChange = {},
-        enabled = false, // Desativa a edição
+        enabled = false,
         textStyle = TextStyle(fontSize = 16.sp, color = Color.Gray),
         singleLine = true,
         decorationBox = { innerTextField ->
@@ -308,7 +340,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
-                    .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp)) // Fundo mais escuro
+                    .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {

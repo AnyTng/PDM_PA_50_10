@@ -2,12 +2,11 @@ package ipca.app.lojasas.data
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import ipca.app.lojasas.data.UserRole.APOIADO
-import ipca.app.lojasas.data.UserRole.FUNCIONARIO
 
 enum class UserRole {
     FUNCIONARIO,
-    APOIADO
+    APOIADO,
+    ADMIN // Adicionado o novo papel
 }
 
 object UserRoleRepository {
@@ -28,25 +27,33 @@ object UserRoleRepository {
     ) {
         val normalizedEmail = email.trim()
 
-        // 1) Check funcionários
+        // 1) Verificar na coleção de funcionários (inclui Admins)
         firestore.collection(FUNCIONARIOS_COLLECTION)
             .whereEqualTo(FUNCIONARIO_EMAIL_FIELD, normalizedEmail)
             .limit(1)
             .get()
             .addOnSuccessListener { querySnapshot ->
                 if (!querySnapshot.isEmpty) {
-                    onSuccess(FUNCIONARIO)
+                    val document = querySnapshot.documents[0]
+                    // Verificar o campo 'role' no documento
+                    val roleString = document.getString("role")
+
+                    if (roleString != null && roleString.equals("Admin", ignoreCase = true)) {
+                        onSuccess(UserRole.ADMIN)
+                    } else {
+                        onSuccess(UserRole.FUNCIONARIO)
+                    }
                     return@addOnSuccessListener
                 }
 
-                // 2) If not found, check apoiados
+                // 2) Se não encontrar, verificar na coleção de apoiados
                 firestore.collection(APOIADOS_COLLECTION)
                     .whereEqualTo(APOIADO_EMAIL_FIELD, normalizedEmail)
                     .limit(1)
                     .get()
                     .addOnSuccessListener { apoiadoSnapshot ->
                         if (!apoiadoSnapshot.isEmpty) {
-                            onSuccess(APOIADO)
+                            onSuccess(UserRole.APOIADO)
                         } else {
                             onNotFound()
                         }
@@ -63,7 +70,9 @@ object UserRoleRepository {
     }
 }
 
+// Define para onde cada utilizador vai após o login
 fun UserRole.destination(): String = when (this) {
-    FUNCIONARIO -> "funcionarioHome"
-    APOIADO -> "apoiadoHome"
+    UserRole.FUNCIONARIO -> "funcionarioHome"
+    UserRole.ADMIN -> "funcionarioHome" // Admin também vai para a home (calendário), mas terá menu diferente
+    UserRole.APOIADO -> "apoiadoHome"
 }

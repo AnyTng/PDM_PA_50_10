@@ -52,7 +52,7 @@ import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
-
+import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -182,7 +182,12 @@ class MainActivity : ComponentActivity() {
                         composable("campaignCreate") {
                             CampaignCreateView(navController = navController)
                         }
+                        composable("createProfile") { CreateProfileView(navController = navController) }
 
+// NOVA ROTA: Lista de Colaboradores
+                        composable("collaboratorsList") {
+                            CollaboratorsListView(navController = navController)
+                        }
 // 3. Rota de Resultados (passando o nome da campanha)
                         composable(
                             route = "campaignResults/{campaignName}",

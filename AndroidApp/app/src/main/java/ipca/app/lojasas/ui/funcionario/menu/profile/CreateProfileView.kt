@@ -190,7 +190,24 @@ fun CreateProfileView(
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
             }
-
+            FormSection(title = "Permissões") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RoleRadioButton(
+                        selected = state.selectedRole == "Funcionario",
+                        text = "Colaborador",
+                        onClick = { viewModel.onRoleChange("Funcionario") }
+                    )
+                    Spacer(modifier = Modifier.width(24.dp))
+                    RoleRadioButton(
+                        selected = state.selectedRole == "Admin",
+                        text = "Administrador",
+                        onClick = { viewModel.onRoleChange("Admin") }
+                    )
+                }
+            }
             // REMOVIDA A SECÇÃO "TIPO?" (Role Selection)
 
             Spacer(modifier = Modifier.height(80.dp))

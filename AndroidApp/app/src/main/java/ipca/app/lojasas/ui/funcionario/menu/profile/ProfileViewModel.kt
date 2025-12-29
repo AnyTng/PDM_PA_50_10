@@ -20,7 +20,10 @@ data class ProfileState(
     var codPostal: String = "",
     var role: UserRole? = null,
 
-    // --- NOVOS CAMPOS DO FORMULÁRIO ---
+    // --- CONTROLO DE ADMIN ---
+    var isAdmin: Boolean = false, // Novo campo para controlar a UI
+
+    // --- CAMPOS DO FORMULÁRIO (Mantidos do teu código) ---
     var nacionalidade: String = "",
     var dataNascimento: Date? = null,
     var relacaoIPCA: String = "",
@@ -30,7 +33,6 @@ data class ProfileState(
     var bolsaEstudos: Boolean = false,
     var valorBolsa: String = "",
     var necessidades: List<String> = emptyList(),
-    // ----------------------------------
 
     var isLoading: Boolean = true,
     var error: String? = null,
@@ -60,12 +62,14 @@ class ProfileViewModel : ViewModel() {
         val uid = currentUser.uid
         uiState.value = uiState.value.copy(isLoading = true, error = null)
 
+        // Tenta encontrar em Funcionários
         db.collection("funcionarios").whereEqualTo("uid", uid).get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     val doc = documents.documents[0]
                     fillState(doc.data, doc.id, UserRole.FUNCIONARIO)
                 } else {
+                    // Se não for funcionário, tenta Apoiados
                     db.collection("apoiados").whereEqualTo("uid", uid).get()
                         .addOnSuccessListener { apoiadoDocs ->
                             if (!apoiadoDocs.isEmpty) {
@@ -85,10 +89,13 @@ class ProfileViewModel : ViewModel() {
     private fun fillState(data: Map<String, Any>?, docId: String, role: UserRole) {
         if (data == null) return
 
-        // Conversão segura da data
         val dtNasc = try {
             (data["dataNascimento"] as? com.google.firebase.Timestamp)?.toDate()
         } catch (e: Exception) { null }
+
+        // Verifica se é Admin baseado no campo 'role' (String) da BD
+        val roleString = data["role"] as? String ?: ""
+        val isAdminUser = role == UserRole.FUNCIONARIO && roleString.equals("Admin", ignoreCase = true)
 
         uiState.value = ProfileState(
             numMecanografico = docId,
@@ -100,8 +107,8 @@ class ProfileViewModel : ViewModel() {
             morada = data["morada"] as? String ?: "",
             codPostal = data["codPostal"] as? String ?: "",
             role = role,
+            isAdmin = isAdminUser, // Define se é admin
 
-            // Preenchimento dos novos campos
             nacionalidade = data["nacionalidade"] as? String ?: "",
             dataNascimento = dtNasc,
             relacaoIPCA = data["relacaoIPCA"] as? String ?: "",
@@ -126,9 +133,6 @@ class ProfileViewModel : ViewModel() {
         uiState.value = state.copy(isLoading = true)
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
 
-        // Nota: Apenas permitimos editar os dados básicos de contacto aqui.
-        // Os dados sensíveis (bolsa, curso, etc) continuam "read-only" neste ecrã
-        // para evitar inconsistências após validação.
         val updates = hashMapOf<String, Any>(
             "nome" to state.nome,
             "contacto" to state.contacto,
@@ -147,10 +151,15 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
-    // ... (restantes funções deleteAccount e changePassword mantêm-se iguais) ...
     fun deleteAccount(onSuccess: () -> Unit) {
         val state = uiState.value
         if (state.role == null || state.numMecanografico.isEmpty()) return
+
+        // Validação extra de segurança no ViewModel
+        if (state.isAdmin) {
+            uiState.value = state.copy(error = "Administradores não podem apagar a própria conta.")
+            return
+        }
 
         uiState.value = state.copy(isLoading = true)
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"

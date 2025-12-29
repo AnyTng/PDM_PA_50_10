@@ -6,7 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,19 +15,45 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun MenuView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    // Cor de fundo cinza claro igual à imagem
     val backgroundColor = Color(0xFFF2F2F2)
 
+    // Estado para saber se é Admin
+    var isAdmin by remember { mutableStateOf(false) }
+
+    // Verificar permissões ao iniciar
+    LaunchedEffect(Unit) {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            FirebaseFirestore.getInstance().collection("funcionarios")
+                .document(user.uid) // Assume-se que o ID do doc é o UID ou faz-se query
+                .get() // Nota: No teu CreateProfile usas numMecanografico como ID, precisamos procurar pelo UID
+                .addOnSuccessListener {
+                    // Como o ID do documento é o NumMecanografico, temos de fazer query pelo campo uid
+                }
+
+            // Query segura pelo UID
+            FirebaseFirestore.getInstance().collection("funcionarios")
+                .whereEqualTo("uid", user.uid)
+                .get()
+                .addOnSuccessListener { docs ->
+                    if (!docs.isEmpty) {
+                        val role = docs.documents[0].getString("role")
+                        isAdmin = role.equals("Admin", ignoreCase = true)
+                    }
+                }
+        }
+    }
+
     Scaffold(
-        containerColor = backgroundColor, // Define a cor de fundo do Scaffold
+        containerColor = backgroundColor,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
 
@@ -48,22 +74,33 @@ fun MenuView(
             ) {
                 Column {
                     MenuRow(title = "Gerir o meu Perfil") { navController.navigate("profileFuncionario") }
-                    MenuDivider()
-                    MenuRow(title = "Criar novo Colaborador") { navController.navigate("createProfile")}
-                    MenuDivider()
-                }
-            }
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    MenuRow(title = "Histórico de ações") { /* Navegar */ }
+
+                    // APENAS ADMIN VÊ ISTO
+                    if (isAdmin) {
+                        MenuDivider()
+                        MenuRow(title = "Criar novo Colaborador") { navController.navigate("createProfile") }
+                        MenuDivider()
+                        // Nova rota para ver colaboradores
+                        MenuRow(title = "Ver Colaboradores") { navController.navigate("collaboratorsList") }
+                    }
                     MenuDivider()
                 }
             }
+            if (isAdmin) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        MenuRow(title = "Historico") { /* Navegar */ }
+                        MenuDivider()
+
+                    }
+                }
+            }
+            // ... (Resto do código mantém-se igual: Histórico, Apoiados, Logout) ...
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(12.dp),
@@ -75,7 +112,7 @@ fun MenuView(
                     MenuDivider()
                     MenuRow(title = "Pedidos Urgentes") { /* Navegar */ }
                     MenuDivider()
-                    MenuRow(title = "Validar Contas") { navController.navigate("validateAccounts") }
+                    MenuRow(title = "Validar Beneficiario") { navController.navigate("validateAccounts") }
                     MenuDivider()
                     MenuRow(title = "Ver Campanhas") { navController.navigate("campaigns") }
                 }
@@ -89,19 +126,13 @@ fun MenuView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        // --- AQUI ESTÁ A CORREÇÃO ---
-
-                        // 1. Limpa a autenticação no Firebase
                         try {
                             FirebaseAuth.getInstance().signOut()
                         } catch (e: Exception) {
-                            // Caso não estejas a usar Firebase ou dê erro, o código continua
                             e.printStackTrace()
                         }
-
-                        // 2. Navega para o Login e limpa o histórico para trás
                         navController.navigate("login") {
-                            popUpTo(0) // Garante que a pilha de navegação é limpa
+                            popUpTo(0)
                         }
                     }
             ) {
@@ -160,12 +191,10 @@ fun MenuDivider() {
         thickness = 1.dp
     )
 }
-
+/*
 // --- PREVIEWS ---
-
-@Preview(showBackground = true, name = "Menu Completo Preview")
+@Preview
 @Composable
 fun MenuViewPreview() {
-    val navController = rememberNavController()
-    MenuView(navController = navController)
-}
+    MenuView(navController = NavController(LocalContext.current))
+}*/

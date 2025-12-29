@@ -93,6 +93,7 @@ fun LoginView(
                 val destination = when (role) {
                     UserRole.APOIADO -> "apoiadoHome"
                     UserRole.FUNCIONARIO -> "funcionarioHome"
+                    UserRole.ADMIN -> "funcionarioHome" // Admin segue o mesmo fluxo inicial que o funcionário
                 }
                 navController.navigate(destination) {
                     popUpTo("login") { inclusive = true }

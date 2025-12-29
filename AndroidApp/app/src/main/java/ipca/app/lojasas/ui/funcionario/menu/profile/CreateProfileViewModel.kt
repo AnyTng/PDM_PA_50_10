@@ -20,7 +20,8 @@ data class CreateProfileState(
     // var role: UserRole = UserRole.FUNCIONARIO, // Removido do State público ou fixado internamente
     var isLoading: Boolean = false,
     var error: String? = null,
-    var success: Boolean = false
+    var success: Boolean = false,
+    var selectedRole: String = "Funcionario" // Novo campo
 )
 
 class CreateProfileViewModel : ViewModel() {
@@ -38,7 +39,7 @@ class CreateProfileViewModel : ViewModel() {
     fun onDocumentTypeChange(newValue: String) { uiState.value = uiState.value.copy(documentType = newValue) }
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
     fun onCodPostalChange(newValue: String) { uiState.value = uiState.value.copy(codPostal = newValue) }
-
+    fun onRoleChange(newRole: String) { uiState.value = uiState.value.copy(selectedRole = newRole) }
     // Removido onRoleChange
 
     fun createProfile(onSuccess: () -> Unit) {
@@ -85,7 +86,7 @@ class CreateProfileViewModel : ViewModel() {
             "morada" to state.morada,
             "codPostal" to state.codPostal,
             "email" to state.email,
-            "role" to "Funcionario", // Fixado
+            "role" to state.selectedRole, // Usa o valor dinâmico ("Funcionario" ou "Admin")
             "mudarPass" to true
         )
 
