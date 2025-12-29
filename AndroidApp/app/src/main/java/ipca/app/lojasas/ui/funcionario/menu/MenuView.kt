@@ -33,14 +33,6 @@ fun MenuView(
         val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
             FirebaseFirestore.getInstance().collection("funcionarios")
-                .document(user.uid) // Assume-se que o ID do doc é o UID ou faz-se query
-                .get() // Nota: No teu CreateProfile usas numMecanografico como ID, precisamos procurar pelo UID
-                .addOnSuccessListener {
-                    // Como o ID do documento é o NumMecanografico, temos de fazer query pelo campo uid
-                }
-
-            // Query segura pelo UID
-            FirebaseFirestore.getInstance().collection("funcionarios")
                 .whereEqualTo("uid", user.uid)
                 .get()
                 .addOnSuccessListener { docs ->
@@ -52,11 +44,38 @@ fun MenuView(
         }
     }
 
+    MenuViewContent(
+        isAdmin = isAdmin,
+        backgroundColor = backgroundColor,
+        onNavigate = { route -> navController.navigate(route) },
+        onLogout = {
+            try {
+                FirebaseAuth.getInstance().signOut()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            navController.navigate("login") { popUpTo(0) }
+        },
+        modifier = modifier
+    )
+}
+
+/**
+ * UI "pura" -> usa isto nos @Preview para não bater no Firebase/Firestore.
+ */
+@Composable
+private fun MenuViewContent(
+    isAdmin: Boolean,
+    backgroundColor: Color,
+    onNavigate: (String) -> Unit,
+    onLogout: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Scaffold(
         containerColor = backgroundColor,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        modifier = modifier
     ) { innerPadding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,7 +84,7 @@ fun MenuView(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-            // --- GRUPO DE OPÇÕES PRINCIPAIS ---
+            // --- GRUPO PERFIL / ADMIN ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(12.dp),
@@ -73,19 +92,19 @@ fun MenuView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Gerir o meu Perfil") { navController.navigate("profileFuncionario") }
+                    MenuRow(title = "Gerir o meu Perfil") { onNavigate("profileFuncionario") }
 
-                    // APENAS ADMIN VÊ ISTO
                     if (isAdmin) {
                         MenuDivider()
-                        MenuRow(title = "Criar novo Colaborador") { navController.navigate("createProfile") }
+                        MenuRow(title = "Criar novo Colaborador") { onNavigate("createProfile") }
                         MenuDivider()
-                        // Nova rota para ver colaboradores
-                        MenuRow(title = "Ver Colaboradores") { navController.navigate("collaboratorsList") }
+                        MenuRow(title = "Ver Colaboradores") { onNavigate("collaboratorsList") }
                     }
                     MenuDivider()
                 }
             }
+
+            // --- BLOCO EXTRA ADMIN (como tinhas “Historico”) ---
             if (isAdmin) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -94,13 +113,13 @@ fun MenuView(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        MenuRow(title = "Historico") { /* Navegar */ }
+                        MenuRow(title = "Historico") { /* onNavigate("...") */ }
                         MenuDivider()
-
                     }
                 }
             }
-            // ... (Resto do código mantém-se igual: Histórico, Apoiados, Logout) ...
+
+            // --- OUTRAS OPÇÕES ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(12.dp),
@@ -108,13 +127,13 @@ fun MenuView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Apoiados") { navController.navigate("apoiadosList") }
+                    MenuRow(title = "Apoiados") { onNavigate("apoiadosList") }
                     MenuDivider()
-                    MenuRow(title = "Pedidos Urgentes") { /* Navegar */ }
+                    MenuRow(title = "Pedidos Urgentes") { /* onNavigate("...") */ }
                     MenuDivider()
-                    MenuRow(title = "Validar Beneficiario") { navController.navigate("validateAccounts") }
+                    MenuRow(title = "Validar Beneficiario") { onNavigate("validateAccounts") }
                     MenuDivider()
-                    MenuRow(title = "Ver Campanhas") { navController.navigate("campaigns") }
+                    MenuRow(title = "Ver Campanhas") { onNavigate("campaigns") }
                 }
             }
 
@@ -125,16 +144,7 @@ fun MenuView(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        try {
-                            FirebaseAuth.getInstance().signOut()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                        navController.navigate("login") {
-                            popUpTo(0)
-                        }
-                    }
+                    .clickable { onLogout() }
             ) {
                 Box(
                     modifier = Modifier
@@ -191,10 +201,31 @@ fun MenuDivider() {
         thickness = 1.dp
     )
 }
-/*
-// --- PREVIEWS ---
-@Preview
+
+// ---------------- PREVIEWS ----------------
+
+@Preview(showBackground = true, name = "Menu - Colaborador")
 @Composable
-fun MenuViewPreview() {
-    MenuView(navController = NavController(LocalContext.current))
-}*/
+private fun MenuViewPreview_Colaborador() {
+    MaterialTheme {
+        MenuViewContent(
+            isAdmin = false,
+            backgroundColor = Color(0xFFF2F2F2),
+            onNavigate = {},
+            onLogout = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Menu - Admin")
+@Composable
+private fun MenuViewPreview_Admin() {
+    MaterialTheme {
+        MenuViewContent(
+            isAdmin = true,
+            backgroundColor = Color(0xFFF2F2F2),
+            onNavigate = {},
+            onLogout = {}
+        )
+    }
+}

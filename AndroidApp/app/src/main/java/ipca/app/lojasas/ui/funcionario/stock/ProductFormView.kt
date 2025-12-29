@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,14 +31,15 @@ import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
 import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductFormView(
     navController: NavController,
     productId: String? = null,
-    prefillSubCategoria: String? = null, // Parâmetro restaurado!
+    prefillSubCategoria: String? = null,
     viewModel: ProductFormViewModel = viewModel()
 ) {
     val state by viewModel.uiState
@@ -51,6 +54,7 @@ fun ProductFormView(
         viewModel.start(productId, prefillSubCategoria)
     }
 
+    // Date Picker (fica aqui para não aparecer nos previews)
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             initialSelectedDateMillis = state.validade?.time ?: System.currentTimeMillis()
@@ -86,145 +90,239 @@ fun ProductFormView(
         if (state.isLoading) {
             CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
         } else {
-            Column(
+            ProductFormViewContent(
+                title = if (productId == null) "Novo Produto" else "Editar Produto",
+
+                categoria = state.categoria,
+                availableCategories = state.availableCategories,
+                onCategoriaChange = { viewModel.setCategoria(it) },
+
+                nomeProduto = state.nomeProduto,
+                onNomeProdutoChange = { viewModel.setNomeProduto(it) },
+
+                subCategoria = state.subCategoria,
+                onSubCategoriaChange = { viewModel.setSubCategoria(it) },
+
+                marca = state.marca,
+                onMarcaChange = { viewModel.setMarca(it) },
+
+                campanhaId = state.campanha,
+                campaigns = state.availableCampaigns,
+                onCampaignSelected = { viewModel.setCampanha(it) },
+
+                doado = state.doado,
+                onDoadoChange = { viewModel.setDoado(it) },
+
+                tamanhoValor = state.tamanhoValor,
+                onTamanhoValorChange = { viewModel.setTamanhoValor(it) },
+
+                tamanhoUnidade = state.tamanhoUnidade,
+                onTamanhoUnidadeChange = { viewModel.setTamanhoUnidade(it) },
+
+                validade = state.validade,
+                onValidadeClick = { showDatePicker = true },
+
+                descProduto = state.descProduto,
+                onDescProdutoChange = { viewModel.setDescProduto(it) },
+
+                codBarras = state.codBarras,
+                onCodBarrasChange = { viewModel.setCodBarras(it) },
+                onScanClick = startScan,
+
+                error = state.error,
+                isSaving = state.isSaving,
+                onSaveClick = { viewModel.save { navController.popBackStack() } }
+            )
+        }
+    }
+}
+
+/**
+ * UI "pura" -> dá para Preview sem NavController/ViewModel.
+ */
+@Composable
+private fun ProductFormViewContent(
+    title: String,
+
+    categoria: String,
+    availableCategories: List<String>,
+    onCategoriaChange: (String) -> Unit,
+
+    nomeProduto: String,
+    onNomeProdutoChange: (String) -> Unit,
+
+    subCategoria: String,
+    onSubCategoriaChange: (String) -> Unit,
+
+    marca: String,
+    onMarcaChange: (String) -> Unit,
+
+    campanhaId: String,
+    campaigns: List<Campaign>,
+    onCampaignSelected: (String) -> Unit,
+
+    doado: String,
+    onDoadoChange: (String) -> Unit,
+
+    tamanhoValor: String,
+    onTamanhoValorChange: (String) -> Unit,
+
+    tamanhoUnidade: String,
+    onTamanhoUnidadeChange: (String) -> Unit,
+
+    validade: Date?,
+    onValidadeClick: () -> Unit,
+
+    descProduto: String,
+    onDescProdutoChange: (String) -> Unit,
+
+    codBarras: String,
+    onCodBarrasChange: (String) -> Unit,
+    onScanClick: () -> Unit,
+
+    error: String?,
+    isSaving: Boolean,
+    onSaveClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Título
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontFamily = IntroFontFamily,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            ),
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // 1. Campos Principais
+        StockAutocomplete(
+            label = "Categoria (Ex: Alimentar)",
+            value = categoria,
+            suggestions = availableCategories,
+            onValueChange = onCategoriaChange
+        )
+
+        StockInput(
+            label = "Produto (Ex: Arroz)",
+            value = nomeProduto,
+            onValueChange = onNomeProdutoChange
+        )
+
+        StockInput(
+            label = "Tipo / Variedade (Ex: Carolino)",
+            value = subCategoria,
+            onValueChange = onSubCategoriaChange
+        )
+
+        StockInput(
+            label = "Marca",
+            value = marca,
+            onValueChange = onMarcaChange
+        )
+
+        // 2. Detalhes de Origem (Campanha e Doador)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StockCampaignSelector(
+                label = "Campanha",
+                selectedId = campanhaId,
+                campaigns = campaigns,
+                onCampaignSelected = onCampaignSelected,
+                modifier = Modifier.weight(1f)
+            )
+
+            StockInput(
+                label = "Origem / Doador",
+                value = doado,
+                onValueChange = onDoadoChange,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // 3. Características Físicas
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StockInput(
+                label = "Tamanho (Valor)",
+                value = tamanhoValor,
+                onValueChange = onTamanhoValorChange,
+                keyboardType = KeyboardType.Number,
+                modifier = Modifier.weight(1f)
+            )
+            StockInput(
+                label = "Unidade (Kg...)",
+                value = tamanhoUnidade,
+                onValueChange = onTamanhoUnidadeChange,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // 4. Validade
+        StockDateInput(
+            label = "Validade",
+            date = validade,
+            onClick = onValidadeClick
+        )
+
+        // 5. Descrição
+        StockInput(
+            label = "Descrição / Notas",
+            value = descProduto,
+            onValueChange = onDescProdutoChange,
+            singleLine = false
+        )
+
+        // 6. Código de Barras
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            StockInput(
+                label = "Código de Barras",
+                value = codBarras,
+                onValueChange = onCodBarrasChange,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = onScanClick,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(top = 8.dp)
+                    .background(GreenSas, shape = RoundedCornerShape(8.dp))
             ) {
-                // Título
-                Text(
-                    text = if (productId == null) "Novo Produto" else "Editar Produto",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontFamily = IntroFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                // 1. Campos Principais
-                StockAutocomplete(
-                    label = "Categoria (Ex: Alimentar)",
-                    value = state.categoria,
-                    suggestions = state.availableCategories,
-                    onValueChange = { viewModel.setCategoria(it) }
-                )
-
-                StockInput(
-                    label = "Produto (Ex: Arroz)",
-                    value = state.nomeProduto,
-                    onValueChange = { viewModel.setNomeProduto(it) }
-                )
-
-                StockInput(
-                    label = "Tipo / Variedade (Ex: Carolino)",
-                    value = state.subCategoria,
-                    onValueChange = { viewModel.setSubCategoria(it) }
-                )
-
-                StockInput(
-                    label = "Marca",
-                    value = state.marca,
-                    onValueChange = { viewModel.setMarca(it) }
-                )
-
-                // 2. Detalhes de Origem (Campanha e Doador)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // SELETOR DE CAMPANHA (Novo)
-                    StockCampaignSelector(
-                        label = "Campanha",
-                        selectedId = state.campanha,
-                        campaigns = state.availableCampaigns,
-                        onCampaignSelected = { viewModel.setCampanha(it) },
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    StockInput(
-                        label = "Origem / Doador",
-                        value = state.doado,
-                        onValueChange = { viewModel.setDoado(it) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                // 3. Características Físicas
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StockInput(
-                        label = "Tamanho (Valor)",
-                        value = state.tamanhoValor,
-                        onValueChange = { viewModel.setTamanhoValor(it) },
-                        keyboardType = KeyboardType.Number,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StockInput(
-                        label = "Unidade (Kg...)",
-                        value = state.tamanhoUnidade,
-                        onValueChange = { viewModel.setTamanhoUnidade(it) },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                // 4. Validade
-                StockDateInput(
-                    label = "Validade",
-                    date = state.validade,
-                    onClick = { showDatePicker = true }
-                )
-
-                // 5. Descrição
-                StockInput(
-                    label = "Descrição / Notas",
-                    value = state.descProduto,
-                    onValueChange = { viewModel.setDescProduto(it) },
-                    singleLine = false
-                )
-
-                // 6. Código de Barras
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StockInput(
-                        label = "Código de Barras",
-                        value = state.codBarras,
-                        onValueChange = { viewModel.setCodBarras(it) },
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(
-                        onClick = startScan,
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .background(GreenSas, shape = RoundedCornerShape(8.dp))
-                    ) {
-                        Icon(Icons.Default.PhotoCamera, contentDescription = "Scan", tint = Color.White)
-                    }
-                }
-
-                if (state.error != null) {
-                    Text(text = state.error!!, color = MaterialTheme.colorScheme.error)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        viewModel.save { navController.popBackStack() }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = GreenSas,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(
-                        if (state.isSaving) "A guardar..." else "Guardar Produto",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Spacer(modifier = Modifier.height(32.dp))
+                Icon(Icons.Default.PhotoCamera, contentDescription = "Scan", tint = Color.White)
             }
         }
+
+        if (error != null) {
+            Text(text = error, color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = onSaveClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = GreenSas,
+                contentColor = Color.White
+            )
+        ) {
+            Text(
+                if (isSaving) "A guardar..." else "Guardar Produto",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -241,7 +339,6 @@ fun StockCampaignSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    // Mostra o nome da campanha se encontrada, senão mostra o ID ou "Nenhuma"
     val displayText = campaigns.find { it.id == selectedId }?.nomeCampanha
         ?: if (selectedId.isNotBlank()) "ID: $selectedId" else ""
 
@@ -278,7 +375,6 @@ fun StockCampaignSelector(
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.background(Color.White)
             ) {
-                // Opção para limpar
                 DropdownMenuItem(
                     text = { Text("Nenhuma", color = Color.Gray) },
                     onClick = {
@@ -437,5 +533,130 @@ fun StockDateInput(
                 .matchParentSize()
                 .clickable { onClick() }
         )
+    }
+}
+
+// ---------------- PREVIEWS ----------------
+
+@Preview(showBackground = true, name = "ProductForm - Novo Produto")
+@Composable
+private fun ProductFormViewPreview_New() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(StockBackground)
+            .padding(16.dp)
+    ) {
+        ProductFormViewContent(
+            title = "Novo Produto",
+
+            categoria = "Alimentar",
+            availableCategories = listOf("Alimentar", "Higiene", "Bebidas", "Infantil"),
+            onCategoriaChange = {},
+
+            nomeProduto = "Arroz",
+            onNomeProdutoChange = {},
+
+            subCategoria = "Carolino",
+            onSubCategoriaChange = {},
+
+            marca = "Nacional",
+            onMarcaChange = {},
+
+            campanhaId = "",
+            campaigns = emptyList(), // sem precisar instanciar Campaign no preview
+            onCampaignSelected = {},
+
+            doado = "Doação Particular",
+            onDoadoChange = {},
+
+            tamanhoValor = "1",
+            onTamanhoValorChange = {},
+
+            tamanhoUnidade = "kg",
+            onTamanhoUnidadeChange = {},
+
+            validade = Date(),
+            onValidadeClick = {},
+
+            descProduto = "Em bom estado. Armazenar em local seco.",
+            onDescProdutoChange = {},
+
+            codBarras = "5601234567890",
+            onCodBarrasChange = {},
+            onScanClick = {},
+
+            error = null,
+            isSaving = false,
+            onSaveClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "ProductForm - Editar Produto")
+@Composable
+private fun ProductFormViewPreview_Edit() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(StockBackground)
+            .padding(16.dp)
+    ) {
+        ProductFormViewContent(
+            title = "Editar Produto",
+
+            categoria = "Higiene",
+            availableCategories = listOf("Alimentar", "Higiene", "Bebidas", "Infantil"),
+            onCategoriaChange = {},
+
+            nomeProduto = "Gel de Banho",
+            onNomeProdutoChange = {},
+
+            subCategoria = "Neutro",
+            onSubCategoriaChange = {},
+
+            marca = "Marca X",
+            onMarcaChange = {},
+
+            campanhaId = "",
+            campaigns = emptyList(),
+            onCampaignSelected = {},
+
+            doado = "Parceiro Externo",
+            onDoadoChange = {},
+
+            tamanhoValor = "0.75",
+            onTamanhoValorChange = {},
+
+            tamanhoUnidade = "L",
+            onTamanhoUnidadeChange = {},
+
+            validade = null,
+            onValidadeClick = {},
+
+            descProduto = "Sem observações.",
+            onDescProdutoChange = {},
+
+            codBarras = "",
+            onCodBarrasChange = {},
+            onScanClick = {},
+
+            error = null,
+            isSaving = false,
+            onSaveClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "ProductForm - Loading")
+@Composable
+private fun ProductFormViewPreview_Loading() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(StockBackground)
+            .padding(16.dp)
+    ) {
+        CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
     }
 }

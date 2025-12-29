@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Event // Ícone para datas
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,78 +37,49 @@ fun CampaignsView(navController: NavController) {
     val state by viewModel.uiState
     var campaignToEdit by remember { mutableStateOf<Campaign?>(null) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF2F2F2))
-            .padding(16.dp)
-    ) {
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = GreenSas)
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 1. CAMPANHAS ATIVAS (A Decorrer)
-                if (state.activeCampaigns.isNotEmpty()) {
-                    item { SectionTitle("A Decorrer") }
-                    items(state.activeCampaigns) { campaign ->
-                        CampaignCard(
-                            campaign = campaign,
-                            isEditable = true, // Ativas podem ser editadas (estender prazo)
-                            showResults = false,
-                            onAction = { campaignToEdit = campaign }
-                        )
-                    }
-                }
-
-                // 2. CAMPANHAS FUTURAS (Agendadas)
-                if (state.futureCampaigns.isNotEmpty()) {
-                    item {
-                        Spacer(Modifier.height(8.dp))
-                        SectionTitle("Agendadas (Futuro)")
-                    }
-                    items(state.futureCampaigns) { campaign ->
-                        CampaignCard(
-                            campaign = campaign,
-                            isEditable = true, // Futuras são totalmente editáveis
-                            showResults = false,
-                            onAction = { campaignToEdit = campaign }
-                        )
-                    }
-                }
-
-                // 3. HISTÓRICO
-                item {
-                    Spacer(Modifier.height(16.dp))
-                    SectionTitle("Histórico (Terminadas)")
-                }
-                if (state.inactiveCampaigns.isEmpty()) item { EmptyText() }
-                items(state.inactiveCampaigns) { campaign ->
-                    CampaignCard(
-                        campaign = campaign,
-                        isEditable = false,
-                        showResults = true,
-                        onAction = { navController.navigate("campaignResults/${campaign.nomeCampanha}") }
-                    )
-                }
-            }
-        }
-
-        // FAB
-        FloatingActionButton(
-            onClick = { navController.navigate("campaignCreate") },
-            containerColor = GreenSas,
-            contentColor = Color.White,
-            shape = CircleShape,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 16.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Nova")
+    val activeModels = remember(state.activeCampaigns) {
+        state.activeCampaigns.map {
+            CampaignCardModel(
+                item = it,
+                nome = it.nomeCampanha,
+                desc = it.descCampanha,
+                inicio = it.dataInicio,
+                fim = it.dataFim
+            )
         }
     }
+    val futureModels = remember(state.futureCampaigns) {
+        state.futureCampaigns.map {
+            CampaignCardModel(
+                item = it,
+                nome = it.nomeCampanha,
+                desc = it.descCampanha,
+                inicio = it.dataInicio,
+                fim = it.dataFim
+            )
+        }
+    }
+    val inactiveModels = remember(state.inactiveCampaigns) {
+        state.inactiveCampaigns.map {
+            CampaignCardModel(
+                item = it,
+                nome = it.nomeCampanha,
+                desc = it.descCampanha,
+                inicio = it.dataInicio,
+                fim = it.dataFim
+            )
+        }
+    }
+
+    CampaignsViewContent(
+        isLoading = state.isLoading,
+        active = activeModels,
+        future = futureModels,
+        inactive = inactiveModels,
+        onCreate = { navController.navigate("campaignCreate") },
+        onEdit = { campaign -> campaignToEdit = campaign },
+        onResults = { campaign -> navController.navigate("campaignResults/${campaign.nomeCampanha}") }
+    )
 
     // POP-UP DE EDIÇÃO
     if (campaignToEdit != null) {
@@ -122,6 +93,116 @@ fun CampaignsView(navController: NavController) {
     }
 }
 
+/**
+ * Modelo simples para poderes fazer Preview sem precisar instanciar Campaign.
+ */
+private data class CampaignCardModel<T>(
+    val item: T,
+    val nome: String,
+    val desc: String,
+    val inicio: Date,
+    val fim: Date
+)
+
+/**
+ * UI "pura" -> dá para Preview sem NavController/ViewModel.
+ */
+@Composable
+private fun <T> CampaignsViewContent(
+    isLoading: Boolean,
+    active: List<CampaignCardModel<T>>,
+    future: List<CampaignCardModel<T>>,
+    inactive: List<CampaignCardModel<T>>,
+    onCreate: () -> Unit,
+    onEdit: (T) -> Unit,
+    onResults: (T) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF2F2F2))
+            .padding(16.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = GreenSas)
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(bottom = 80.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // 1. CAMPANHAS ATIVAS
+                if (active.isNotEmpty()) {
+                    item { SectionTitle("A Decorrer") }
+                    items(active) { model ->
+                        CampaignCardContent(
+                            nome = model.nome,
+                            desc = model.desc,
+                            dataInicio = model.inicio,
+                            dataFim = model.fim,
+                            isEditable = true,
+                            showResults = false,
+                            onAction = { onEdit(model.item) }
+                        )
+                    }
+                }
+
+                // 2. CAMPANHAS FUTURAS
+                if (future.isNotEmpty()) {
+                    item {
+                        Spacer(Modifier.height(8.dp))
+                        SectionTitle("Agendadas (Futuro)")
+                    }
+                    items(future) { model ->
+                        CampaignCardContent(
+                            nome = model.nome,
+                            desc = model.desc,
+                            dataInicio = model.inicio,
+                            dataFim = model.fim,
+                            isEditable = true,
+                            showResults = false,
+                            onAction = { onEdit(model.item) }
+                        )
+                    }
+                }
+
+                // 3. HISTÓRICO
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    SectionTitle("Histórico (Terminadas)")
+                }
+                if (inactive.isEmpty()) item { EmptyText() }
+                items(inactive) { model ->
+                    CampaignCardContent(
+                        nome = model.nome,
+                        desc = model.desc,
+                        dataInicio = model.inicio,
+                        dataFim = model.fim,
+                        isEditable = false,
+                        showResults = true,
+                        onAction = { onResults(model.item) }
+                    )
+                }
+            }
+        }
+
+        // FAB
+        FloatingActionButton(
+            onClick = onCreate,
+            containerColor = GreenSas,
+            contentColor = Color.White,
+            shape = CircleShape,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Nova")
+        }
+    }
+}
+
+/**
+ * Wrapper original (mantém compatível com o resto do teu código).
+ */
 @Composable
 fun CampaignCard(
     campaign: Campaign,
@@ -129,7 +210,32 @@ fun CampaignCard(
     showResults: Boolean,
     onAction: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    CampaignCardContent(
+        nome = campaign.nomeCampanha,
+        desc = campaign.descCampanha,
+        dataInicio = campaign.dataInicio,
+        dataFim = campaign.dataFim,
+        isEditable = isEditable,
+        showResults = showResults,
+        onAction = onAction
+    )
+}
+
+/**
+ * UI do cartão (stateless) -> dá para Preview sem Campaign real.
+ */
+@Composable
+private fun CampaignCardContent(
+    nome: String,
+    desc: String,
+    dataInicio: Date,
+    dataFim: Date,
+    isEditable: Boolean,
+    showResults: Boolean,
+    onAction: () -> Unit
+) {
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -138,16 +244,26 @@ fun CampaignCard(
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(campaign.nomeCampanha, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GreenSas)
+                Text(nome, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GreenSas)
                 if (isEditable) {
-                    Icon(Icons.Default.Edit, "Editar", tint = Color.Gray, modifier = Modifier.clickable { onAction() })
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = Color.Gray,
+                        modifier = Modifier.clickable { onAction() }
+                    )
                 }
             }
-            Text("${dateFormat.format(campaign.dataInicio)} até ${dateFormat.format(campaign.dataFim)}", fontSize = 12.sp, color = Color.Gray)
 
-            if (campaign.descCampanha.isNotEmpty()) {
+            Text(
+                "${dateFormat.format(dataInicio)} até ${dateFormat.format(dataFim)}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
+
+            if (desc.isNotEmpty()) {
                 Spacer(Modifier.height(4.dp))
-                Text(campaign.descCampanha, fontSize = 14.sp, maxLines = 2, color = Color.Black)
+                Text(desc, fontSize = 14.sp, maxLines = 2, color = Color.Black)
             }
 
             if (showResults) {
@@ -155,7 +271,9 @@ fun CampaignCard(
                 Button(
                     onClick = onAction,
                     colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
-                    modifier = Modifier.fillMaxWidth().height(36.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
                 ) {
                     Icon(Icons.Default.BarChart, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(8.dp))
@@ -203,19 +321,20 @@ fun EditCampaignDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Nome
                 OutlinedTextField(
                     value = nome,
                     onValueChange = { nome = it },
                     label = { Text("Nome da Campanha") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenSas, cursorColor = GreenSas, focusedLabelColor = GreenSas)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenSas,
+                        cursorColor = GreenSas,
+                        focusedLabelColor = GreenSas
+                    )
                 )
 
-                // Datas (Lado a Lado)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Botão Início
                     OutlinedButton(
                         onClick = { showDatePicker(dataInicio) { dataInicio = it } },
                         modifier = Modifier.weight(1f),
@@ -227,7 +346,6 @@ fun EditCampaignDialog(
                         }
                     }
 
-                    // Botão Fim
                     OutlinedButton(
                         onClick = { showDatePicker(dataFim) { dataFim = it } },
                         modifier = Modifier.weight(1f),
@@ -240,30 +358,37 @@ fun EditCampaignDialog(
                     }
                 }
 
-                // Validação visual simples
                 if (dataInicio.after(dataFim)) {
                     Text("⚠️ A data de início deve ser anterior ao fim.", color = Color.Red, fontSize = 12.sp)
                 }
 
-                // Descrição
                 OutlinedTextField(
                     value = desc,
                     onValueChange = { desc = it },
                     label = { Text("Descrição") },
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenSas, cursorColor = GreenSas, focusedLabelColor = GreenSas)
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenSas,
+                        cursorColor = GreenSas,
+                        focusedLabelColor = GreenSas
+                    )
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val updated = campaign.copy(nomeCampanha = nome, descCampanha = desc, dataInicio = dataInicio, dataFim = dataFim)
+                    val updated = campaign.copy(
+                        nomeCampanha = nome,
+                        descCampanha = desc,
+                        dataInicio = dataInicio,
+                        dataFim = dataFim
+                    )
                     onSave(updated)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
-                enabled = !dataInicio.after(dataFim) // Desativa botão se datas inválidas
+                enabled = !dataInicio.after(dataFim)
             ) {
                 Text("Guardar")
             }
@@ -278,10 +403,87 @@ fun EditCampaignDialog(
 
 @Composable
 fun SectionTitle(text: String) {
-    Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(bottom = 8.dp))
+    Text(
+        text,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        color = Color.Black,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
 }
 
 @Composable
 fun EmptyText() {
     Text("Nenhuma campanha encontrada.", color = Color.Gray, fontSize = 14.sp)
+}
+
+// ---------------- PREVIEWS ----------------
+
+private fun dateOf(y: Int, m: Int, d: Int): Date =
+    Calendar.getInstance().apply {
+        set(y, m, d, 0, 0, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.time
+
+@Preview(showBackground = true, name = "Campaigns - Loading")
+@Composable
+private fun CampaignsViewPreview_Loading() {
+    CampaignsViewContent<Unit>(
+        isLoading = true,
+        active = emptyList(),
+        future = emptyList(),
+        inactive = emptyList(),
+        onCreate = {},
+        onEdit = { _ -> },      // <-- FIX
+        onResults = { _ -> }    // <-- FIX
+    )
+}
+
+@Preview(showBackground = true, name = "Campaigns - Com listas")
+@Composable
+private fun CampaignsViewPreview_WithData() {
+    val active = listOf(
+        CampaignCardModel(Unit, "Campanha de Inverno", "Angariação de bens alimentares e higiene.",
+            dateOf(2025, Calendar.DECEMBER, 1), dateOf(2026, Calendar.JANUARY, 10)
+        ),
+        CampaignCardModel(Unit, "Natal Solidário", "Produtos infantis e brinquedos.",
+            dateOf(2025, Calendar.DECEMBER, 10), dateOf(2026, Calendar.JANUARY, 5)
+        )
+    )
+
+    val future = listOf(
+        CampaignCardModel(Unit, "Páscoa", "Cabazes para famílias.",
+            dateOf(2026, Calendar.MARCH, 1), dateOf(2026, Calendar.APRIL, 10)
+        )
+    )
+
+    val inactive = listOf(
+        CampaignCardModel(Unit, "Regresso às Aulas", "Material escolar e higiene.",
+            dateOf(2025, Calendar.SEPTEMBER, 1), dateOf(2025, Calendar.SEPTEMBER, 30)
+        )
+    )
+
+    CampaignsViewContent<Unit>(
+        isLoading = false,
+        active = active,
+        future = future,
+        inactive = inactive,
+        onCreate = {},
+        onEdit = { _ -> },      // <-- FIX
+        onResults = { _ -> }    // <-- FIX
+    )
+}
+
+@Preview(showBackground = true, name = "Campaigns - Histórico vazio")
+@Composable
+private fun CampaignsViewPreview_EmptyHistory() {
+    CampaignsViewContent<Unit>(
+        isLoading = false,
+        active = emptyList(),
+        future = emptyList(),
+        inactive = emptyList(),
+        onCreate = {},
+        onEdit = { _ -> },      // <-- FIX
+        onResults = { _ -> }    // <-- FIX
+    )
 }

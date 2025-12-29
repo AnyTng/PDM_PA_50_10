@@ -2,7 +2,6 @@ package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
 import android.app.DatePickerDialog
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,48 +13,86 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun CampaignCreateView(navController: NavController) {
-    val viewModel: CampaignCreateViewModel = viewModel()
+    val vm: CampaignCreateViewModel = viewModel()
     val context = LocalContext.current
-    val calendar = Calendar.getInstance()
+    val calendar = remember { Calendar.getInstance() }
 
-    // Helpers para DatePicker
     fun showDatePicker(onDateSelected: (Date) -> Unit) {
-        DatePickerDialog(context, { _, y, m, d ->
-            calendar.set(y, m, d)
-            onDateSelected(calendar.time)
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+        DatePickerDialog(
+            context,
+            { _, y, m, d ->
+                calendar.set(y, m, d)
+                onDateSelected(calendar.time)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
+    CampaignCreateViewContent(
+        nome = vm.nome.value,
+        onNomeChange = { vm.nome.value = it },
+        dataInicio = vm.dataInicio.value,
+        onDataInicioClick = { showDatePicker { vm.dataInicio.value = it } },
+        dataFim = vm.dataFim.value,
+        onDataFimClick = { showDatePicker { vm.dataFim.value = it } },
+        desc = vm.desc.value,
+        onDescChange = { vm.desc.value = it },
+        onSaveClick = { vm.save { navController.popBackStack() } }
+    )
+}
+
+/**
+ * UI "pura" -> dá para Preview sem NavController/ViewModel/DatePicker real.
+ */
+@Composable
+private fun CampaignCreateViewContent(
+    nome: String,
+    onNomeChange: (String) -> Unit,
+    dataInicio: Date?,
+    onDataInicioClick: () -> Unit,
+    dataFim: Date?,
+    onDataFimClick: () -> Unit,
+    desc: String,
+    onDescChange: (String) -> Unit,
+    onSaveClick: () -> Unit
+) {
     Scaffold(
-        //topBar = { AppHeader("Nova Campanha", true, { navController.popBackStack() }) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.save { navController.popBackStack() } },
+                onClick = onSaveClick,
                 containerColor = GreenSas,
                 contentColor = Color.White
             ) { Icon(Icons.Default.Check, null) }
         }
     ) { padding ->
         Column(
-            modifier = Modifier.padding(padding).fillMaxSize().background(Color.White).padding(16.dp),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Nome
             Text("Nome?", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             OutlinedTextField(
-                value = viewModel.nome.value,
-                onValueChange = { viewModel.nome.value = it },
+                value = nome,
+                onValueChange = onNomeChange,
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Nome da campanha") },
                 shape = RoundedCornerShape(8.dp)
@@ -66,8 +103,8 @@ fun CampaignCreateView(navController: NavController) {
             // Datas
             Text("De quando a quando?", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                DateButton("Início", viewModel.dataInicio.value) { showDatePicker { viewModel.dataInicio.value = it } }
-                DateButton("Fim", viewModel.dataFim.value) { showDatePicker { viewModel.dataFim.value = it } }
+                DateButton("Início", dataInicio, onClick = onDataInicioClick)
+                DateButton("Fim", dataFim, onClick = onDataFimClick)
             }
 
             HorizontalDivider()
@@ -75,9 +112,11 @@ fun CampaignCreateView(navController: NavController) {
             // Descrição
             Text("Descrição", fontWeight = FontWeight.Bold, fontSize = 18.sp)
             OutlinedTextField(
-                value = viewModel.desc.value,
-                onValueChange = { viewModel.desc.value = it },
-                modifier = Modifier.fillMaxWidth().height(150.dp),
+                value = desc,
+                onValueChange = onDescChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
                 placeholder = { Text("Escreve aqui") },
                 shape = RoundedCornerShape(8.dp)
             )
@@ -87,7 +126,11 @@ fun CampaignCreateView(navController: NavController) {
 
 @Composable
 fun RowScope.DateButton(label: String, date: Date?, onClick: () -> Unit) {
-    val text = if (date != null) SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date) else "Selecionar"
+    val text = if (date != null)
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
+    else
+        "Selecionar"
+
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier.weight(1f),
@@ -98,4 +141,43 @@ fun RowScope.DateButton(label: String, date: Date?, onClick: () -> Unit) {
             Text(text, color = Color.Black)
         }
     }
+}
+
+// ---------------- PREVIEWS ----------------
+
+@Preview(showBackground = true, name = "CampaignCreate - Vazio")
+@Composable
+private fun CampaignCreateViewPreview_Empty() {
+    CampaignCreateViewContent(
+        nome = "",
+        onNomeChange = {},
+        dataInicio = null,
+        onDataInicioClick = {},
+        dataFim = null,
+        onDataFimClick = {},
+        desc = "",
+        onDescChange = {},
+        onSaveClick = {}
+    )
+}
+
+@Preview(showBackground = true, name = "CampaignCreate - Preenchido")
+@Composable
+private fun CampaignCreateViewPreview_Filled() {
+    val cal = Calendar.getInstance().apply { set(2026, Calendar.JANUARY, 10) }
+    val inicio = cal.time
+    cal.set(2026, Calendar.FEBRUARY, 20)
+    val fim = cal.time
+
+    CampaignCreateViewContent(
+        nome = "Campanha de Inverno",
+        onNomeChange = {},
+        dataInicio = inicio,
+        onDataInicioClick = {},
+        dataFim = fim,
+        onDataFimClick = {},
+        desc = "Angariação de bens alimentares e higiene para famílias apoiadas.",
+        onDescChange = {},
+        onSaveClick = {}
+    )
 }
