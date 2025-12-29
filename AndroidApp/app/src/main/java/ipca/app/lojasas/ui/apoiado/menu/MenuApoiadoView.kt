@@ -63,7 +63,7 @@ fun MenuApoiadoView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuApoiadoRow(title = "Meus Pedidos") { /* Navegar */ }
+                    MenuApoiadoRow(title = "Fazer Pedido de Ajuda Urgente") { /* Navegar */ }
                     MenuApoiadoDivider()
 
                     // 2. LÓGICA DO BOTÃO DESATIVADO

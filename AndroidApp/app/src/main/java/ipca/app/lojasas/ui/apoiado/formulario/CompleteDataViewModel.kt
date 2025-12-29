@@ -13,9 +13,12 @@ data class CompleteDataState(
     var apoioEmergencia: Boolean = false,
     var bolsaEstudos: Boolean = false,
     var valorBolsa: String = "",
-    var dataNascimento: Long? = null, // Timestamp do DatePicker
+    var dataNascimento: Long? = null,
     var nacionalidade: String = "",
     var necessidades: List<String> = emptyList(),
+
+    // Lista de sugestões
+    var availableNationalities: List<String> = emptyList(),
 
     var isLoading: Boolean = false,
     var error: String? = null
@@ -28,8 +31,25 @@ class CompleteDataViewModel : ViewModel() {
 
     val db = Firebase.firestore
 
-    // Funções de UI para atualizar o estado
-    fun onRelacaoChange(value: String) { uiState.value = uiState.value.copy(relacaoIPCA = value) }
+    init {
+        fetchNationalities()
+    }
+
+    // --- FUNÇÕES DE UPDATE ---
+
+    // Ao mudar a relação, se deixar de ser Estudante, limpamos os dados específicos
+    fun onRelacaoChange(value: String) {
+        val isStudent = (value == "Estudante")
+        uiState.value = uiState.value.copy(
+            relacaoIPCA = value,
+            // Limpa campos se não for estudante
+            curso = if (isStudent) uiState.value.curso else "",
+            graoEnsino = if (isStudent) uiState.value.graoEnsino else "",
+            bolsaEstudos = if (isStudent) uiState.value.bolsaEstudos else false,
+            valorBolsa = if (isStudent) uiState.value.valorBolsa else ""
+        )
+    }
+
     fun onCursoChange(value: String) { uiState.value = uiState.value.copy(curso = value) }
     fun onGraoChange(value: String) { uiState.value = uiState.value.copy(graoEnsino = value) }
     fun onApoioEmergenciaChange(value: Boolean) { uiState.value = uiState.value.copy(apoioEmergencia = value) }
@@ -48,7 +68,21 @@ class CompleteDataViewModel : ViewModel() {
         uiState.value = uiState.value.copy(necessidades = currentList)
     }
 
-    // --- NOVA FUNÇÃO: Carregar dados existentes (CORREÇÃO DO ERRO) ---
+    // --- CARREGAMENTO DE DADOS ---
+
+    private fun fetchNationalities() {
+        db.collection("apoiados").get()
+            .addOnSuccessListener { result ->
+                val list = result.documents
+                    .mapNotNull { it.getString("nacionalidade") }
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+                    .distinct()
+                    .sorted()
+                uiState.value = uiState.value.copy(availableNationalities = list)
+            }
+    }
+
     fun loadData(docId: String) {
         uiState.value = uiState.value.copy(isLoading = true)
         db.collection("apoiados").document(docId).get()
@@ -56,7 +90,6 @@ class CompleteDataViewModel : ViewModel() {
                 if (document.exists()) {
                     val data = document.data
                     if (data != null) {
-                        // Converter Timestamp do Firestore para Date/Long
                         val timestamp = (data["dataNascimento"] as? com.google.firebase.Timestamp)
 
                         uiState.value = uiState.value.copy(
@@ -85,8 +118,6 @@ class CompleteDataViewModel : ViewModel() {
         val state = uiState.value
         uiState.value = state.copy(isLoading = true, error = null)
 
-        // Se tem apoio de emergência, não precisa de submeter documentos (exemplo lógico)
-        // Se NÃO tem apoio, FALTA documentos.
         val precisaDocumentos = !state.apoioEmergencia
 
         val updateMap = hashMapOf<String, Any>(
@@ -95,15 +126,13 @@ class CompleteDataViewModel : ViewModel() {
             "bolsaEstudos" to state.bolsaEstudos,
             "nacionalidade" to state.nacionalidade,
             "necessidade" to state.necessidades,
-            // Guarda a data. Se for null usa a data atual (evita crash), mas idealmente deve validar antes.
             "dataNascimento" to if (state.dataNascimento != null) Date(state.dataNascimento!!) else Date(),
-
             "estadoConta" to if (precisaDocumentos) "Falta_Documentos" else "Analise",
             "dadosIncompletos" to false,
             "faltaDocumentos" to precisaDocumentos
         )
 
-        // Adiciona campos opcionais apenas se preenchidos
+        // Campos opcionais (mas validados na UI antes de chegar aqui)
         if (state.curso.isNotEmpty()) updateMap["curso"] = state.curso
         if (state.graoEnsino.isNotEmpty()) updateMap["graoEnsino"] = state.graoEnsino
         if (state.valorBolsa.isNotEmpty()) updateMap["valorBolsa"] = state.valorBolsa
