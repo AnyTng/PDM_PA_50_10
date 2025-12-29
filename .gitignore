@@ -34,3 +34,5 @@ replay_pid*
 /Frontend/Android/.idea
 Frontend/Android/local.properties
 /AndroidApp/.idea
+/App/Android/.idea
+App/Android/.gradle/config.properties
