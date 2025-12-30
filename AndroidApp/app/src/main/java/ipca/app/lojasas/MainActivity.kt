@@ -47,6 +47,7 @@ import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
 import androidx.navigation.navArgument
+import ipca.app.lojasas.ui.apoiado.menu.help.UrgentHelpView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignsView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
@@ -163,7 +164,12 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable("login") { LoginView(navController = navController) }
-                        composable("apoiadoHome") { ApoiadoHomeScreen(navController = navController) }
+                        composable("apoiadoHome") {
+                            ApoiadoHomeScreen(
+                                navController = navController,
+                                userId = Firebase.auth.currentUser?.uid ?: ""
+                            )
+                        }
                         composable("funcionarioHome") { CalendarView(navController = navController) }
                         composable("menu") { MenuView(navController = navController) }
                         composable("createProfile") { CreateProfileView(navController = navController) }
@@ -175,15 +181,23 @@ class MainActivity : ComponentActivity() {
                         composable("validateAccounts") { ValidateAccountsView(navController = navController) }
                         composable("accountBlocked") { BlockedAccountScreen(navController = navController) }
                         composable("submittedDocuments") {SubmittedDocumentsView(navController = navController)}
-                        composable("campaigns") {
-                            CampaignsView(navController = navController)
+                        composable("campaigns") { CampaignsView(navController = navController) }
+                        composable("createApoiado") { CreateApoiadoView(navController = navController) }
+                        composable("apoiadosList") { ApoiadosListView(navController = navController) }
+
+                        composable(
+                            route = "urgent_help_screen/{numeroMecanografico}", // Rota com placeholder
+                            arguments = listOf(navArgument("numeroMecanografico") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            // Extrai o argumento "a1" que vem da navegação
+                            val numMec = backStackEntry.arguments?.getString("numeroMecanografico") ?: ""
+
+                            // Passa "a1" para a View
+                            UrgentHelpView(navController = navController, numeroMecanografico = numMec)
                         }
-                        composable("createApoiado") {
-                            CreateApoiadoView(navController = navController)
-                        }
-                        composable("apoiadosList") {
-                            ApoiadosListView(navController = navController)
-                        }
+
+
+
 // 2. Rota de Criação
                         composable("campaignCreate") {
                             CampaignCreateView(navController = navController)

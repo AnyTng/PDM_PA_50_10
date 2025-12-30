@@ -3,9 +3,10 @@ package ipca.app.lojasas.ui.funcionario.menu.profile
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
+import com.google.firebase.app
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
-import ipca.app.lojasas.data.UserRole
 
 data class CreateProfileState(
     var numMecanografico: String = "",
@@ -17,11 +18,10 @@ data class CreateProfileState(
     var documentType: String = "NIF",
     var morada: String = "",
     var codPostal: String = "",
-    // var role: UserRole = UserRole.FUNCIONARIO, // Removido do State público ou fixado internamente
     var isLoading: Boolean = false,
     var error: String? = null,
     var success: Boolean = false,
-    var selectedRole: String = "Funcionario" // Novo campo
+    var selectedRole: String = "Funcionario"
 )
 
 class CreateProfileViewModel : ViewModel() {
@@ -40,7 +40,6 @@ class CreateProfileViewModel : ViewModel() {
     fun onMoradaChange(newValue: String) { uiState.value = uiState.value.copy(morada = newValue) }
     fun onCodPostalChange(newValue: String) { uiState.value = uiState.value.copy(codPostal = newValue) }
     fun onRoleChange(newRole: String) { uiState.value = uiState.value.copy(selectedRole = newRole) }
-    // Removido onRoleChange
 
     fun createProfile(onSuccess: () -> Unit) {
         val state = uiState.value
@@ -58,11 +57,27 @@ class CreateProfileViewModel : ViewModel() {
 
         uiState.value = state.copy(isLoading = true, error = null)
 
-        val auth = Firebase.auth
-        auth.createUserWithEmailAndPassword(state.email, state.password)
+        // 1. Configurar uma App Firebase Secundária para não afetar a sessão atual
+        val tempAppName = "SecondaryApp"
+        val currentApp = Firebase.app
+
+        val tempApp = try {
+            FirebaseApp.getInstance(tempAppName)
+        } catch (e: Exception) {
+            FirebaseApp.initializeApp(currentApp.applicationContext, currentApp.options, tempAppName)
+        }
+
+        // 2. Usar o Auth dessa app secundária
+        val tempAuth = Firebase.auth(tempApp)
+
+        tempAuth.createUserWithEmailAndPassword(state.email, state.password)
             .addOnSuccessListener { result ->
                 val userId = result.user?.uid
                 if (userId != null) {
+                    // Importante: Fazer logout da app secundária imediatamente
+                    tempAuth.signOut()
+
+                    // 3. Guardar no Firestore (usando a instância principal que ainda tem o Admin logado)
                     saveToFirestore(authUid = userId, onSuccess)
                 }
             }
@@ -73,9 +88,8 @@ class CreateProfileViewModel : ViewModel() {
 
     private fun saveToFirestore(authUid: String, onSuccess: () -> Unit) {
         val state = uiState.value
-        val db = Firebase.firestore
+        val db = Firebase.firestore // Usa a instância DEFAULT (Admin logado)
 
-        // Criação exclusiva de FUNCIONÁRIOS
         val userMap = hashMapOf(
             "uid" to authUid,
             "numMecanografico" to state.numMecanografico,
@@ -86,14 +100,13 @@ class CreateProfileViewModel : ViewModel() {
             "morada" to state.morada,
             "codPostal" to state.codPostal,
             "email" to state.email,
-            "role" to state.selectedRole, // Usa o valor dinâmico ("Funcionario" ou "Admin")
+            "role" to state.selectedRole,
             "mudarPass" to true
         )
 
         db.collection("funcionarios").document(state.numMecanografico)
             .set(userMap)
             .addOnSuccessListener {
-                // Também guardar na coleção 'users' para Login rápido se necessário
                 db.collection("users").document(authUid).set(mapOf("role" to "Funcionario", "email" to state.email))
                     .addOnSuccessListener {
                         uiState.value = state.copy(isLoading = false, success = true)
