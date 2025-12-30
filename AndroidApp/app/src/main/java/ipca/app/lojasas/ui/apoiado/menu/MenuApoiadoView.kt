@@ -7,25 +7,29 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue // Import necessário
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // Import necessário
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 
 @Composable
 fun MenuApoiadoView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    // 1. Instanciar o ViewModel
     val viewModel: MenuApoiadoViewModel = viewModel()
-    val isApproved by viewModel.isApproved // Estado: true se estiver aprovado
+    val isApproved by viewModel.isApproved
+
+    // 1. Ler o número mecanográfico do ViewModel
+    val numeroMecanografico by viewModel.numeroMecanografico
 
     val backgroundColor = Color(0xFFF2F2F2)
 
@@ -63,11 +67,16 @@ fun MenuApoiadoView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuApoiadoRow(title = "Fazer Pedido de Ajuda Urgente") { /* Navegar */ }
+                    // 2. Usar a variável lida aqui.
+                    // Nota: Verificamos se não está vazia para evitar erro de navegação
+                    MenuApoiadoRow(title = "Fazer Pedido de Ajuda Urgente") {
+                        if (numeroMecanografico.isNotEmpty()) {
+                            navController.navigate("urgent_help_screen/$numeroMecanografico")
+                        }
+                    }
+
                     MenuApoiadoDivider()
 
-                    // 2. LÓGICA DO BOTÃO DESATIVADO
-                    // Se estiver aprovado (isApproved == true), o enabled será false
                     MenuApoiadoRow(
                         title = "Entregar Documentos",
                         enabled = !isApproved,
@@ -115,20 +124,19 @@ fun MenuApoiadoView(
     }
 }
 
-// 3. ATUALIZAÇÃO DO COMPONENTE MenuApoiadoRow
+// ... (Resto do código MenuApoiadoRow e MenuApoiadoDivider mantém-se igual)
 @Composable
 fun MenuApoiadoRow(
     title: String,
-    enabled: Boolean = true, // Novo parâmetro (padrão é true/ativo)
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    // Definir as cores baseadas no estado
     val contentColor = if (enabled) Color.Black else Color.Gray.copy(alpha = 0.6f)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, onClick = onClick) // Só clica se enabled = true
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 18.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -136,11 +144,10 @@ fun MenuApoiadoRow(
         Text(
             text = title,
             fontSize = 18.sp,
-            color = contentColor, // Aplica a cor (Preto ou Cinza)
+            color = contentColor,
             fontWeight = FontWeight.Normal
         )
 
-        // Se estiver desativado, removemos a seta ou pintamos de cinza
         if (enabled) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
