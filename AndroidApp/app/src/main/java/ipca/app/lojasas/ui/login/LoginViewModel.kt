@@ -107,27 +107,21 @@ class LoginViewModel : ViewModel() {
 //Para notificações
 private fun configureTopicForRole(role: UserRole) {
     val messaging = FirebaseMessaging.getInstance()
+    val roleStr = role.toString()
 
-    val isFuncionario = role.toString().equals("Funcionario", ignoreCase = true)
+    val isFuncionario = roleStr.equals("Funcionario", ignoreCase = true)
+    val isAdmin = roleStr.equals("Admin", ignoreCase = true) ||
+            roleStr.equals("Administrador", ignoreCase = true)
 
-    if (isFuncionario) {
+    if (isFuncionario || isAdmin) {
+        // ✅ ambos recebem as notificações que vão para "funcionarios"
         messaging.subscribeToTopic("funcionarios")
             .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d(TAG, "FCM: Subscrito no tópico funcionarios ✅")
-                } else {
-                    Log.e(TAG, "FCM: Falhou subscrição", task.exception)
-                }
+                if (task.isSuccessful) Log.d(TAG, "FCM: Subscrito em funcionarios ✅")
+                else Log.e(TAG, "FCM: Falhou subscribe funcionarios", task.exception)
             }
     } else {
         messaging.unsubscribeFromTopic("funcionarios")
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d(TAG, "FCM: Removido do tópico funcionarios ✅")
-                } else {
-                    Log.e(TAG, "FCM: Falhou unsubscribe", task.exception)
-                }
-            }
     }
 }
 
