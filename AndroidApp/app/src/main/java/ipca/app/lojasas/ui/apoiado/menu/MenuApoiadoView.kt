@@ -45,7 +45,7 @@ fun MenuApoiadoView(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+            ) {
 
             // --- GRUPO: CONTA ---
             Card(
@@ -70,7 +70,7 @@ fun MenuApoiadoView(
                 Column {
                     // 2. Usar a variável lida aqui.
                     // Nota: Verificamos se não está vazia para evitar erro de navegação
-                    MenuApoiadoRow(title = "Fazer Pedido de Ajuda Urgente") {
+                    MenuApoiadoRow(title = "Fazer Pedido de Ajuda Urgente",enabled = !isBlock) {
                         if (numeroMecanografico.isNotEmpty()) {
                             navController.navigate("urgent_help_screen/$numeroMecanografico")
                         }
@@ -80,12 +80,12 @@ fun MenuApoiadoView(
 
                     MenuApoiadoRow(
                         title = "Entregar Documentos",
-                        enabled = !isApproved,
+                        enabled = !isApproved && !isBlock,
                         onClick = { navController.navigate("documentSubmission") }
                     )
 
                     MenuApoiadoDivider()
-                    MenuApoiadoRow(title = "Documentos Entregues") { navController.navigate("submittedDocuments") }
+                    MenuApoiadoRow(title = "Documentos Entregues",enabled = !isBlock) { navController.navigate("submittedDocuments") }
                 }
             }
 
