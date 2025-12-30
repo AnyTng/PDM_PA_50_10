@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -146,7 +147,19 @@ fun ApoiadoProfileView(
                         Spacer(modifier = Modifier.height(8.dp))
                         ReadOnlyInput(value = state.necessidades.joinToString(", "), placeholder = "Necessidades")
                     }
+
                 }
+
+
+
+                FormSection(title = "Validade da Conta") {
+                    val valConta = state.validadeConta?.let { dateFormatter.format(it) } ?: ""
+
+                    ReadOnlyInput(value = valConta, placeholder = "Data de Validade da Conta")
+
+                }
+
+
 
                 Spacer(modifier = Modifier.height(10.dp))
 
@@ -195,3 +208,5 @@ fun ApoiadoProfileView(
         }
     }
 }
+
+

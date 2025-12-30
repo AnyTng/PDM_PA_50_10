@@ -240,7 +240,7 @@ class ValidateAccountsViewModel : ViewModel() {
         val calendar = Calendar.getInstance()
         val currentYear = calendar.get(Calendar.YEAR)
         val thisYearAug = Calendar.getInstance().apply {
-            set(currentYear, Calendar.AUGUST, 31, 23, 59, 59)
+            set(currentYear, Calendar.SEPTEMBER, 31, 23, 59, 59)
         }
         return if (calendar.time.after(thisYearAug.time)) {
             thisYearAug.apply { add(Calendar.YEAR, 1) }.time

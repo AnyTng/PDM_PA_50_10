@@ -33,6 +33,7 @@ data class ProfileState(
     var bolsaEstudos: Boolean = false,
     var valorBolsa: String = "",
     var necessidades: List<String> = emptyList(),
+    var validadeConta: Date? = null,
 
     var isLoading: Boolean = true,
     var error: String? = null,
@@ -93,6 +94,10 @@ class ProfileViewModel : ViewModel() {
             (data["dataNascimento"] as? com.google.firebase.Timestamp)?.toDate()
         } catch (e: Exception) { null }
 
+        val dtVal = try {
+            (data["validadeConta"] as? com.google.firebase.Timestamp)?.toDate()
+        } catch (e: Exception) { null }
+
         // Verifica se é Admin baseado no campo 'role' (String) da BD
         val roleString = data["role"] as? String ?: ""
         val isAdminUser = role == UserRole.FUNCIONARIO && roleString.equals("Admin", ignoreCase = true)
@@ -118,6 +123,7 @@ class ProfileViewModel : ViewModel() {
             bolsaEstudos = data["bolsaEstudos"] as? Boolean ?: false,
             valorBolsa = (data["valorBolsa"] as? String) ?: "",
             necessidades = (data["necessidade"] as? List<String>) ?: emptyList(),
+            validadeConta = dtVal,
 
             isLoading = false
         )
