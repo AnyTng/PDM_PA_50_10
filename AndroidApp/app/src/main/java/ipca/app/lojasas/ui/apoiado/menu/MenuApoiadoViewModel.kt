@@ -7,7 +7,8 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 
 class MenuApoiadoViewModel : ViewModel() {
-
+    var isBlock = mutableStateOf(false)
+        private set
     var isApproved = mutableStateOf(false)
         private set
 
@@ -33,7 +34,7 @@ class MenuApoiadoViewModel : ViewModel() {
 
                         // 2. Ler o número mecanográfico do documento
                         val numMec = doc.getString("numMecanografico") ?: ""
-
+                        isBlock.value = (estado == "Bloqueado")
                         isApproved.value = (estado == "Aprovado" || estado == "Suspenso")
                         numeroMecanografico.value = numMec // Atualizar o estado
                     }

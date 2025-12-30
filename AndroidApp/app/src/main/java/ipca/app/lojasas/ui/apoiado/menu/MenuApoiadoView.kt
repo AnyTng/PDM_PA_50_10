@@ -27,6 +27,7 @@ fun MenuApoiadoView(
 ) {
     val viewModel: MenuApoiadoViewModel = viewModel()
     val isApproved by viewModel.isApproved
+    val isBlock by viewModel.isBlock
 
     // 1. Ler o número mecanográfico do ViewModel
     val numeroMecanografico by viewModel.numeroMecanografico
