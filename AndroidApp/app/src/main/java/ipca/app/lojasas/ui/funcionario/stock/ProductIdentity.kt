@@ -17,7 +17,6 @@ data class ProductIdentity(
     val estadoProduto: String,
     val parceiroExternoNome: String,
     val categoria: String
-
 )
 
 fun Product.identity(): ProductIdentity {

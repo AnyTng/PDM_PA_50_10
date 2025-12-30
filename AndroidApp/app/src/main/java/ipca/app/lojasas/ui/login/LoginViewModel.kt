@@ -8,6 +8,8 @@ import ipca.app.lojasas.data.UserRoleRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.messaging.FirebaseMessaging
+
 
 const val TAG = "LojaSocial"
 
@@ -85,6 +87,9 @@ class LoginViewModel : ViewModel() {
             email = email,
             onSuccess = { role ->
                 uiState.value = uiState.value.copy(isLoading = false, error = null)
+
+                configureTopicForRole(role)
+
                 onLoginSuccess(role)
             },
             onNotFound = {
@@ -97,3 +102,32 @@ class LoginViewModel : ViewModel() {
         )
     }
 }
+
+
+//Para notificações
+private fun configureTopicForRole(role: UserRole) {
+    val messaging = FirebaseMessaging.getInstance()
+
+    val isFuncionario = role.toString().equals("Funcionario", ignoreCase = true)
+
+    if (isFuncionario) {
+        messaging.subscribeToTopic("funcionarios")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "FCM: Subscrito no tópico funcionarios ✅")
+                } else {
+                    Log.e(TAG, "FCM: Falhou subscrição", task.exception)
+                }
+            }
+    } else {
+        messaging.unsubscribeFromTopic("funcionarios")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "FCM: Removido do tópico funcionarios ✅")
+                } else {
+                    Log.e(TAG, "FCM: Falhou unsubscribe", task.exception)
+                }
+            }
+    }
+}
+

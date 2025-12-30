@@ -53,6 +53,11 @@ import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +70,7 @@ class MainActivity : ComponentActivity() {
             )
         )
         setContent {
+            AskNotificationPermissionOnce()
             val navController = rememberNavController()
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -302,3 +308,18 @@ private data class HeaderConfig(
     val showBack: Boolean = false,
     val onBack: (() -> Unit)? = null
 )
+
+//Pedir permissão de notificações
+@Composable
+fun AskNotificationPermissionOnce() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = {}
+    )
+
+    LaunchedEffect(Unit) {
+        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+}
