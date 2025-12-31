@@ -50,27 +50,34 @@ class CreateApoiadoViewModel : ViewModel() {
     private val db = Firebase.firestore
 
     // --- Setters para a View ---
-    fun onNumMecanograficoChange(v: String) { uiState.value = uiState.value.copy(numMecanografico = v) }
-    fun onNomeChange(v: String) { uiState.value = uiState.value.copy(nome = v) }
-    fun onEmailChange(v: String) { uiState.value = uiState.value.copy(email = v) }
-    fun onPasswordChange(v: String) { uiState.value = uiState.value.copy(password = v) }
+    // Nota UX: limpamos o erro ao editar para evitar “não acontece nada” em tentativas repetidas.
+    private fun clearError() {
+        val s = uiState.value
+        if (s.error != null) uiState.value = s.copy(error = null)
+    }
 
-    fun onContactoChange(v: String) { uiState.value = uiState.value.copy(contacto = v) }
-    fun onDocumentNumberChange(v: String) { uiState.value = uiState.value.copy(documentNumber = v) }
-    fun onDocumentTypeChange(v: String) { uiState.value = uiState.value.copy(documentType = v) }
-    fun onNacionalidadeChange(v: String) { uiState.value = uiState.value.copy(nacionalidade = v) }
-    fun onDataNascimentoChange(v: Long?) { uiState.value = uiState.value.copy(dataNascimento = v) }
-    fun onMoradaChange(v: String) { uiState.value = uiState.value.copy(morada = v) }
-    fun onCodPostalChange(v: String) { uiState.value = uiState.value.copy(codPostal = v) }
+    fun onNumMecanograficoChange(v: String) { clearError(); uiState.value = uiState.value.copy(numMecanografico = v) }
+    fun onNomeChange(v: String) { clearError(); uiState.value = uiState.value.copy(nome = v) }
+    fun onEmailChange(v: String) { clearError(); uiState.value = uiState.value.copy(email = v) }
+    fun onPasswordChange(v: String) { clearError(); uiState.value = uiState.value.copy(password = v) }
 
-    fun onRelacaoChange(v: String) { uiState.value = uiState.value.copy(relacaoIPCA = v) }
-    fun onCursoChange(v: String) { uiState.value = uiState.value.copy(curso = v) }
-    fun onGraoChange(v: String) { uiState.value = uiState.value.copy(graoEnsino = v) }
-    fun onApoioEmergenciaChange(v: Boolean) { uiState.value = uiState.value.copy(apoioEmergencia = v) }
-    fun onBolsaChange(v: Boolean) { uiState.value = uiState.value.copy(bolsaEstudos = v) }
-    fun onValorBolsaChange(v: String) { uiState.value = uiState.value.copy(valorBolsa = v) }
+    fun onContactoChange(v: String) { clearError(); uiState.value = uiState.value.copy(contacto = v) }
+    fun onDocumentNumberChange(v: String) { clearError(); uiState.value = uiState.value.copy(documentNumber = v) }
+    fun onDocumentTypeChange(v: String) { clearError(); uiState.value = uiState.value.copy(documentType = v) }
+    fun onNacionalidadeChange(v: String) { clearError(); uiState.value = uiState.value.copy(nacionalidade = v) }
+    fun onDataNascimentoChange(v: Long?) { clearError(); uiState.value = uiState.value.copy(dataNascimento = v) }
+    fun onMoradaChange(v: String) { clearError(); uiState.value = uiState.value.copy(morada = v) }
+    fun onCodPostalChange(v: String) { clearError(); uiState.value = uiState.value.copy(codPostal = v) }
+
+    fun onRelacaoChange(v: String) { clearError(); uiState.value = uiState.value.copy(relacaoIPCA = v) }
+    fun onCursoChange(v: String) { clearError(); uiState.value = uiState.value.copy(curso = v) }
+    fun onGraoChange(v: String) { clearError(); uiState.value = uiState.value.copy(graoEnsino = v) }
+    fun onApoioEmergenciaChange(v: Boolean) { clearError(); uiState.value = uiState.value.copy(apoioEmergencia = v) }
+    fun onBolsaChange(v: Boolean) { clearError(); uiState.value = uiState.value.copy(bolsaEstudos = v) }
+    fun onValorBolsaChange(v: String) { clearError(); uiState.value = uiState.value.copy(valorBolsa = v) }
 
     fun toggleNecessidade(item: String) {
+        clearError()
         val currentList = uiState.value.necessidades.toMutableList()
         if (currentList.contains(item)) currentList.remove(item) else currentList.add(item)
         uiState.value = uiState.value.copy(necessidades = currentList)

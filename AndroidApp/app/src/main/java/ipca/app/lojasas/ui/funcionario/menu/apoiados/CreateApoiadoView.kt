@@ -200,7 +200,7 @@ fun CreateApoiadoView(
 
                     CustomTextField(value = state.contacto, onValueChange = { viewModel.onContactoChange(it) }, label = "Telemóvel", keyboardType = KeyboardType.Phone)
                     CustomTextField(value = state.morada, onValueChange = { viewModel.onMoradaChange(it) }, label = "Morada Completa")
-                    CustomTextField(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, label = "Código Postal (Ex: 4700-000)")
+                    CustomTextField(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, label = "Código Postal")
                 }
 
                 // --- 3. DADOS ACADÉMICOS / PROFISSIONAIS ---
@@ -261,6 +261,23 @@ fun CreateApoiadoView(
                             )
                             Text(item)
                         }
+                    }
+                }
+
+                // --- ERRO (VISÍVEL NO ECRÃ) ---
+                // Mantemos também o Toast, mas isto ajuda a perceber imediatamente porque a criação foi bloqueada.
+                if (state.error != null) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = state.error ?: "",
+                            color = Color(0xFFB00020),
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(12.dp)
+                        )
                     }
                 }
 
