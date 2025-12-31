@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.app
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.utils.Validators
 import java.util.Date
 
 data class CreateApoiadoState(
@@ -78,13 +79,118 @@ class CreateApoiadoViewModel : ViewModel() {
     fun createApoiado() {
         val s = uiState.value
 
-        // Validação Básica
-        if (s.email.isBlank() || s.password.isBlank() || s.nome.isBlank() || s.numMecanografico.isBlank()) {
+        // --- Validações (campos obrigatórios + regras de formato) ---
+        val email = s.email.trim()
+        val nome = s.nome.trim()
+        val numMec = s.numMecanografico.trim()
+        val morada = s.morada.trim()
+        val nacionalidade = s.nacionalidade.trim()
+
+        if (email.isBlank() || s.password.isBlank() || nome.isBlank() || numMec.isBlank()) {
             uiState.value = s.copy(error = "Preencha os campos obrigatórios (Email, Senha, Nome, Nº Mec.).")
             return
         }
 
-        uiState.value = s.copy(isLoading = true, error = null)
+        if (!Validators.isValidEmail(email)) {
+            uiState.value = s.copy(error = "Email inválido.")
+            return
+        }
+
+        if (s.password.length < 6) {
+            uiState.value = s.copy(error = "A password deve ter pelo menos 6 caracteres.")
+            return
+        }
+
+        if (!Validators.isValidMecanografico(numMec)) {
+            uiState.value = s.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: f12345).")
+            return
+        }
+
+        val birthMillis = s.dataNascimento
+        if (birthMillis == null) {
+            uiState.value = s.copy(error = "A data de nascimento é obrigatória.")
+            return
+        }
+        if (!Validators.isAgeAtLeast(birthMillis, Validators.MIN_AGE_YEARS)) {
+            uiState.value = s.copy(error = "O apoiado deve ter pelo menos ${Validators.MIN_AGE_YEARS} anos.")
+            return
+        }
+
+        if (nacionalidade.isBlank()) {
+            uiState.value = s.copy(error = "A nacionalidade é obrigatória.")
+            return
+        }
+
+        val contactoNorm = Validators.normalizePhonePT(s.contacto)
+        if (contactoNorm == null) {
+            uiState.value = s.copy(error = "Contacto inválido. Use 9 dígitos (ex: 912345678) ou +351...")
+            return
+        }
+
+        if (morada.isBlank()) {
+            uiState.value = s.copy(error = "A morada é obrigatória.")
+            return
+        }
+
+        val codPostalNorm = Validators.normalizePostalCodePT(s.codPostal)
+        if (codPostalNorm == null) {
+            uiState.value = s.copy(error = "Código Postal inválido. Formato esperado: 1234-567")
+            return
+        }
+
+        val documentNumberTrim = s.documentNumber.trim()
+        if (documentNumberTrim.isBlank()) {
+            uiState.value = s.copy(error = "O número de documento é obrigatório.")
+            return
+        }
+
+        val normalizedDocNumber = if (s.documentType == "NIF") {
+            if (!Validators.isValidNif(documentNumberTrim)) {
+                uiState.value = s.copy(error = "NIF inválido.")
+                return
+            }
+            Validators.normalizeNif(documentNumberTrim)!!
+        } else {
+            // Passaporte: regra simples (não vazio e tamanho mínimo)
+            if (documentNumberTrim.length < 5) {
+                uiState.value = s.copy(error = "Nº Passaporte inválido.")
+                return
+            }
+            documentNumberTrim
+        }
+
+        if (s.relacaoIPCA == "Estudante" && s.curso.trim().isBlank()) {
+            uiState.value = s.copy(error = "O curso é obrigatório para estudantes.")
+            return
+        }
+
+        if (s.bolsaEstudos) {
+            val bolsa = s.valorBolsa.trim().replace(',', '.').toDoubleOrNull()
+            if (bolsa == null || bolsa <= 0) {
+                uiState.value = s.copy(error = "O valor da bolsa deve ser um número válido (> 0).")
+                return
+            }
+        }
+
+        if (s.necessidades.isEmpty()) {
+            uiState.value = s.copy(error = "Selecione pelo menos uma necessidade.")
+            return
+        }
+
+        // Guarda valores normalizados no state (para persistência coerente)
+        val normalizedState = s.copy(
+            email = email,
+            nome = nome,
+            numMecanografico = numMec,
+            contacto = contactoNorm,
+            documentNumber = normalizedDocNumber,
+            nacionalidade = nacionalidade,
+            morada = morada,
+            codPostal = codPostalNorm,
+            valorBolsa = s.valorBolsa.trim()
+        )
+
+        uiState.value = normalizedState.copy(isLoading = true, error = null)
 
         // 1. Configurar uma App secundária para criar o user sem fazer login automático na App principal
         val secondaryAppName = "TempCreateUserApp"
@@ -103,7 +209,7 @@ class CreateApoiadoViewModel : ViewModel() {
         // 2. Usar o Auth dessa app secundária
         val secondaryAuth = FirebaseAuth.getInstance(secondaryApp)
 
-        secondaryAuth.createUserWithEmailAndPassword(s.email, s.password)
+        secondaryAuth.createUserWithEmailAndPassword(normalizedState.email, normalizedState.password)
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid ?: ""
 
@@ -115,7 +221,7 @@ class CreateApoiadoViewModel : ViewModel() {
                 saveFirestoreData(uid)
             }
             .addOnFailureListener { e ->
-                uiState.value = s.copy(isLoading = false, error = "Erro Auth: ${e.message}")
+                uiState.value = uiState.value.copy(isLoading = false, error = "Erro Auth: ${e.message}")
             }
     }
 
@@ -136,7 +242,7 @@ class CreateApoiadoViewModel : ViewModel() {
             "documentNumber" to s.documentNumber,
             "documentType" to s.documentType,
             "nacionalidade" to s.nacionalidade,
-            "dataNascimento" to (s.dataNascimento?.let { Date(it) } ?: Date()),
+            "dataNascimento" to Date(s.dataNascimento!!),
             "morada" to s.morada,
             "codPostal" to s.codPostal,
 

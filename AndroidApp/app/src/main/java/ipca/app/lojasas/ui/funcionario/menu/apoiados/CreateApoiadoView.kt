@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
+import ipca.app.lojasas.utils.Validators
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -61,6 +62,9 @@ fun CreateApoiadoView(
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
+
+    // Impede escolher datas que resultem em idade < MIN_AGE_YEARS
+    datePickerDialog.datePicker.maxDate = Validators.maxBirthDateForMinAgeMillis()
 
     // Efeitos de Sucesso/Erro
     LaunchedEffect(state.isSuccess) {
@@ -196,7 +200,7 @@ fun CreateApoiadoView(
 
                     CustomTextField(value = state.contacto, onValueChange = { viewModel.onContactoChange(it) }, label = "Telemóvel", keyboardType = KeyboardType.Phone)
                     CustomTextField(value = state.morada, onValueChange = { viewModel.onMoradaChange(it) }, label = "Morada Completa")
-                    CustomTextField(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, label = "Código Postal")
+                    CustomTextField(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, label = "Código Postal (Ex: 4700-000)")
                 }
 
                 // --- 3. DADOS ACADÉMICOS / PROFISSIONAIS ---

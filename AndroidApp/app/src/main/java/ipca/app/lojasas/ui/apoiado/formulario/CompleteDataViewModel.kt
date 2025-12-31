@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.utils.Validators
 import java.util.Date
 
 data class CompleteDataState(
@@ -116,6 +117,48 @@ class CompleteDataViewModel : ViewModel() {
 
     fun submitData(docId: String, onSuccess: () -> Unit) {
         val state = uiState.value
+
+        // --- Validações (defesa extra no ViewModel) ---
+        if (state.nacionalidade.isBlank()) {
+            uiState.value = state.copy(error = "A nacionalidade é obrigatória.")
+            return
+        }
+        val birth = state.dataNascimento
+        if (birth == null) {
+            uiState.value = state.copy(error = "A data de nascimento é obrigatória.")
+            return
+        }
+        if (!Validators.isAgeAtLeast(birth, Validators.MIN_AGE_YEARS)) {
+            uiState.value = state.copy(error = "Deve ter pelo menos ${Validators.MIN_AGE_YEARS} anos.")
+            return
+        }
+        if (state.relacaoIPCA.isBlank()) {
+            uiState.value = state.copy(error = "Selecione a relação com o IPCA.")
+            return
+        }
+        if (state.necessidades.isEmpty()) {
+            uiState.value = state.copy(error = "Selecione pelo menos uma necessidade.")
+            return
+        }
+
+        if (state.relacaoIPCA == "Estudante") {
+            if (state.curso.isBlank()) {
+                uiState.value = state.copy(error = "O curso é obrigatório para estudantes.")
+                return
+            }
+            if (state.graoEnsino.isBlank()) {
+                uiState.value = state.copy(error = "O grau de ensino é obrigatório para estudantes.")
+                return
+            }
+            if (state.bolsaEstudos) {
+                val parsed = state.valorBolsa.trim().replace(',', '.').toDoubleOrNull()
+                if (parsed == null || parsed <= 0) {
+                    uiState.value = state.copy(error = "O valor da bolsa deve ser um número válido (> 0).")
+                    return
+                }
+            }
+        }
+
         uiState.value = state.copy(isLoading = true, error = null)
 
         val precisaDocumentos = !state.apoioEmergencia
@@ -124,18 +167,18 @@ class CompleteDataViewModel : ViewModel() {
             "relacaoIPCA" to state.relacaoIPCA,
             "apoioEmergenciaSocial" to state.apoioEmergencia,
             "bolsaEstudos" to state.bolsaEstudos,
-            "nacionalidade" to state.nacionalidade,
+            "nacionalidade" to state.nacionalidade.trim(),
             "necessidade" to state.necessidades,
-            "dataNascimento" to if (state.dataNascimento != null) Date(state.dataNascimento!!) else Date(),
+            "dataNascimento" to Date(birth),
             "estadoConta" to if (precisaDocumentos) "Falta_Documentos" else "Analise",
             "dadosIncompletos" to false,
             "faltaDocumentos" to precisaDocumentos
         )
 
-        // Campos opcionais (mas validados na UI antes de chegar aqui)
-        if (state.curso.isNotEmpty()) updateMap["curso"] = state.curso
-        if (state.graoEnsino.isNotEmpty()) updateMap["graoEnsino"] = state.graoEnsino
-        if (state.valorBolsa.isNotEmpty()) updateMap["valorBolsa"] = state.valorBolsa
+        // Campos opcionais (mas validados acima quando aplicável)
+        if (state.curso.isNotBlank()) updateMap["curso"] = state.curso.trim()
+        if (state.graoEnsino.isNotBlank()) updateMap["graoEnsino"] = state.graoEnsino.trim()
+        if (state.valorBolsa.isNotBlank()) updateMap["valorBolsa"] = state.valorBolsa.trim()
 
         db.collection("apoiados").document(docId)
             .update(updateMap)

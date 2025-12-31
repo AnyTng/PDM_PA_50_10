@@ -7,6 +7,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.data.UserRole
+import ipca.app.lojasas.utils.Validators
 import java.util.Date
 
 data class ProfileState(
@@ -131,29 +132,47 @@ class ProfileViewModel : ViewModel() {
 
     fun saveProfile(onSuccess: () -> Unit) {
         val state = uiState.value
-        if (state.nome.isEmpty()) {
+
+        val nome = state.nome.trim()
+        if (nome.isEmpty()) {
             uiState.value = state.copy(error = "O nome não pode estar vazio.")
             return
         }
 
-        uiState.value = state.copy(isLoading = true)
+        val contactoTrim = state.contacto.trim()
+        val contactoNorm = if (contactoTrim.isNotBlank()) Validators.normalizePhonePT(contactoTrim) else ""
+        if (contactoTrim.isNotBlank() && contactoNorm == null) {
+            uiState.value = state.copy(error = "Contacto inválido. Use 9 dígitos (ex: 912345678) ou +351...")
+            return
+        }
+
+        val codPostalTrim = state.codPostal.trim()
+        val codPostalNorm = if (codPostalTrim.isNotBlank()) Validators.normalizePostalCodePT(codPostalTrim) else ""
+        if (codPostalTrim.isNotBlank() && codPostalNorm == null) {
+            uiState.value = state.copy(error = "Código Postal inválido. Formato esperado: 1234-567")
+            return
+        }
+
+        val morada = state.morada.trim()
+
+        uiState.value = state.copy(isLoading = true, error = null, nome = nome, contacto = contactoNorm ?: "", morada = morada, codPostal = codPostalNorm ?: "")
         val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
 
         val updates = hashMapOf<String, Any>(
-            "nome" to state.nome,
-            "contacto" to state.contacto,
-            "morada" to state.morada,
-            "codPostal" to state.codPostal
+            "nome" to nome,
+            "contacto" to (contactoNorm ?: ""),
+            "morada" to morada,
+            "codPostal" to (codPostalNorm ?: "")
         )
 
         db.collection(collectionName).document(state.numMecanografico)
             .update(updates)
             .addOnSuccessListener {
-                uiState.value = state.copy(isLoading = false, success = true)
+                uiState.value = uiState.value.copy(isLoading = false, success = true)
                 onSuccess()
             }
             .addOnFailureListener { e ->
-                uiState.value = state.copy(isLoading = false, error = "Erro ao atualizar: ${e.message}")
+                uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao atualizar: ${e.message}")
             }
     }
 

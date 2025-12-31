@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.app
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.utils.Validators
 
 data class CreateProfileState(
     var numMecanografico: String = "",
@@ -42,20 +43,83 @@ class CreateProfileViewModel : ViewModel() {
     fun onRoleChange(newRole: String) { uiState.value = uiState.value.copy(selectedRole = newRole) }
 
     fun createProfile(onSuccess: () -> Unit) {
-        val state = uiState.value
+        val s = uiState.value
 
-        if (state.email.isEmpty() || state.password.isEmpty() || state.nome.isEmpty() || state.numMecanografico.isEmpty()) {
-            uiState.value = state.copy(error = "Preencha os campos obrigatórios.")
+        // --- Validações (campos obrigatórios + formatos) ---
+        val email = s.email.trim()
+        val nome = s.nome.trim()
+        val numMec = s.numMecanografico.trim()
+        val morada = s.morada.trim()
+
+        if (email.isBlank() || s.password.isBlank() || nome.isBlank() || numMec.isBlank()) {
+            uiState.value = s.copy(error = "Preencha os campos obrigatórios.")
             return
         }
 
-        val mecanograficoRegex = Regex("^[a-zA-Z]\\d+$")
-        if (!state.numMecanografico.matches(mecanograficoRegex)) {
-            uiState.value = state.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: f12345).")
+        if (!Validators.isValidEmail(email)) {
+            uiState.value = s.copy(error = "Email inválido.")
             return
         }
 
-        uiState.value = state.copy(isLoading = true, error = null)
+        if (s.password.length < 6) {
+            uiState.value = s.copy(error = "A password deve ter pelo menos 6 caracteres.")
+            return
+        }
+
+        if (!Validators.isValidMecanografico(numMec)) {
+            uiState.value = s.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: f12345).")
+            return
+        }
+
+        val contactoNorm = Validators.normalizePhonePT(s.contacto)
+        if (contactoNorm == null) {
+            uiState.value = s.copy(error = "Contacto inválido. Use 9 dígitos (ex: 912345678) ou +351...")
+            return
+        }
+
+        if (morada.isBlank()) {
+            uiState.value = s.copy(error = "A morada é obrigatória.")
+            return
+        }
+
+        val codPostalNorm = Validators.normalizePostalCodePT(s.codPostal)
+        if (codPostalNorm == null) {
+            uiState.value = s.copy(error = "Código Postal inválido. Formato esperado: 1234-567")
+            return
+        }
+
+        val documentNumberTrim = s.documentNumber.trim()
+        if (documentNumberTrim.isBlank()) {
+            uiState.value = s.copy(error = "O número de documento é obrigatório.")
+            return
+        }
+
+        val normalizedDocNumber = if (s.documentType == "NIF") {
+            if (!Validators.isValidNif(documentNumberTrim)) {
+                uiState.value = s.copy(error = "NIF inválido.")
+                return
+            }
+            Validators.normalizeNif(documentNumberTrim)!!
+        } else {
+            if (documentNumberTrim.length < 5) {
+                uiState.value = s.copy(error = "Nº Passaporte inválido.")
+                return
+            }
+            documentNumberTrim
+        }
+
+        // Guarda valores normalizados no state
+        val normalizedState = s.copy(
+            email = email,
+            nome = nome,
+            numMecanografico = numMec,
+            contacto = contactoNorm,
+            morada = morada,
+            codPostal = codPostalNorm,
+            documentNumber = normalizedDocNumber
+        )
+
+        uiState.value = normalizedState.copy(isLoading = true, error = null)
 
         // 1. Configurar uma App Firebase Secundária para não afetar a sessão atual
         val tempAppName = "SecondaryApp"
@@ -70,7 +134,7 @@ class CreateProfileViewModel : ViewModel() {
         // 2. Usar o Auth dessa app secundária
         val tempAuth = Firebase.auth(tempApp)
 
-        tempAuth.createUserWithEmailAndPassword(state.email, state.password)
+        tempAuth.createUserWithEmailAndPassword(normalizedState.email, normalizedState.password)
             .addOnSuccessListener { result ->
                 val userId = result.user?.uid
                 if (userId != null) {
@@ -82,7 +146,7 @@ class CreateProfileViewModel : ViewModel() {
                 }
             }
             .addOnFailureListener { e ->
-                uiState.value = state.copy(isLoading = false, error = e.message ?: "Erro ao criar conta.")
+                uiState.value = uiState.value.copy(isLoading = false, error = e.message ?: "Erro ao criar conta.")
             }
     }
 

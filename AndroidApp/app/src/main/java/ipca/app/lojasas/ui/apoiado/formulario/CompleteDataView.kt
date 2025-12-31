@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import androidx.navigation.NavController
+import ipca.app.lojasas.utils.Validators
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,13 +60,19 @@ fun CompleteDataView(
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
+    // Impede escolher datas que resultem em idade < MIN_AGE_YEARS
+    datePickerDialog.datePicker.maxDate = Validators.maxBirthDateForMinAgeMillis()
+
     var expandedNacionalidade by remember { mutableStateOf(false) }
 
     // --- LÓGICA DE VALIDAÇÃO ---
     // O botão só fica ativo se isto for true
     val isFormValid = remember(state) {
+        val birthValid = state.dataNascimento != null &&
+                Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)
+
         val basicFieldsValid = state.nacionalidade.isNotBlank() &&
-                state.dataNascimento != null &&
+                birthValid &&
                 state.relacaoIPCA.isNotBlank() &&
                 state.necessidades.isNotEmpty()
 
@@ -74,7 +81,10 @@ fun CompleteDataView(
         if (state.relacaoIPCA == "Estudante") {
             // Se for estudante, exige curso, grau, e (se tiver bolsa) o valor
             val studentValid = state.curso.isNotBlank() && state.graoEnsino.isNotBlank()
-            val bolsaValid = if (state.bolsaEstudos) state.valorBolsa.isNotBlank() else true
+            val bolsaValid = if (state.bolsaEstudos) {
+                val parsed = state.valorBolsa.trim().replace(',', '.').toDoubleOrNull()
+                parsed != null && parsed > 0
+            } else true
             studentValid && bolsaValid
         } else {
             true
@@ -172,6 +182,14 @@ fun CompleteDataView(
             },
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (state.dataNascimento != null && !Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)) {
+            Text(
+                text = "Deve ter pelo menos ${Validators.MIN_AGE_YEARS} anos para submeter.",
+                color = Color.Red,
+                fontSize = 12.sp
+            )
+        }
 
         Divider()
 
