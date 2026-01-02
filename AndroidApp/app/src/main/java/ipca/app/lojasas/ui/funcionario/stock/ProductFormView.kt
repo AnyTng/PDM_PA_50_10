@@ -85,7 +85,6 @@ fun ProductFormView(
         modifier = Modifier
             .fillMaxSize()
             .background(StockBackground)
-            .padding(16.dp)
     ) {
         if (state.isLoading) {
             CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
@@ -187,9 +186,12 @@ private fun ProductFormViewContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Título
         Text(
             text = title,
@@ -322,7 +324,8 @@ private fun ProductFormViewContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(120.dp))
+
     }
 }
 
@@ -468,12 +471,12 @@ fun StockAutocomplete(
 
 @Composable
 fun StockInput(
+    modifier: Modifier = Modifier,
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
-    singleLine: Boolean = true,
-    modifier: Modifier = Modifier
+    singleLine: Boolean = true
 ) {
     OutlinedTextField(
         value = value,
