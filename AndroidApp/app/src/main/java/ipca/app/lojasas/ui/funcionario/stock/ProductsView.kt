@@ -57,7 +57,7 @@ fun ProductsView(
 }
 
 /**
- * UI "pura" para Preview (não depende de NavController nem de ViewModel).
+ * UI para Preview
  */
 @Composable
 private fun <T> ProductsViewContent(
@@ -73,7 +73,6 @@ private fun <T> ProductsViewContent(
         modifier = Modifier
             .fillMaxSize()
             .background(StockBackground)
-            .padding(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
@@ -97,16 +96,19 @@ private fun <T> ProductsViewContent(
                     Text(
                         text = error.ifBlank { "Erro" },
                         color = Color.Red,
-                        modifier = Modifier.padding(top = 16.dp)
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 16.dp),
-                        contentPadding = PaddingValues(bottom = 120.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 120.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(groups.size) { index ->
@@ -121,7 +123,7 @@ private fun <T> ProductsViewContent(
             onClick = onFabClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(6.dp)
+                .padding(end = 22.dp, bottom = 22.dp)
         )
     }
 }

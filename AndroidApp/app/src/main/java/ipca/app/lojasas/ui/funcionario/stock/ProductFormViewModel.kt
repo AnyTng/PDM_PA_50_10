@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
+import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductUpsert
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Calendar
@@ -156,6 +157,41 @@ class ProductFormViewModel(
     fun setTamanhoValor(value: String) = update { copy(tamanhoValor = value) }
     fun setTamanhoUnidade(value: String) = update { copy(tamanhoUnidade = value) }
 
+    fun onBarcodeScanned(value: String) {
+        val normalized = value.trim()
+        if (normalized.isBlank()) return
+
+        _uiState.value = _uiState.value.copy(codBarras = normalized, error = null)
+
+        repository.fetchProductByBarcode(
+            codBarras = normalized,
+            onSuccess = { product ->
+                if (product == null) return@fetchProductByBarcode
+
+                val current = _uiState.value
+                if (!current.productId.isNullOrBlank() && current.productId == product.id) {
+                    return@fetchProductByBarcode
+                }
+
+                _uiState.value = current.copy(
+                    nomeProduto = product.nomeProduto,
+                    categoria = product.categoria.orEmpty(),
+                    subCategoria = product.subCategoria,
+                    marca = product.marca.orEmpty(),
+                    codBarras = normalized,
+                    tamanhoValor = sizeValueFrom(product),
+                    tamanhoUnidade = product.tamanhoUnidade?.trim().orEmpty(),
+                    estadoProduto = product.estadoProduto?.takeIf { it.isNotBlank() } ?: current.estadoProduto
+                )
+            },
+            onError = { e ->
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Erro ao procurar código de barras."
+                )
+            }
+        )
+    }
+
     fun save(onSuccess: (String) -> Unit) {
         val current = _uiState.value
         if (current.isSaving) return
@@ -205,6 +241,12 @@ class ProductFormViewModel(
 
     private fun update(block: ProductFormUiState.() -> ProductFormUiState) {
         _uiState.value = _uiState.value.block()
+    }
+
+    private fun sizeValueFrom(product: Product): String {
+        return product.tamanhoValor?.let {
+            if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
+        }.orEmpty()
     }
 }
 

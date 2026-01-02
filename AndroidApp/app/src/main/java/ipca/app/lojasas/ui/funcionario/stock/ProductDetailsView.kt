@@ -89,7 +89,6 @@ private fun <T> ProductDetailsViewContent(
         modifier = Modifier
             .fillMaxSize()
             .background(StockBackground)
-            .padding(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
@@ -113,24 +112,27 @@ private fun <T> ProductDetailsViewContent(
                     Text(
                         text = error.ifBlank { "Erro" },
                         color = Color.Red,
-                        modifier = Modifier.padding(top = 16.dp)
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
 
                 isEmpty -> {
                     Text(
                         text = emptyText,
-                        modifier = Modifier.padding(top = 16.dp),
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
                         color = Color(0xFF333333)
                     )
                 }
 
                 else -> {
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 16.dp),
-                        contentPadding = PaddingValues(bottom = 120.dp),
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 120.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(groups.size) { index ->
@@ -145,7 +147,7 @@ private fun <T> ProductDetailsViewContent(
             onClick = onFabClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(6.dp)
+                .padding(end = 22.dp, bottom = 22.dp)
         )
     }
 }

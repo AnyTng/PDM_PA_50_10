@@ -46,7 +46,7 @@ fun ProductFormView(
     var showDatePicker by remember { mutableStateOf(false) }
 
     val startScan = rememberBarcodeScanner(
-        onScanned = { code -> viewModel.setCodBarras(code) },
+        onScanned = { code -> viewModel.onBarcodeScanned(code) },
         onError = { /* Log error */ }
     )
 

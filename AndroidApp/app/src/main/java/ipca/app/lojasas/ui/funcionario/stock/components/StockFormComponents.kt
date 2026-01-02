@@ -69,6 +69,7 @@ fun StockPrimaryButton(
     enabled: Boolean,
     isLoading: Boolean,
     modifier: Modifier = Modifier
+
 ) {
     Button(
         onClick = onClick,

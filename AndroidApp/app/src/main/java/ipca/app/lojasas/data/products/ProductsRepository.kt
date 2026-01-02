@@ -66,6 +66,28 @@ class ProductsRepository(
             .addOnFailureListener { onError(it) }
     }
 
+    fun fetchProductByBarcode(
+        codBarras: String,
+        onSuccess: (Product?) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = codBarras.trim()
+        if (normalized.isBlank()) {
+            onSuccess(null)
+            return
+        }
+
+        collection
+            .whereEqualTo("codBarras", normalized)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { result ->
+                val product = result.documents.firstOrNull()?.toProductOrNull()
+                onSuccess(product)
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
     fun createProduct(
         product: ProductUpsert,
         onSuccess: (String) -> Unit,
@@ -152,4 +174,3 @@ private fun ProductUpsert.toFirestoreMap(): Map<String, Any> {
 
     return base.filterValues { it != null } as Map<String, Any>
 }
-

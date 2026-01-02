@@ -46,43 +46,55 @@ fun StockSearchBar(
     modifier: Modifier = Modifier,
     placeholder: String = "Pesquisar"
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White)
     ) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.weight(1f),
-            singleLine = true,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = StockAccent
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = GreenSas
+                    )
+                },
+                placeholder = { Text(placeholder, color = GreenSas.copy(alpha = 0.6f)) },
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GreenSas,
+                    unfocusedBorderColor = GreenSas,
+                    focusedLabelColor = GreenSas,
+                    unfocusedLabelColor = GreenSas,
+                    cursorColor = GreenSas,
+                    focusedLeadingIconColor = GreenSas,
+                    unfocusedLeadingIconColor = GreenSas,
+                    focusedTextColor = GreenSas,
+                    unfocusedTextColor = GreenSas,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
                 )
-            },
-            placeholder = { Text(placeholder, color = StockAccent) },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = StockAccent,
-                unfocusedBorderColor = StockAccent,
-                focusedLabelColor = StockAccent,
-                unfocusedLabelColor = StockAccent,
-                cursorColor = GreenSas,
-                focusedLeadingIconColor = StockAccent,
-                unfocusedLeadingIconColor = StockAccent
             )
-        )
-        IconButton(onClick = { /* TODO: filtros */ }) {
-            Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color(0xFF333333))
-        }
-        IconButton(onClick = { /* TODO: ordenar */ }) {
-            Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color(0xFF333333))
-        }
-        IconButton(onClick = { /* TODO: exportar */ }) {
-            Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = Color(0xFF333333))
+            IconButton(onClick = { /* TODO: filtros */ }) {
+                Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color(0xFF333333))
+            }
+            IconButton(onClick = { /* TODO: ordenar */ }) {
+                Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color(0xFF333333))
+            }
+            IconButton(onClick = { /* TODO: exportar */ }) {
+                Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = Color(0xFF333333))
+            }
         }
     }
 }
@@ -110,7 +122,7 @@ fun StockGroupCard(
         Row(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = group.name,
@@ -120,7 +132,8 @@ fun StockGroupCard(
                 ),
                 color = GreenSas,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
 
             Surface(
