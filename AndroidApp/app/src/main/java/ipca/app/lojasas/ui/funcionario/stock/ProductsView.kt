@@ -11,9 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,6 +42,7 @@ fun ProductsView(
     viewModel: ProductsViewModel = viewModel()
 ) {
     val state by viewModel.uiState
+    val context = LocalContext.current
 
     ProductsViewContent(
         searchQuery = state.searchQuery,
@@ -44,6 +50,12 @@ fun ProductsView(
         isLoading = state.isLoading,
         error = state.error,
         groups = state.groups,
+        availableCategories = state.availableCategories,
+        selectedCategory = state.selectedCategory,
+        onCategorySelected = viewModel::onCategorySelected,
+        sortOption = state.sortOption,
+        onSortSelected = viewModel::onSortSelected,
+        onExportClick = { viewModel.exportToCSV(context) },
         groupRow = { group ->
             StockGroupCard(
                 group = group,
@@ -66,9 +78,17 @@ private fun <T> ProductsViewContent(
     isLoading: Boolean,
     error: String?,
     groups: List<T>,
+    availableCategories: List<String>,
+    selectedCategory: String,
+    onCategorySelected: (String) -> Unit,
+    sortOption: StockSortOption,
+    onSortSelected: (StockSortOption) -> Unit,
+    onExportClick: () -> Unit,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
+    val categoryOptions = listOf(CATEGORY_ALL) + availableCategories
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -77,7 +97,61 @@ private fun <T> ProductsViewContent(
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
                 query = searchQuery,
-                onQueryChange = onSearchQueryChange
+                onQueryChange = onSearchQueryChange,
+                showFilter = availableCategories.isNotEmpty(),
+                filterMenuContent = { expanded, onDismiss ->
+                    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+                        categoryOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    onCategorySelected(option)
+                                    onDismiss()
+                                },
+                                trailingIcon = {
+                                    if (option == selectedCategory) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = GreenSas
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                },
+                showSort = true,
+                sortMenuContent = { expanded, onDismiss ->
+                    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+                        val options = listOf(
+                            StockSortOption.NAME_ASC to "Nome (A-Z)",
+                            StockSortOption.NAME_DESC to "Nome (Z-A)",
+                            StockSortOption.QTY_ASC to "Quantidade (menor \u2192 maior)",
+                            StockSortOption.QTY_DESC to "Quantidade (maior \u2192 menor)"
+                        )
+                        options.forEach { (option, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    onSortSelected(option)
+                                    onDismiss()
+                                },
+                                trailingIcon = {
+                                    if (option == sortOption) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = GreenSas
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                },
+                showExport = selectedCategory == CATEGORY_ALL,
+                onExportClick = onExportClick
             )
 
             when {
@@ -141,6 +215,12 @@ private fun ProductsViewPreview_Normal() {
         isLoading = false,
         error = null,
         groups = fakeGroups,
+        availableCategories = listOf("Alimentar", "Higiene"),
+        selectedCategory = CATEGORY_ALL,
+        onCategorySelected = {},
+        sortOption = StockSortOption.NAME_ASC,
+        onSortSelected = {},
+        onExportClick = {},
         groupRow = { name ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -174,6 +254,12 @@ private fun ProductsViewPreview_Loading() {
         isLoading = true,
         error = null,
         groups = emptyList<String>(),
+        availableCategories = emptyList(),
+        selectedCategory = CATEGORY_ALL,
+        onCategorySelected = {},
+        sortOption = StockSortOption.NAME_ASC,
+        onSortSelected = {},
+        onExportClick = {},
         groupRow = {},
         onFabClick = {}
     )
@@ -188,6 +274,12 @@ private fun ProductsViewPreview_Error() {
         isLoading = false,
         error = "Erro ao carregar grupos",
         groups = emptyList<String>(),
+        availableCategories = emptyList(),
+        selectedCategory = CATEGORY_ALL,
+        onCategorySelected = {},
+        sortOption = StockSortOption.NAME_ASC,
+        onSortSelected = {},
+        onExportClick = {},
         groupRow = {},
         onFabClick = {}
     )

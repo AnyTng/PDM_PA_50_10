@@ -17,7 +17,10 @@ import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,8 +47,17 @@ fun StockSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Pesquisar"
+    placeholder: String = "Pesquisar",
+    showFilter: Boolean = false,
+    filterMenuContent: @Composable (Boolean, () -> Unit) -> Unit = { _, _ -> },
+    showSort: Boolean = false,
+    sortMenuContent: @Composable (Boolean, () -> Unit) -> Unit = { _, _ -> },
+    showExport: Boolean = false,
+    onExportClick: () -> Unit = {}
 ) {
+    var showFilterMenu by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -86,14 +98,26 @@ fun StockSearchBar(
                     unfocusedContainerColor = Color.Transparent
                 )
             )
-            IconButton(onClick = { /* TODO: filtros */ }) {
-                Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color(0xFF333333))
+            if (showFilter) {
+                Box {
+                    IconButton(onClick = { showFilterMenu = true }) {
+                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color(0xFF333333))
+                    }
+                    filterMenuContent(showFilterMenu) { showFilterMenu = false }
+                }
             }
-            IconButton(onClick = { /* TODO: ordenar */ }) {
-                Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color(0xFF333333))
+            if (showSort) {
+                Box {
+                    IconButton(onClick = { showSortMenu = true }) {
+                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color(0xFF333333))
+                    }
+                    sortMenuContent(showSortMenu) { showSortMenu = false }
+                }
             }
-            IconButton(onClick = { /* TODO: exportar */ }) {
-                Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = Color(0xFF333333))
+            if (showExport) {
+                IconButton(onClick = onExportClick) {
+                    Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = Color(0xFF333333))
+                }
             }
         }
     }

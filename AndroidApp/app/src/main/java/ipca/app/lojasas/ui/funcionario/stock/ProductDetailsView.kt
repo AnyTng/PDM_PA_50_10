@@ -15,9 +15,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +61,14 @@ fun ProductDetailsView(
         isEmpty = state.groups.isEmpty(),
         emptyText = "Sem produtos nesta categoria.",
         groups = state.groups,
+        availableBrands = state.availableBrands,
+        selectedBrand = state.selectedBrand,
+        onBrandSelected = viewModel::onBrandSelected,
+        availableCampaigns = state.availableCampaigns,
+        selectedCampaign = state.selectedCampaign,
+        onCampaignSelected = viewModel::onCampaignSelected,
+        sortOption = state.sortOption,
+        onSortSelected = viewModel::onSortSelected,
         groupRow = { group ->
             StockProductGroupCard(
                 product = group.product,
@@ -82,6 +95,14 @@ private fun <T> ProductDetailsViewContent(
     isEmpty: Boolean,
     emptyText: String,
     groups: List<T>,
+    availableBrands: List<String>,
+    selectedBrand: String,
+    onBrandSelected: (String) -> Unit,
+    availableCampaigns: List<CampaignFilterOption>,
+    selectedCampaign: String,
+    onCampaignSelected: (String) -> Unit,
+    sortOption: ProductSortOption,
+    onSortSelected: (ProductSortOption) -> Unit,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
@@ -93,7 +114,93 @@ private fun <T> ProductDetailsViewContent(
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
                 query = searchQuery,
-                onQueryChange = onSearchQueryChange
+                onQueryChange = onSearchQueryChange,
+                showFilter = availableBrands.isNotEmpty() || availableCampaigns.isNotEmpty(),
+                filterMenuContent = { expanded, onDismiss ->
+                    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+                        if (availableBrands.isNotEmpty()) {
+                            Text(
+                                text = "Marca",
+                                color = Color.Gray,
+                                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp)
+                            )
+                            availableBrands.forEach { brand ->
+                                DropdownMenuItem(
+                                    text = { Text(brand) },
+                                    onClick = {
+                                        onBrandSelected(brand)
+                                        onDismiss()
+                                    },
+                                    trailingIcon = {
+                                        if (brand == selectedBrand) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = GreenSas
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        if (availableCampaigns.isNotEmpty()) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            Text(
+                                text = "Campanha",
+                                color = Color.Gray,
+                                modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)
+                            )
+                            availableCampaigns.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(option.label) },
+                                    onClick = {
+                                        onCampaignSelected(option.id)
+                                        onDismiss()
+                                    },
+                                    trailingIcon = {
+                                        if (option.id == selectedCampaign) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = GreenSas
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
+                },
+                showSort = true,
+                sortMenuContent = { expanded, onDismiss ->
+                    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+                        val options = listOf(
+                            ProductSortOption.EXPIRY_ASC to "Validade (mais próxima)",
+                            ProductSortOption.EXPIRY_DESC to "Validade (mais distante)",
+                            ProductSortOption.SIZE_ASC to "Quantidade (menor \u2192 maior)",
+                            ProductSortOption.SIZE_DESC to "Quantidade (maior \u2192 menor)"
+                        )
+                        options.forEach { (option, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label) },
+                                onClick = {
+                                    onSortSelected(option)
+                                    onDismiss()
+                                },
+                                trailingIcon = {
+                                    if (option == sortOption) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = GreenSas
+                                        )
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
             )
 
             when {
@@ -173,6 +280,14 @@ private fun ProductDetailsViewPreview_Normal() {
         isEmpty = false,
         emptyText = "Sem produtos nesta categoria.",
         groups = fake,
+        availableBrands = listOf(BRAND_ALL, "Marca X"),
+        selectedBrand = BRAND_ALL,
+        onBrandSelected = {},
+        availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
+        selectedCampaign = CAMPAIGN_ALL,
+        onCampaignSelected = {},
+        sortOption = ProductSortOption.EXPIRY_ASC,
+        onSortSelected = {},
         groupRow = { g ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -215,6 +330,14 @@ private fun ProductDetailsViewPreview_Empty() {
         isEmpty = true,
         emptyText = "Sem produtos nesta categoria.",
         groups = emptyList<FakeGroup>(),
+        availableBrands = listOf(BRAND_ALL),
+        selectedBrand = BRAND_ALL,
+        onBrandSelected = {},
+        availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
+        selectedCampaign = CAMPAIGN_ALL,
+        onCampaignSelected = {},
+        sortOption = ProductSortOption.EXPIRY_ASC,
+        onSortSelected = {},
         groupRow = {},
         onFabClick = {}
     )
@@ -231,6 +354,14 @@ private fun ProductDetailsViewPreview_Loading() {
         isEmpty = false,
         emptyText = "Sem produtos nesta categoria.",
         groups = emptyList<FakeGroup>(),
+        availableBrands = listOf(BRAND_ALL),
+        selectedBrand = BRAND_ALL,
+        onBrandSelected = {},
+        availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
+        selectedCampaign = CAMPAIGN_ALL,
+        onCampaignSelected = {},
+        sortOption = ProductSortOption.EXPIRY_ASC,
+        onSortSelected = {},
         groupRow = {},
         onFabClick = {}
     )
@@ -247,6 +378,14 @@ private fun ProductDetailsViewPreview_Error() {
         isEmpty = false,
         emptyText = "Sem produtos nesta categoria.",
         groups = emptyList<FakeGroup>(),
+        availableBrands = listOf(BRAND_ALL),
+        selectedBrand = BRAND_ALL,
+        onBrandSelected = {},
+        availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
+        selectedCampaign = CAMPAIGN_ALL,
+        onCampaignSelected = {},
+        sortOption = ProductSortOption.EXPIRY_ASC,
+        onSortSelected = {},
         groupRow = {},
         onFabClick = {}
     )
