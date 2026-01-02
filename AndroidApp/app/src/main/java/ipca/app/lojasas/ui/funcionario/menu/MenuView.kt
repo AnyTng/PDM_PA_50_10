@@ -129,7 +129,7 @@ private fun MenuViewContent(
                 Column {
                     MenuRow(title = "Apoiados") { onNavigate("apoiadosList") }
                     MenuDivider()
-                    MenuRow(title = "Pedidos Urgentes") { /* onNavigate("...") */ }
+                    MenuRow(title = "Pedidos Urgentes") { onNavigate("urgentRequests") }
                     MenuDivider()
                     MenuRow(title = "Validar Beneficiario") { onNavigate("validateAccounts") }
                     MenuDivider()

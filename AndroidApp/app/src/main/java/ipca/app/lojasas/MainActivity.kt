@@ -54,6 +54,9 @@ import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
+import ipca.app.lojasas.ui.funcionario.pedidosurgentes.UrgentRequestsView
+import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
+import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -83,6 +86,10 @@ class MainActivity : ComponentActivity() {
                 val footerType = when (currentRoute) {
                     "funcionarioHome",
                     "menu",
+                    "urgentRequests",
+                    "cestasList",
+                    "createCesta",
+                    "createCestaUrgente/{pedidoId}/{apoiadoId}",
                     "stockProducts",
                     "stockProducts/{subCategory}",
                     "stockProduct/{productId}",
@@ -99,6 +106,10 @@ class MainActivity : ComponentActivity() {
                     "funcionarioHome" -> HeaderConfig(title = "Calendário")
                     "stockProducts" -> HeaderConfig(title = "Stock")
                     "menu" -> HeaderConfig(title = "Menu")
+                    "urgentRequests" -> HeaderConfig(title = "Pedidos Urgentes", showBack = true, onBack = { navController.popBackStack() })
+                    "cestasList" -> HeaderConfig(title = "Cestas")
+                    "createCesta" -> HeaderConfig(title = "Criar Cesta", showBack = true, onBack = { navController.popBackStack() })
+                    "createCestaUrgente/{pedidoId}/{apoiadoId}" -> HeaderConfig(title = "Criar Cesta", showBack = true, onBack = { navController.popBackStack() })
                     "menuApoiado" -> HeaderConfig(title = "Menu")
                     "profileFuncionario" -> HeaderConfig(title = "Perfil Gestor", showBack = true, onBack = { navController.popBackStack() })
                     "profileApoiado" -> HeaderConfig(title = "Meu Perfil", showBack = true, onBack = { navController.popBackStack() })
@@ -172,6 +183,25 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("funcionarioHome") { CalendarView(navController = navController) }
                         composable("menu") { MenuView(navController = navController) }
+                        composable("urgentRequests") { UrgentRequestsView(navController = navController) }
+                        composable("cestasList") { CestasListView(navController = navController) }
+                        composable("createCesta") { CreateCestaView(navController = navController, fromUrgent = false, pedidoId = null, apoiadoId = null) }
+                        composable(
+                            route = "createCestaUrgente/{pedidoId}/{apoiadoId}",
+                            arguments = listOf(
+                                navArgument("pedidoId") { type = NavType.StringType },
+                                navArgument("apoiadoId") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val pedidoId = backStackEntry.arguments?.getString("pedidoId").orEmpty()
+                            val apoiadoId = backStackEntry.arguments?.getString("apoiadoId").orEmpty()
+                            CreateCestaView(
+                                navController = navController,
+                                fromUrgent = true,
+                                pedidoId = pedidoId,
+                                apoiadoId = apoiadoId
+                            )
+                        }
                         composable("createProfile") { CreateProfileView(navController = navController) }
                         composable("createProfileApoiado") { CreateProfileApoiadoView(navController = navController) }
                         composable("documentSubmission") { DocumentSubmissionView(navController = navController) }

@@ -140,6 +140,11 @@ fun ApoiadoHomeScreen(
         getProfileStatusUi(state.estadoConta, state.faltaDocumentos)
     }
 
+    // Pedidos urgentes que já têm cesta associada devem ser apresentados como cesta (e não duplicar cartões)
+    val urgentToShow = remember(state.urgentRequests) {
+        state.urgentRequests.filter { it.cestaId.isNullOrBlank() }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -202,8 +207,8 @@ fun ApoiadoHomeScreen(
         }
 
         // Pedidos de Ajuda (azul acinzentado)
-        if (state.urgentRequests.isNotEmpty()) {
-            items(state.urgentRequests, key = { it.id }) { request ->
+        if (urgentToShow.isNotEmpty()) {
+            items(urgentToShow, key = { it.id }) { request ->
                 UrgentRequestHomeCard(request = request)
             }
         }
@@ -214,7 +219,7 @@ fun ApoiadoHomeScreen(
             !state.estadoConta.equals("Falta_Documentos", ignoreCase = true) &&
             !state.estadoConta.equals("Correcao_Dados", ignoreCase = true) &&
             state.cestasPendentes.isEmpty() &&
-            state.urgentRequests.isEmpty()
+            urgentToShow.isEmpty()
         ) {
             item { EmptyStateCheck() }
         }
@@ -435,6 +440,17 @@ private fun CestaHomeCard(
                 fontSize = 18.sp,
                 color = textColor
             )
+
+            if (cesta.origem?.equals("Urgente", ignoreCase = true) == true) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Origem: Pedido Urgente",
+                    fontFamily = IntroFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = textColor.copy(alpha = 0.95f)
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -897,9 +913,13 @@ private fun formatPedidoEstado(raw: String): String {
     val normalized = raw.trim().lowercase(Locale.getDefault())
     return when {
         normalized.isBlank() -> "—"
+        // Estados do fluxo de aprovação (Pedidos Urgentes)
+        normalized == "preparar_apoio" || normalized == "preparar apoio" || normalized == "em preparar apoio" ->
+            "Pedido Aprovado. O seu pedido esta a ser preparado. Quando pronto ira aparecer para levantar a cesta"
+        normalized == "negado" -> "Pedido Negado"
         normalized == "analise" || normalized == "em analise" || normalized == "em_analise" -> "Em Análise"
         normalized == "aprovado" -> "Aprovado"
-        normalized == "rejeitado" || normalized == "negado" -> "Rejeitado"
+        normalized == "rejeitado" -> "Rejeitado"
         normalized == "concluido" || normalized == "concluído" -> "Concluído"
         else -> raw
     }

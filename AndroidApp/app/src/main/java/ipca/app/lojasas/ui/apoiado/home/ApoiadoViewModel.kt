@@ -21,7 +21,9 @@ data class Cesta(
     val dataRecolha: Date? = null,
     val dataAgendada: Date? = null,
     val estadoCesta: String = "",
-    val numeroItens: Int = 0
+    val numeroItens: Int = 0,
+    val origem: String? = null,
+    val pedidoUrgenteId: String? = null
 )
 
 // Mantido o teu modelo original de Pedido
@@ -30,7 +32,8 @@ data class UrgentRequest(
     val descricao: String,
     val estado: String,
     val data: Date?,
-    val tipo: String
+    val tipo: String,
+    val cestaId: String? = null
 )
 
 data class ApoiadoState(
@@ -179,34 +182,47 @@ class ApoiadoViewModel : ViewModel() {
                     dataRecolha = dataRecolha,
                     dataAgendada = dataAgendada,
                     estadoCesta = estadoCesta,
-                    numeroItens = produtos.size
+                    numeroItens = produtos.size,
+                    origem = doc.getString("origem"),
+                    pedidoUrgenteId = doc.getString("pedidoUrgenteId")
                 )
             } ?: emptyList()
 
             fun isCompleted(estado: String): Boolean {
                 val eLower = estado.trim().lowercase(Locale.getDefault())
                 return eLower.contains("entreg") ||
-                        eLower.contains("levant") ||
+                        // Evitar falso positivo em "nao levantou".
+                        eLower.contains("levantad") ||
                         eLower.contains("conclu") ||
                         eLower.contains("finaliz")
             }
 
             fun isMissed(estado: String, data: Date?): Boolean {
                 val eLower = estado.trim().lowercase(Locale.getDefault())
-                val explicit = eLower.contains("não levant") || eLower.contains("nao levant")
+                // Normalizamos para apanhar estados como "Nao_Levantou"
+                val normalized = eLower.replace('_', ' ')
+                val explicit = normalized.contains("não levant") || normalized.contains("nao levant")
                 val pastNotCompleted = (data != null && data.before(now) && !isCompleted(estado))
                 return explicit || pastNotCompleted
             }
 
-            val naoLevantadas = todasCestas
+            fun isCancelled(estado: String): Boolean {
+                val eLower = estado.trim().lowercase(Locale.getDefault())
+                return eLower.contains("cancel")
+            }
+
+            // Cestas canceladas não devem aparecer ao apoiado
+            val cestasVisiveis = todasCestas.filterNot { isCancelled(it.estadoCesta) }
+
+            val naoLevantadas = cestasVisiveis
                 .filter { isMissed(it.estadoCesta, it.dataRecolha) }
                 .sortedByDescending { it.dataRecolha }
 
-            val realizadas = todasCestas
+            val realizadas = cestasVisiveis
                 .filter { isCompleted(it.estadoCesta) }
                 .sortedByDescending { it.dataRecolha }
 
-            val pendentes = todasCestas
+            val pendentes = cestasVisiveis
                 .filter { !isCompleted(it.estadoCesta) && !isMissed(it.estadoCesta, it.dataRecolha) }
                 .sortedBy { it.dataRecolha }
 
@@ -234,7 +250,8 @@ class ApoiadoViewModel : ViewModel() {
                         descricao = doc.getString("descricao") ?: "",
                         estado = doc.getString("estado") ?: "Analise",
                         data = doc.getTimestamp("dataSubmissao")?.toDate(),
-                        tipo = doc.getString("tipo") ?: "Ajuda"
+                        tipo = doc.getString("tipo") ?: "Ajuda",
+                        cestaId = doc.getString("cestaId")?.trim()
                     )
                 } ?: emptyList()
 

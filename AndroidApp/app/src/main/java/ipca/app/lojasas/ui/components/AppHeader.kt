@@ -82,11 +82,11 @@ fun AppHeader(
         }
 
         Image(
-            painter = painterResource(id = R.drawable.sas),
+            painter = painterResource(id = R.drawable.icon),
             contentDescription = "Serviços de Ação Social IPCA",
             contentScale = ContentScale.FillBounds,
             modifier = Modifier
-                .width(80.dp)
+                .width(40.dp)
                 .height(40.dp)
         )
 
