@@ -100,9 +100,13 @@ fun CalendarView(
             if (selectedDayEvents.isEmpty()) {
                 Text("Sem eventos para este dia.", color = Color.Gray, fontSize = 14.sp)
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(selectedDayEvents) { event ->
                         EventItemCard(event)
+
                     }
                 }
             }
@@ -112,7 +116,7 @@ fun CalendarView(
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = GreenSas)
         }
 
-        // --- POP-UP OBRIGATÓRIO (Mantido do original) ---
+        // --- pop-up da password ---
         if (state.showMandatoryPasswordChange) {
             MandatoryPasswordChangeDialog(
                 isLoading = state.isLoading,
@@ -133,7 +137,7 @@ fun CalendarGrid(
     val daysInMonth = displayedMonth.getActualMaximum(Calendar.DAY_OF_MONTH)
     val firstDayOfWeek = displayedMonth.clone() as Calendar
     firstDayOfWeek.set(Calendar.DAY_OF_MONTH, 1)
-    // Calendar.SUNDAY = 1. Ajuste se necessário para começar na Segunda (MONDAY = 2)
+
     val startOffset = firstDayOfWeek.get(Calendar.DAY_OF_WEEK) - 1
 
     val weekDays = listOf("D", "S", "T", "Q", "Q", "S", "S")
