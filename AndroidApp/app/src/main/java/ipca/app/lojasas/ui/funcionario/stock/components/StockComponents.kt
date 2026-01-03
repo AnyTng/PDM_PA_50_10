@@ -312,11 +312,11 @@ fun StockProductGroupCard(
 
                 Button(
                     onClick = onViewClick,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
                 ) {
-                    Text(text = "Delete", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(text = "Detalhes", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }

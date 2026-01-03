@@ -1,7 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.calendar
 
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.EmailAuthProvider
@@ -43,98 +42,180 @@ class CalendarViewModel : ViewModel() {
 
     private val db = Firebase.firestore
     private val auth = Firebase.auth
+    private var loadSequence = 0
 
     init {
         checkMudarPassStatus()
-        loadAllEvents()
     }
 
     // --- CARREGAMENTO DE EVENTOS ---
-    fun loadAllEvents() {
-        uiState.value = uiState.value.copy(isLoading = true)
+    fun loadEventsForMonth(reference: Calendar) {
+        val loadId = ++loadSequence
+        val (start, end) = monthRange(reference)
+        uiState.value = uiState.value.copy(isLoading = true, error = null, events = emptyList())
 
         val eventsList = mutableListOf<CalendarEvent>()
+        var pending = 4
+        var hasError = false
 
-        // Usamos um contador simples ou Tasks do Firebase para esperar pelas 3 chamadas
-        // Aqui faremos sequencial para simplificar a lógica sem Coroutines complexas
-
-        // 1. Carregar Campanhas
-        db.collection("campanha").get().addOnSuccessListener { campSnap ->
-            campSnap.documents.forEach { doc ->
-                val nome = doc.getString("nomeCampanha") ?: "Campanha"
-                val inicio = doc.getTimestamp("dataInicio")?.toDate()
-                val fim = doc.getTimestamp("dataFim")?.toDate()
-
-                if (inicio != null) {
-                    eventsList.add(CalendarEvent(doc.id + "_start", "Início: $nome", inicio, EventType.CAMPAIGN_START))
-                }
-                if (fim != null) {
-                    eventsList.add(CalendarEvent(doc.id + "_end", "Fim: $nome", fim, EventType.CAMPAIGN_END))
-                }
+        fun finish() {
+            pending -= 1
+            if (pending == 0 && loadId == loadSequence) {
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    events = eventsList,
+                    error = if (hasError) "Erro parcial ao carregar eventos." else null
+                )
             }
-            loadProducts(eventsList)
-        }.addOnFailureListener { loadProducts(eventsList) }
-    }
-
-    private fun loadProducts(currentList: MutableList<CalendarEvent>) {
-        // 2. Carregar Validade de Produtos
-        db.collection("produtos").get().addOnSuccessListener { prodSnap ->
-            prodSnap.documents.forEach { doc ->
-                val validade = doc.getTimestamp("validade")?.toDate()
-                val nome = doc.getString("nomeProduto") ?: "Produto"
-                val marca = doc.getString("marca") ?: ""
-
-                // Só adicionamos se tiver validade e se não estiver "Vendido/Doado" (opcional)
-                if (validade != null) {
-                    currentList.add(
-                        CalendarEvent(
-                            id = doc.id,
-                            title = "Validade: $nome ($marca)",
-                            date = validade,
-                            type = EventType.PRODUCT_EXPIRY
-                        )
-                    )
-                }
-            }
-            loadCestas(currentList)
-        }.addOnFailureListener { loadCestas(currentList) }
-    }
-
-    private fun loadCestas(currentList: MutableList<CalendarEvent>) {
-        // 3. Carregar Entregas de Cestas
-        db.collection("cestas").get().addOnSuccessListener { cestaSnap ->
-            cestaSnap.documents.forEach { doc ->
-                // Baseado na imagem image_7bc068.png
-                val dataRecolha = doc.getTimestamp("dataRecolha")?.toDate()
-                val apoiadoId = doc.getString("apoiadoID") ?: "Desconhecido"
-                val estado = doc.getString("estadoCesta") ?: ""
-
-                if (dataRecolha != null) {
-                    currentList.add(
-                        CalendarEvent(
-                            id = doc.id,
-                            title = "Entrega Cesta ($estado)",
-                            description = "Apoiado: $apoiadoId",
-                            date = dataRecolha,
-                            type = EventType.BASKET_DELIVERY
-                        )
-                    )
-                }
-            }
-
-            // Finalizar: Atualizar Estado
-            uiState.value = uiState.value.copy(
-                isLoading = false,
-                events = currentList
-            )
-        }.addOnFailureListener {
-            // Mesmo com erro nas cestas, mostra o que já carregou
-            uiState.value = uiState.value.copy(
-                isLoading = false,
-                events = currentList,
-                error = "Erro parcial ao carregar eventos."
-            )
         }
+
+        // 1. Campanhas (início)
+        db.collection("campanha")
+            .whereGreaterThanOrEqualTo("dataInicio", start)
+            .whereLessThan("dataInicio", end)
+            .get()
+            .addOnSuccessListener { campSnap ->
+                campSnap.documents.forEach { doc ->
+                    val nome = doc.getString("nomeCampanha") ?: "Campanha"
+                    val inicio = doc.getTimestamp("dataInicio")?.toDate()
+                        ?: (doc.get("dataInicio") as? Date)
+                    if (inicio != null) {
+                        eventsList.add(
+                            CalendarEvent(
+                                doc.id + "_start",
+                                "Início: $nome",
+                                inicio,
+                                EventType.CAMPAIGN_START
+                            )
+                        )
+                    }
+                }
+                finish()
+            }
+            .addOnFailureListener {
+                hasError = true
+                finish()
+            }
+
+        // 2. Campanhas (fim)
+        db.collection("campanha")
+            .whereGreaterThanOrEqualTo("dataFim", start)
+            .whereLessThan("dataFim", end)
+            .get()
+            .addOnSuccessListener { campSnap ->
+                campSnap.documents.forEach { doc ->
+                    val nome = doc.getString("nomeCampanha") ?: "Campanha"
+                    val fim = doc.getTimestamp("dataFim")?.toDate()
+                        ?: (doc.get("dataFim") as? Date)
+                    if (fim != null) {
+                        eventsList.add(
+                            CalendarEvent(
+                                doc.id + "_end",
+                                "Fim: $nome",
+                                fim,
+                                EventType.CAMPAIGN_END
+                            )
+                        )
+                    }
+                }
+                finish()
+            }
+            .addOnFailureListener {
+                hasError = true
+                finish()
+            }
+
+        // 3. Validade de Produtos
+        db.collection("produtos")
+            .whereGreaterThanOrEqualTo("validade", start)
+            .whereLessThan("validade", end)
+            .get()
+            .addOnSuccessListener { prodSnap ->
+                prodSnap.documents.forEach { doc ->
+                    val validade = doc.getTimestamp("validade")?.toDate()
+                        ?: (doc.get("validade") as? Date)
+                    val nome = doc.getString("nomeProduto") ?: "Produto"
+                    val marca = doc.getString("marca") ?: ""
+
+                    if (validade != null) {
+                        eventsList.add(
+                            CalendarEvent(
+                                id = doc.id,
+                                title = "Validade: $nome ($marca)",
+                                date = validade,
+                                type = EventType.PRODUCT_EXPIRY
+                            )
+                        )
+                    }
+                }
+                finish()
+            }
+            .addOnFailureListener {
+                hasError = true
+                finish()
+            }
+
+        // 4. Entregas de Cestas
+        db.collection("cestas")
+            .whereGreaterThanOrEqualTo("dataRecolha", start)
+            .whereLessThan("dataRecolha", end)
+            .get()
+            .addOnSuccessListener { cestaSnap ->
+                cestaSnap.documents.forEach { doc ->
+                    val dataRecolha = doc.getTimestamp("dataRecolha")?.toDate()
+                        ?: (doc.get("dataRecolha") as? Date)
+                    val apoiadoId = doc.getString("apoiadoID") ?: "Desconhecido"
+                    val estado = doc.getString("estadoCesta") ?: ""
+
+                    if (dataRecolha != null) {
+                        eventsList.add(
+                            CalendarEvent(
+                                id = doc.id,
+                                title = "Entrega Cesta ($estado)",
+                                description = "Apoiado: $apoiadoId",
+                                date = dataRecolha,
+                                type = EventType.BASKET_DELIVERY
+                            )
+                        )
+                    }
+                }
+                finish()
+            }
+            .addOnFailureListener {
+                hasError = true
+                finish()
+            }
+    }
+
+    fun ensureSelectedDateInMonth(reference: Calendar) {
+        val current = uiState.value.selectedDate
+        val selectedCal = Calendar.getInstance().apply { time = current }
+        if (selectedCal.get(Calendar.YEAR) == reference.get(Calendar.YEAR) &&
+            selectedCal.get(Calendar.MONTH) == reference.get(Calendar.MONTH)
+        ) {
+            return
+        }
+
+        val target = (reference.clone() as Calendar).apply {
+            val targetDay = selectedCal.get(Calendar.DAY_OF_MONTH)
+            val maxDay = getActualMaximum(Calendar.DAY_OF_MONTH)
+            set(Calendar.DAY_OF_MONTH, targetDay.coerceAtMost(maxDay))
+        }
+        uiState.value = uiState.value.copy(selectedDate = target.time)
+    }
+
+    private fun monthRange(reference: Calendar): Pair<Date, Date> {
+        val start = (reference.clone() as Calendar).apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val end = (start.clone() as Calendar).apply {
+            add(Calendar.MONTH, 1)
+        }
+        return start.time to end.time
     }
 
     fun selectDate(date: Date) {

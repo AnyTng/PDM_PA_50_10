@@ -51,6 +51,12 @@ fun CalendarView(
         monthForPage(baseMonth, pagerState.currentPage, initialPage)
     }
 
+    LaunchedEffect(pagerState.currentPage) {
+        val month = monthForPage(baseMonth, pagerState.currentPage, initialPage)
+        viewModel.ensureSelectedDateInMonth(month)
+        viewModel.loadEventsForMonth(month)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
