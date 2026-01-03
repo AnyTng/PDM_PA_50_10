@@ -11,69 +11,83 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.ui.components.AppHeader // Importar o Header
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UrgentHelpView(
     navController: NavController,
-    numeroMecanografico: String // Recebe o nº mecanográfico do utilizador logado
+    numeroMecanografico: String
 ) {
     val viewModel: UrgentHelpViewModel = viewModel()
     var descricao by remember { mutableStateOf("") }
 
-    // Estados do ViewModel
     val isLoading by viewModel.isLoading
     val error by viewModel.error
 
+    // 1. Column principal sem padding para o Header ocupar tudo
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(16.dp)
     ) {
-        Text(
-            text = "Pedido de Ajuda Urgente",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF094E33)
-        )
-        Text(
-            text = "Descreva abaixo o que necessita com urgência.",
-            color = Color.Gray,
-            fontSize = 14.sp
+        // 2. Adicionar o AppHeader no topo
+        AppHeader(
+            title = "Ajuda Urgente",
+            showBack = true,
+            onBack = { navController.popBackStack() }
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        OutlinedTextField(
-            value = descricao,
-            onValueChange = { descricao = it },
-            label = { Text("Descrição da necessidade") },
+        // 3. Column interna com padding para o formulário
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(150.dp),
-            maxLines = 10
-        )
-
-        if (error != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(error!!, color = Color.Red)
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                viewModel.submitUrgentRequest(numeroMecanografico, descricao) {
-                    navController.popBackStack() // Volta para trás ao terminar
-                }
-            },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF094E33)),
-            enabled = !isLoading
+                .padding(16.dp)
         ) {
-            if (isLoading) CircularProgressIndicator(color = Color.White)
-            else Text("Submeter Pedido")
+            Text(
+                text = "Pedido de Ajuda Urgente",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF094E33)
+            )
+            Text(
+                text = "Descreva abaixo o que necessita com urgência.",
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            OutlinedTextField(
+                value = descricao,
+                onValueChange = { descricao = it },
+                label = { Text("Descrição da necessidade") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
+                maxLines = 10
+            )
+
+            if (error != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(error!!, color = Color.Red)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    viewModel.submitUrgentRequest(numeroMecanografico, descricao) {
+                        navController.popBackStack()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF094E33)),
+                enabled = !isLoading
+            ) {
+                if (isLoading) CircularProgressIndicator(color = Color.White)
+                else Text("Submeter Pedido")
+            }
         }
     }
 }
