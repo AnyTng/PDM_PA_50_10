@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -51,7 +50,6 @@ fun ApoiadosListView(
                 onClick = { navController.navigate("createApoiado") },
                 containerColor = GreenSas,
                 contentColor = Color.White,
-                shape = CircleShape,
                 modifier = Modifier.size(64.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Criar Apoiado", modifier = Modifier.size(32.dp))

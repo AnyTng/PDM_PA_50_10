@@ -76,7 +76,8 @@ private fun CampaignCreateViewContent(
             FloatingActionButton(
                 onClick = onSaveClick,
                 containerColor = GreenSas,
-                contentColor = Color.White
+                contentColor = Color.White,
+                modifier = Modifier.size(64.dp)
             ) { Icon(Icons.Default.Check, null) }
         }
     ) { padding ->
