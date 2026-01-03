@@ -31,11 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.ui.funcionario.pedidosurgentes.PedidoUrgenteItem
+import ipca.app.lojasas.ui.funcionario.pedidosurgentes.UrgentRequestsViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 private val GreenSas = Color(0xFF094E33)
 private val GreyBg = Color(0xFFF2F2F2)
+private val OrangeWarning = Color(0xFFE6A519) // Cor para destacar a ação pendente
 
 @Composable
 fun UrgentRequestsView(
@@ -89,15 +92,21 @@ fun UrgentRequestsView(
                                     viewModel.negarPedido(pedido.id)
                                 },
                                 onAprovar = {
-                                    // 1) Marcar como aprovado (Preparar_Apoio)
-                                    // 2) Encaminhar para criar cesta (estilo imagem 1)
+                                    // 1) Marca como aprovado
                                     viewModel.aprovarPedido(pedido.id) { ok ->
                                         if (ok) {
+                                            // 2) Encaminha para criar cesta
                                             navController.navigate(
                                                 "createCestaUrgente/${pedido.id}/${pedido.numeroMecanografico}"
                                             )
                                         }
                                     }
+                                },
+                                onCriarCesta = {
+                                    // Botão de recuperação: Vai direto para a criação de cesta
+                                    navController.navigate(
+                                        "createCestaUrgente/${pedido.id}/${pedido.numeroMecanografico}"
+                                    )
                                 }
                             )
                         }
@@ -113,15 +122,23 @@ private fun PedidoUrgenteCard(
     pedido: PedidoUrgenteItem,
     dateFmt: SimpleDateFormat,
     onNegar: () -> Unit,
-    onAprovar: () -> Unit
+    onAprovar: () -> Unit,
+    onCriarCesta: () -> Unit
 ) {
     val estadoNorm = pedido.estado.trim().lowercase(Locale.getDefault())
+
+    // Estado: Em Análise
     val isAnalise = estadoNorm.isBlank() || estadoNorm == "analise" || estadoNorm == "em analise" || estadoNorm == "em_analise"
 
+    // Estado: Aprovado (Preparar Apoio), mas ainda SEM Cesta criada (cestaId é null ou vazio)
+    val isAprovadoSemCesta = (estadoNorm == "preparar_apoio" || estadoNorm == "preparar apoio") && pedido.cestaId.isNullOrBlank()
+
     val estadoLabel = when {
-        estadoNorm == "preparar_apoio" || estadoNorm == "preparar apoio" -> "Preparar Apoio"
+        estadoNorm == "preparar_apoio" || estadoNorm == "preparar apoio" -> "Aprovado"
         estadoNorm == "negado" -> "Negado"
-        estadoNorm == "analise" || estadoNorm == "em analise" || estadoNorm == "em_analise" || estadoNorm.isBlank() -> "Em Análise"
+        isAnalise -> "Em Análise"
+        // Se tiver cestaId, podemos até mostrar que já tem cesta
+        !pedido.cestaId.isNullOrBlank() -> "Concluído (Cesta Criada)"
         else -> pedido.estado.ifBlank { "—" }
     }
 
@@ -147,7 +164,11 @@ private fun PedidoUrgenteCard(
                     text = estadoLabel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = if (estadoNorm == "negado") Color(0xFFB00020) else Color.Gray
+                    color = when {
+                        estadoNorm == "negado" -> Color(0xFFB00020)
+                        !pedido.cestaId.isNullOrBlank() -> GreenSas // Verde se já tiver cesta
+                        else -> Color.Gray
+                    }
                 )
             }
 
@@ -167,6 +188,7 @@ private fun PedidoUrgenteCard(
                 color = Color.Black
             )
 
+            // CASO 1: EM ANÁLISE (Botões de Decisão)
             if (isAnalise) {
                 Spacer(Modifier.height(14.dp))
                 Row(
@@ -189,13 +211,23 @@ private fun PedidoUrgenteCard(
                     }
                 }
             }
+
+            // CASO 2: APROVADO MAS FALTA CRIAR CESTA (Botão de Recuperação)
+            if (isAprovadoSemCesta) {
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = onCriarCesta,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangeWarning)
+                ) {
+                    Text("⚠️ Finalizar: Criar Cesta", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun rememberDateFormatter(): SimpleDateFormat {
-    // MaterialTheme não é obrigatório aqui; mas mantém consistência
-    MaterialTheme
     return SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 }

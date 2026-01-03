@@ -291,7 +291,6 @@ class CreateCestaViewModel : ViewModel() {
             "apoiadoID" to apoiado.id,
             "funcionarioID" to funcId,
             "dataAtual" to now,
-            // Guardamos as 2 para compatibilidade com o que já existe no projeto
             "dataAgendada" to agendada,
             "dataRecolha" to agendada,
             "estadoCesta" to "Agendada",
@@ -305,9 +304,9 @@ class CreateCestaViewModel : ViewModel() {
         if (recDias != null) cestaMap["recorrenciaDias"] = recDias
         if (!s.pedidoId.isNullOrBlank()) cestaMap["pedidoUrgenteId"] = s.pedidoId!!
 
-        // Transação: cria a cesta + reserva produtos (garante consistência)
+        // --- APENAS ESTA TRANSAÇÃO (A mais completa) ---
         db.runTransaction { txn ->
-            // Firestore requires all reads before any writes in a transaction.
+            // Leitura dos produtos (Firestore exige leituras antes de escritas)
             val produtoRefs = produtoIds.map { pid ->
                 pid to db.collection("produtos").document(pid)
             }
@@ -315,12 +314,11 @@ class CreateCestaViewModel : ViewModel() {
                 pid to txn.get(ref)
             }
 
-            // 1) Verifica produtos
+            // 1) Verifica produtos e disponibilidade
             produtoSnaps.forEach { (pid, snap) ->
                 if (!snap.exists()) {
                     throw IllegalStateException("Produto não encontrado: $pid")
                 }
-
                 val estado = snap.getString("estadoProduto")?.trim().orEmpty()
                 val isDisponivel = estado.isBlank() || estado.equals("Disponivel", ignoreCase = true)
                 if (!isDisponivel) {
@@ -352,15 +350,16 @@ class CreateCestaViewModel : ViewModel() {
                 txn.update(db.collection("apoiados").document(apoiado.id), apoioUpdates)
             }
 
-            // 4) Se veio de pedido urgente, manter o estado em "Preparar_Apoio" e ligar a cesta
+            // 4) ATUALIZAR PEDIDO URGENTE (Isto é o que precisas!)
             val pedidoIdLocal = s.pedidoId
             if (s.fromUrgent && !pedidoIdLocal.isNullOrBlank()) {
                 val updates = mutableMapOf<String, Any>(
-                    "estado" to "Preparar_Apoio",
-                    "cestaId" to cestaId,
+                    "estado" to "Preparar_Apoio", // Mantém o estado aprovado
+                    "cestaId" to cestaId,         // <--- ISTO FAZ O BOTÃO DESAPARECER
                     "funcionarioID" to funcId,
                     "dataDecisao" to now
                 )
+                // Nota: A coleção aqui tem de ser "pedidos_ajuda"
                 txn.update(db.collection("pedidos_ajuda").document(pedidoIdLocal), updates)
             }
 
@@ -371,7 +370,6 @@ class CreateCestaViewModel : ViewModel() {
                 onSuccess()
             }
             .addOnFailureListener { e ->
-                // Se falhar, não criou cesta nem reservou (transação é atómica)
                 uiState.value = uiState.value.copy(isSubmitting = false, error = e.message)
             }
     }
