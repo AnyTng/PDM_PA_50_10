@@ -85,10 +85,7 @@ class MainActivity : ComponentActivity() {
                 val footerType = when (currentRoute) {
                     "funcionarioHome",
                     "menu",
-                    "urgentRequests",
                     "cestasList",
-                    "cestaDetails/{cestaId}",
-                    "createCesta",
                     "createCestaUrgente/{pedidoId}/{apoiadoId}",
                     "stockProducts",
                     "stockProducts/{productName}",

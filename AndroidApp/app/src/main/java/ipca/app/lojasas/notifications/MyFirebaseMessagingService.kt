@@ -40,4 +40,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         nm.notify((System.currentTimeMillis() % Int.MAX_VALUE).toInt(), notif)
     }
+
+
+
 }
+
+
