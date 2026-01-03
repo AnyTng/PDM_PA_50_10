@@ -128,7 +128,7 @@ class CestasListViewModel : ViewModel() {
         val now = Date()
         val cestaRef = db.collection("cestas").document(cesta.id)
 
-        // Ao marcar como entregue: cesta -> Entregue e produtos -> Entregues.
+        // Ao marcar como entregue: cesta -> Entregue e produtos -> Entregue.
         db.runTransaction { txn ->
             val cestaSnap = txn.get(cestaRef)
             val produtoIds = (cestaSnap.get("produtos") as? List<*>)
@@ -140,7 +140,7 @@ class CestasListViewModel : ViewModel() {
                 txn.update(
                     prodRef,
                     mapOf(
-                        "estadoProduto" to "Entregues",
+                        "estadoProduto" to "Entregue",
                         "cestaEntregaId" to cesta.id,
                         "entregueEm" to now,
                         "cestaReservaId" to FieldValue.delete(),

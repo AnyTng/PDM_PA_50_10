@@ -211,11 +211,16 @@ private fun csvValue(value: String): String {
 private fun productsToGroups(products: List<Product>): List<StockGroupUi> {
     return products
         .groupBy { it.nomeProduto.trim() } // Agrupa pelo nomeProduto (ex: Arroz)
-        .map { (nomeProduto, groupProducts) ->
-            StockGroupUi(
-                name = nomeProduto.ifBlank { "—" },
-                availableCount = groupProducts.count { it.isAvailable() }
-            )
+        .mapNotNull { (nomeProduto, groupProducts) ->
+            val availableCount = groupProducts.count { it.isAvailable() }
+            if (availableCount == 0) {
+                null
+            } else {
+                StockGroupUi(
+                    name = nomeProduto.ifBlank { "—" },
+                    availableCount = availableCount
+                )
+            }
         }
 }
 

@@ -154,7 +154,7 @@ fun CestasListView(
                             item {
                                 Spacer(Modifier.height(10.dp))
                                 Text(
-                                    "Entregues / Não levantou",
+                                    "Entregue / Não levantou",
                                     fontWeight = FontWeight.Bold,
                                     color = Color.Gray
                                 )
