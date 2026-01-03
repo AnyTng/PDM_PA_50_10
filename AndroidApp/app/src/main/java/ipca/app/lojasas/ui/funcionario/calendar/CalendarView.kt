@@ -4,21 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -27,7 +27,9 @@ import ipca.app.lojasas.ui.theme.GreenSas // Sua cor do tema
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation // Necessário para o Dialog antigo
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CalendarView(
     navController: NavController,
@@ -35,27 +37,46 @@ fun CalendarView(
 ) {
     val state by viewModel.uiState
 
-    // Controlo local do mês visualizado
-    var displayedMonth by remember { mutableStateOf(Calendar.getInstance()) }
+    val baseMonth = remember {
+        Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }
+    }
+    val pageCount = 2400
+    val initialPage = pageCount / 2
+    val pagerState = rememberPagerState(
+        initialPage = initialPage,
+        pageCount = { pageCount }
+    )
+    val scope = rememberCoroutineScope()
+    val displayedMonth = remember(pagerState.currentPage) {
+        monthForPage(baseMonth, pagerState.currentPage, initialPage)
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF8F8F8))
-            .padding(16.dp)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        val selectedDayEvents = state.events.filter { isSameDay(it.date, state.selectedDate) }
 
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 0.dp)
+        ) {
             // --- HEADER: Mês e Navegação ---
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = {
-                    val newCal = displayedMonth.clone() as Calendar
-                    newCal.add(Calendar.MONTH, -1)
-                    displayedMonth = newCal
+                    if (pagerState.currentPage > 0) {
+                        scope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                        }
+                    }
                 }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Anterior", tint = GreenSas)
                 }
@@ -68,21 +89,29 @@ fun CalendarView(
                 )
 
                 IconButton(onClick = {
-                    val newCal = displayedMonth.clone() as Calendar
-                    newCal.add(Calendar.MONTH, 1)
-                    displayedMonth = newCal
+                    if (pagerState.currentPage < pageCount - 1) {
+                        scope.launch {
+                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                        }
+                    }
                 }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Seguinte", tint = GreenSas)
                 }
             }
 
             // --- GRELHA DO CALENDÁRIO ---
-            CalendarGrid(
-                displayedMonth = displayedMonth,
-                events = state.events,
-                selectedDate = state.selectedDate,
-                onDateSelected = { viewModel.selectDate(it) }
-            )
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth()
+            ) { page ->
+                val pageMonth = monthForPage(baseMonth, page, initialPage)
+                CalendarGrid(
+                    displayedMonth = pageMonth,
+                    events = state.events,
+                    selectedDate = state.selectedDate,
+                    onDateSelected = { viewModel.selectDate(it) }
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
             Divider()
@@ -95,18 +124,22 @@ fun CalendarView(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            val selectedDayEvents = state.events.filter { isSameDay(it.date, state.selectedDate) }
-
-            if (selectedDayEvents.isEmpty()) {
-                Text("Sem eventos para este dia.", color = Color.Gray, fontSize = 14.sp)
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(selectedDayEvents) { event ->
-                        EventItemCard(event)
-
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = true)
+            ) {
+                if (selectedDayEvents.isEmpty()) {
+                    Text("Sem eventos para este dia.", color = Color.Gray, fontSize = 14.sp)
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(selectedDayEvents) { event ->
+                            EventItemCard(event)
+                        }
                     }
                 }
             }
@@ -142,6 +175,9 @@ fun CalendarGrid(
 
     val weekDays = listOf("D", "S", "T", "Q", "Q", "S", "S")
 
+    val totalCells = startOffset + daysInMonth
+    val rows = (totalCells + 6) / 7
+
     Column {
         // Cabeçalho Dias da Semana
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
@@ -151,48 +187,56 @@ fun CalendarGrid(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        LazyVerticalGrid(columns = GridCells.Fixed(7)) {
-            // Espaços vazios antes do dia 1
-            items(startOffset) {
-                Box(modifier = Modifier.size(40.dp))
-            }
+        repeat(rows) { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                repeat(7) { column ->
+                    val cellIndex = (row * 7) + column
+                    val day = cellIndex - startOffset + 1
 
-            // Dias do mês
-            items(daysInMonth) { dayIndex ->
-                val day = dayIndex + 1
-                val cal = displayedMonth.clone() as Calendar
-                cal.set(Calendar.DAY_OF_MONTH, day)
-                val date = cal.time
-                val isSelected = isSameDay(date, selectedDate)
-                val dayEvents = events.filter { isSameDay(it.date, date) }
+                    if (cellIndex < startOffset || day > daysInMonth) {
+                        Box(modifier = Modifier.size(40.dp))
+                    } else {
+                        val cal = displayedMonth.clone() as Calendar
+                        cal.set(Calendar.DAY_OF_MONTH, day)
+                        val date = cal.time
+                        val isSelected = isSameDay(date, selectedDate)
+                        val dayEvents = events.filter { isSameDay(it.date, date) }
 
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(45.dp)
-                        .padding(2.dp)
-                        .background(
-                            color = if (isSelected) GreenSas else Color.Transparent,
-                            shape = CircleShape
-                        )
-                        .clickable { onDateSelected(date) }
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = day.toString(),
-                            color = if (isSelected) Color.White else Color.Black,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                        // Indicadores (bolinhas)
-                        if (dayEvents.isNotEmpty()) {
-                            Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.padding(top = 2.dp)) {
-                                dayEvents.take(3).forEach { event ->
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(horizontal = 1.dp)
-                                            .size(6.dp)
-                                            .background(getEventColor(event.type), CircleShape)
-                                    )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(45.dp)
+                                .padding(2.dp)
+                                .background(
+                                    color = if (isSelected) GreenSas else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .clickable { onDateSelected(date) }
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = day.toString(),
+                                    color = if (isSelected) Color.White else Color.Black,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                                // Indicadores (bolinhas)
+                                if (dayEvents.isNotEmpty()) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.Center,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    ) {
+                                        dayEvents.take(3).forEach { event ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .padding(horizontal = 1.dp)
+                                                    .size(6.dp)
+                                                    .background(getEventColor(event.type), CircleShape)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -249,6 +293,12 @@ fun getEventColor(type: EventType): Color {
         EventType.CAMPAIGN_END -> Color(0xFF5E35B1)   // Roxo
         EventType.PRODUCT_EXPIRY -> Color(0xFFE53935) // Vermelho
         EventType.BASKET_DELIVERY -> Color(0xFF43A047) // Verde
+    }
+}
+
+private fun monthForPage(baseMonth: Calendar, page: Int, initialPage: Int): Calendar {
+    return (baseMonth.clone() as Calendar).apply {
+        add(Calendar.MONTH, page - initialPage)
     }
 }
 

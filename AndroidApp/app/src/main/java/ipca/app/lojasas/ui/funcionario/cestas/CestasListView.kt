@@ -17,16 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -102,7 +99,6 @@ fun CestasListView(
         modifier = Modifier
             .fillMaxSize()
             .background(GreyBg)
-            .padding(16.dp)
     ) {
         when {
             state.isLoading -> CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
@@ -116,67 +112,69 @@ fun CestasListView(
                     ag to hist
                 }
 
-                Column(Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 16.dp,
+                        bottom = 120.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     state.error?.let {
-                        Text(it, color = Color.Red, fontSize = 12.sp)
-                        Spacer(Modifier.height(10.dp))
+                        item {
+                            Text(it, color = Color.Red, fontSize = 12.sp)
+                            Spacer(Modifier.height(10.dp))
+                        }
                     }
 
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 110.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        if (agendadas.isEmpty()) {
-                            item {
-                                Text("Sem cestas agendadas.", color = Color.Gray)
-                            }
-                        } else {
-                            items(agendadas, key = { it.id }) { cesta ->
-                                CestaCard(
-                                    cesta = cesta,
-                                    dateFmt = dateFmt,
-                                    showActions = true,
-                                    onAcoes = { cestaParaAcoes = cesta },
-                                    onVerDetalhes = {
-                                        val cestaId = Uri.encode(cesta.id)
-                                        navController.navigate("cestaDetails/$cestaId")
-                                    }
-                                )
-                            }
+                    if (agendadas.isEmpty()) {
+                        item {
+                            Text("Sem cestas agendadas.", color = Color.Gray)
                         }
+                    } else {
+                        items(agendadas, key = { it.id }) { cesta ->
+                            CestaCard(
+                                cesta = cesta,
+                                dateFmt = dateFmt,
+                                showActions = true,
+                                onAcoes = { cestaParaAcoes = cesta },
+                                onVerDetalhes = {
+                                    val cestaId = Uri.encode(cesta.id)
+                                    navController.navigate("cestaDetails/$cestaId")
+                                }
+                            )
+                        }
+                    }
 
-                        if (historico.isNotEmpty()) {
-                            item {
-                                Spacer(Modifier.height(10.dp))
-                                Text(
-                                    "Entregue / Não levantou",
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Gray
-                                )
-                            }
-                            items(historico, key = { it.id }) { cesta ->
-                                CestaCard(
-                                    cesta = cesta,
-                                    dateFmt = dateFmt,
-                                    showActions = false,
-                                    onAcoes = {},
-                                    onVerDetalhes = {}
-                                )
-                            }
+                    if (historico.isNotEmpty()) {
+                        item {
+                            Spacer(Modifier.height(10.dp))
+                            Text(
+                                "Entregue / Não levantou",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Gray
+                            )
+                        }
+                        items(historico, key = { it.id }) { cesta ->
+                            CestaCard(
+                                cesta = cesta,
+                                dateFmt = dateFmt,
+                                showActions = false,
+                                onAcoes = {},
+                                onVerDetalhes = {}
+                            )
                         }
                     }
                 }
 
-                FloatingActionButton(
+                StockFab(
                     onClick = { navController.navigate("createCesta") },
-                    containerColor = GreenSas,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Criar cesta")
-                }
+                        .padding(end = 22.dp, bottom = 22.dp)
+                )
             }
         }
     }
