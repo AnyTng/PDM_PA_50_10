@@ -64,10 +64,14 @@ fun ProductView(
 
             else -> {
                 state.product?.let { prod ->
+                    val reference = Date()
+                    val statusLabel = prod.displayStatus(reference)
+                    val isDisponivel = prod.isBaseAvailable() && !prod.isExpired(reference)
                     ProductViewContent(
                         id = prod.id,
                         nomeProduto = prod.nomeProduto,
-                        estadoProduto = prod.estadoProduto,
+                        estadoLabel = statusLabel,
+                        isDisponivel = isDisponivel,
                         categoria = prod.categoria,
                         subCategoria = prod.subCategoria,
                         marca = prod.marca,
@@ -96,7 +100,8 @@ fun ProductView(
 private fun ProductViewContent(
     id: String,
     nomeProduto: String,
-    estadoProduto: String?,
+    estadoLabel: String,
+    isDisponivel: Boolean,
     categoria: String?,
     subCategoria: String,
     marca: String?,
@@ -141,13 +146,12 @@ private fun ProductViewContent(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    val isDisponivel = estadoProduto == "Disponivel"
                     Surface(
                         color = if (isDisponivel) GreenSas.copy(alpha = 0.1f) else Color.Red.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
-                            text = estadoProduto ?: "Disponivel",
+                            text = estadoLabel,
                             color = if (isDisponivel) GreenSas else Color.Red,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -402,7 +406,8 @@ private fun ProductViewPreview_Disponivel() {
         ProductViewContent(
             id = "p1",
             nomeProduto = "Leite UHT Meio-Gordo",
-            estadoProduto = "Disponivel",
+            estadoLabel = "Disponivel",
+            isDisponivel = true,
             categoria = "Alimentar",
             subCategoria = "Laticínios",
             marca = "Mimosa",
@@ -419,7 +424,7 @@ private fun ProductViewPreview_Disponivel() {
     }
 }
 
-@Preview(showBackground = true, name = "Produto - Indisponível")
+@Preview(showBackground = true, name = "Produto - Reservado")
 @Composable
 private fun ProductViewPreview_Indisponivel() {
     Box(
@@ -430,7 +435,8 @@ private fun ProductViewPreview_Indisponivel() {
         ProductViewContent(
             id = "p2",
             nomeProduto = "Arroz Carolino",
-            estadoProduto = "Indisponivel",
+            estadoLabel = "Reservado",
+            isDisponivel = false,
             categoria = "Alimentar",
             subCategoria = "Cereais",
             marca = "Nacional",

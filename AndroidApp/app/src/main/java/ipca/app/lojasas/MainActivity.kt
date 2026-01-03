@@ -79,7 +79,7 @@ class MainActivity : ComponentActivity() {
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
-                val subCategoryArg = navBackStackEntry?.arguments?.getString("subCategory")?.let { Uri.decode(it) }
+                val productNameArg = navBackStackEntry?.arguments?.getString("productName")?.let { Uri.decode(it) }
 
                 // 1. CONFIGURAÇÃO DO FOOTER
                 // REMOVIDO: "documentSubmission" desta lista
@@ -91,10 +91,10 @@ class MainActivity : ComponentActivity() {
                     "createCesta",
                     "createCestaUrgente/{pedidoId}/{apoiadoId}",
                     "stockProducts",
-                    "stockProducts/{subCategory}",
+                    "stockProducts/{productName}",
                     "stockProduct/{productId}",
                     "stockProductEdit/{productId}",
-                    "stockProductCreate?subCategory={subCategory}"-> FooterType.FUNCIONARIO
+                    "stockProductCreate?productName={productName}"-> FooterType.FUNCIONARIO
                     "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
                     else -> null // "completeData" e "documentSubmission" cairão aqui (sem footer)
                 }
@@ -115,8 +115,8 @@ class MainActivity : ComponentActivity() {
                     "profileApoiado" -> HeaderConfig(title = "Meu Perfil", showBack = true, onBack = { navController.popBackStack() })
                     "createProfile" -> HeaderConfig(title = "Criar Perfil", showBack = true, onBack = { navController.popBackStack() })
                     // "completeData" e "documentSubmission" cairão aqui (sem header)
-                    "stockProducts/{subCategory}" -> HeaderConfig(
-                        title = subCategoryArg ?: "Stock",
+                    "stockProducts/{productName}" -> HeaderConfig(
+                        title = productNameArg ?: "Stock",
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "stockProductCreate?subCategory={subCategory}" -> HeaderConfig(
+                    "stockProductCreate?productName={productName}" -> HeaderConfig(
                         title = "Novo Produto",
                         showBack = true,
                         onBack = { navController.popBackStack() }
@@ -281,11 +281,11 @@ class MainActivity : ComponentActivity() {
                             ProductsView(navController = navController)
                         }
                         composable(
-                            route = "stockProducts/{subCategory}",
-                            arguments = listOf(navArgument("subCategory") { type = NavType.StringType })
+                            route = "stockProducts/{productName}",
+                            arguments = listOf(navArgument("productName") { type = NavType.StringType })
                         ) { backStackEntry ->
-                            val subCategory = backStackEntry.arguments?.getString("subCategory")?.let { Uri.decode(it) }.orEmpty()
-                            ProductDetailsView(navController = navController, subCategoria = subCategory)
+                            val productName = backStackEntry.arguments?.getString("productName")?.let { Uri.decode(it) }.orEmpty()
+                            ProductDetailsView(navController = navController, nomeProduto = productName)
                         }
                         composable(
                             route = "stockProduct/{productId}",
@@ -302,24 +302,24 @@ class MainActivity : ComponentActivity() {
                             ProductFormView(
                                 navController = navController,
                                 productId = productId,
-                                prefillSubCategoria = null
+                                prefillNomeProduto = null
                             )
                         }
                         composable(
-                            route = "stockProductCreate?subCategory={subCategory}",
+                            route = "stockProductCreate?productName={productName}",
                             arguments = listOf(
-                                navArgument("subCategory") {
+                                navArgument("productName") {
                                     type = NavType.StringType
                                     nullable = true
                                     defaultValue = ""
                                 }
                             )
                         ) { backStackEntry ->
-                            val subCategory = backStackEntry.arguments?.getString("subCategory").orEmpty()
+                            val productName = backStackEntry.arguments?.getString("productName").orEmpty()
                             ProductFormView(
                                 navController = navController,
                                 productId = null,
-                                prefillSubCategoria = Uri.decode(subCategory).takeIf { it.isNotBlank() }
+                                prefillNomeProduto = Uri.decode(productName).takeIf { it.isNotBlank() }
                             )
                         }
                     }

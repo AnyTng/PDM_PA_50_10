@@ -15,6 +15,7 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 data class ProductsUiState(
@@ -209,11 +210,14 @@ private fun csvValue(value: String): String {
 }
 
 private fun productsToGroups(products: List<Product>): List<StockGroupUi> {
+    val reference = Date()
     return products
         .groupBy { it.nomeProduto.trim() } // Agrupa pelo nomeProduto (ex: Arroz)
         .mapNotNull { (nomeProduto, groupProducts) ->
-            val availableCount = groupProducts.count { it.isAvailable() }
-            if (availableCount == 0) {
+            val availableCount = groupProducts.count { it.isAvailableForCount(reference) }
+            val reservedCount = groupProducts.count { it.isReserved() }
+            val expiredCount = groupProducts.count { it.isExpiredVisible(reference) }
+            if (availableCount == 0 && reservedCount == 0 && expiredCount == 0) {
                 null
             } else {
                 StockGroupUi(
@@ -222,10 +226,4 @@ private fun productsToGroups(products: List<Product>): List<StockGroupUi> {
                 )
             }
         }
-}
-
-private fun Product.isAvailable(): Boolean {
-    val status = estadoProduto?.trim()?.lowercase()
-    if (status.isNullOrBlank()) return true
-    return status.startsWith("dispon")
 }

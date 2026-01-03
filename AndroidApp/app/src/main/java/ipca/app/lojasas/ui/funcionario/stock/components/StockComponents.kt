@@ -33,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.ui.funcionario.stock.displayStatus
+import ipca.app.lojasas.ui.funcionario.stock.isAvailableForCount
+import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
+import ipca.app.lojasas.ui.funcionario.stock.isReserved
 import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.SimpleDateFormat
@@ -41,6 +45,8 @@ import java.util.Locale
 
 val StockBackground = Color(0xFFF2F2F2)
 val StockAccent = Color(0xFFC9A27B)
+val StockReserved = Color(0xFFB26A00)
+val StockExpired = Color(0xFFE53935)
 
 @Composable
 fun StockSearchBar(
@@ -189,21 +195,28 @@ fun StockGroupCard(
 @Composable
 fun StockProductGroupCard(
     product: Product,
-    quantity: Int,
     onViewClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val statusLabel = product.displayStatus()
+    val statusColor = when {
+        product.isExpiredVisible() -> StockExpired
+        product.isReserved() -> StockReserved
+        product.isAvailableForCount() -> GreenSas
+        else -> Color(0xFF9E9E9E)
+    }
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(2.dp, statusColor)
     ) {
-        // Cabeçalho Verde
+        // Cabeçalho por estado
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(GreenSas)
+                .background(statusColor)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(
@@ -225,11 +238,11 @@ fun StockProductGroupCard(
 
                 Surface(
                     color = Color.White,
-                    contentColor = GreenSas,
+                    contentColor = statusColor,
                     shape = RoundedCornerShape(50)
                 ) {
                     Text(
-                        text = "Quantity: $quantity",
+                        text = statusLabel,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
                     )

@@ -80,14 +80,14 @@ class ProductFormViewModel(
         }
     }
 
-    fun start(productId: String?, prefillSubCategoria: String?) {
-        val key = (productId ?: "NEW") + "|" + (prefillSubCategoria ?: "")
+    fun start(productId: String?, prefillNomeProduto: String?) {
+        val key = (productId ?: "NEW") + "|" + (prefillNomeProduto ?: "")
         if (initializedKey == key) return
         initializedKey = key
 
         if (productId.isNullOrBlank()) {
             _uiState.value = _uiState.value.copy(
-                subCategoria = prefillSubCategoria?.trim().orEmpty()
+                nomeProduto = prefillNomeProduto?.trim().orEmpty()
             )
             return
         }

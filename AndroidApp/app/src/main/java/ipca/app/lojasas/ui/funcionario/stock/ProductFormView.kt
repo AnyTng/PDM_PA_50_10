@@ -39,7 +39,7 @@ import java.util.Locale
 fun ProductFormView(
     navController: NavController,
     productId: String? = null,
-    prefillSubCategoria: String? = null,
+    prefillNomeProduto: String? = null,
     viewModel: ProductFormViewModel = viewModel()
 ) {
     val state by viewModel.uiState
@@ -50,8 +50,8 @@ fun ProductFormView(
         onError = { /* Log error */ }
     )
 
-    LaunchedEffect(productId, prefillSubCategoria) {
-        viewModel.start(productId, prefillSubCategoria)
+    LaunchedEffect(productId, prefillNomeProduto) {
+        viewModel.start(productId, prefillNomeProduto)
     }
 
     // Date Picker (fica aqui para não aparecer nos previews)

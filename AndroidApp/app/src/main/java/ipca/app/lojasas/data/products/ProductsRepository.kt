@@ -41,6 +41,23 @@ class ProductsRepository(
             }
     }
 
+    fun listenProductsByNomeProduto(
+        nomeProduto: String,
+        onSuccess: (List<Product>) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerRegistration {
+        return collection
+            .whereEqualTo("nomeProduto", nomeProduto)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    onError(error)
+                    return@addSnapshotListener
+                }
+                val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
+                onSuccess(products)
+            }
+    }
+
     fun listenProduct(
         productId: String,
         onSuccess: (Product?) -> Unit,

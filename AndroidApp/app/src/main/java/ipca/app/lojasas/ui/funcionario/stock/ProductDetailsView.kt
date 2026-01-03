@@ -44,13 +44,13 @@ import ipca.app.lojasas.ui.theme.GreenSas
 @Composable
 fun ProductDetailsView(
     navController: NavController,
-    subCategoria: String,
+    nomeProduto: String,
     viewModel: ProductDetailsViewModel = viewModel()
 ) {
     val state by viewModel.uiState
 
-    LaunchedEffect(subCategoria) {
-        viewModel.observeSubCategoria(subCategoria)
+    LaunchedEffect(nomeProduto) {
+        viewModel.observeNomeProduto(nomeProduto)
     }
 
     ProductDetailsViewContent(
@@ -59,7 +59,7 @@ fun ProductDetailsView(
         isLoading = state.isLoading,
         error = state.error,
         isEmpty = state.groups.isEmpty(),
-        emptyText = "Sem produtos nesta categoria.",
+        emptyText = "Sem produtos com este nome.",
         groups = state.groups,
         availableBrands = state.availableBrands,
         selectedBrand = state.selectedBrand,
@@ -72,13 +72,12 @@ fun ProductDetailsView(
         groupRow = { group ->
             StockProductGroupCard(
                 product = group.product,
-                quantity = group.quantity,
                 onViewClick = { navController.navigate("stockProduct/${group.product.id}") },
                 modifier = Modifier.clickable { navController.navigate("stockProduct/${group.product.id}") }
             )
         },
         onFabClick = {
-            navController.navigate("stockProductCreate?subCategory=${Uri.encode(subCategoria)}")
+            navController.navigate("stockProductCreate?productName=${Uri.encode(nomeProduto)}")
         }
     )
 }
@@ -278,7 +277,7 @@ private fun ProductDetailsViewPreview_Normal() {
         isLoading = false,
         error = null,
         isEmpty = false,
-        emptyText = "Sem produtos nesta categoria.",
+        emptyText = "Sem produtos com este nome.",
         groups = fake,
         availableBrands = listOf(BRAND_ALL, "Marca X"),
         selectedBrand = BRAND_ALL,
@@ -328,7 +327,7 @@ private fun ProductDetailsViewPreview_Empty() {
         isLoading = false,
         error = null,
         isEmpty = true,
-        emptyText = "Sem produtos nesta categoria.",
+        emptyText = "Sem produtos com este nome.",
         groups = emptyList<FakeGroup>(),
         availableBrands = listOf(BRAND_ALL),
         selectedBrand = BRAND_ALL,
@@ -352,7 +351,7 @@ private fun ProductDetailsViewPreview_Loading() {
         isLoading = true,
         error = null,
         isEmpty = false,
-        emptyText = "Sem produtos nesta categoria.",
+        emptyText = "Sem produtos com este nome.",
         groups = emptyList<FakeGroup>(),
         availableBrands = listOf(BRAND_ALL),
         selectedBrand = BRAND_ALL,
@@ -376,7 +375,7 @@ private fun ProductDetailsViewPreview_Error() {
         isLoading = false,
         error = "Erro ao carregar produtos",
         isEmpty = false,
-        emptyText = "Sem produtos nesta categoria.",
+        emptyText = "Sem produtos com este nome.",
         groups = emptyList<FakeGroup>(),
         availableBrands = listOf(BRAND_ALL),
         selectedBrand = BRAND_ALL,

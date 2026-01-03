@@ -8,12 +8,13 @@ import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
+import java.util.Date
 import java.util.Locale
 
 data class ProductDetailsUiState(
     val isLoading: Boolean = true,
     val error: String? = null,
-    val subCategoria: String = "",
+    val nomeProduto: String = "",
     val searchQuery: String = "",
     val groups: List<ProductGroupUi> = emptyList(),
     val availableBrands: List<String> = emptyList(),
@@ -55,7 +56,7 @@ class ProductDetailsViewModel(
 
     private var listener: ListenerRegistration? = null
     private var allGroups: List<ProductGroupUi> = emptyList()
-    private var currentSubCategoria: String? = null
+    private var currentNomeProduto: String? = null
     private var campaignsById: Map<String, Campaign> = emptyMap()
 
     init {
@@ -68,19 +69,21 @@ class ProductDetailsViewModel(
         )
     }
 
-    fun observeSubCategoria(subCategoria: String) {
-        val normalized = subCategoria.trim()
+    fun observeNomeProduto(nomeProduto: String) {
+        val normalized = nomeProduto.trim()
         if (normalized.isBlank()) return
-        if (currentSubCategoria == normalized) return
+        if (currentNomeProduto == normalized) return
 
-        currentSubCategoria = normalized
-        _uiState.value = _uiState.value.copy(isLoading = true, error = null, subCategoria = normalized)
+        currentNomeProduto = normalized
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null, nomeProduto = normalized)
 
         listener?.remove()
-        listener = repository.listenProductsBySubCategoria(
-            subCategoria = normalized,
+        listener = repository.listenProductsByNomeProduto(
+            nomeProduto = normalized,
             onSuccess = { products ->
-                allGroups = groupIdenticalProducts(products)
+                val reference = Date()
+                val visibleProducts = products.filter { it.isVisibleInStockList(reference) }
+                allGroups = groupIdenticalProducts(visibleProducts)
                 updateAvailableFilters()
                 applyFilter()
             },
