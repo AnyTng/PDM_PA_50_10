@@ -11,6 +11,7 @@ import ipca.app.lojasas.data.products.ProductUpsert
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Calendar
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 data class ProductFormUiState(
     val isLoading: Boolean = false,
@@ -204,6 +205,8 @@ class ProductFormViewModel(
             return
         }
 
+        val alertaValidade7dEm = alertDateFrom(current.validade)
+
         // Correção Importante: Usar .trim() em vez de .normalizedOrNull()
         // para permitir enviar strings vazias ("") e limpar o campo na BD.
         val upsert = ProductUpsert(
@@ -215,6 +218,8 @@ class ProductFormViewModel(
             doado = current.doado.trim(),
             codBarras = current.codBarras.trim(),
             validade = current.validade,
+            alertaValidade7d = false,
+            alertaValidade7dEm = alertaValidade7dEm,
             tamanhoValor = current.tamanhoValor.trim().toDoubleOrNull(),
             tamanhoUnidade = current.tamanhoUnidade.trim().takeIf { it.isNotBlank() },
             descProduto = current.descProduto.trim(),
@@ -247,6 +252,10 @@ class ProductFormViewModel(
         return product.tamanhoValor?.let {
             if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
         }.orEmpty()
+    }
+
+    private fun alertDateFrom(validade: Date?): Date? {
+        return validade?.let { Date(it.time - TimeUnit.DAYS.toMillis(7)) }
     }
 }
 

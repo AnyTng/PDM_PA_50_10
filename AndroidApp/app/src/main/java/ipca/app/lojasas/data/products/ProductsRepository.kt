@@ -164,7 +164,7 @@ class ProductsRepository(
     }
 }
 
-private fun ProductUpsert.toFirestoreMap(): Map<String, Any> {
+private fun ProductUpsert.toFirestoreMap(): Map<String, Any?> {
     val base = mutableMapOf<String, Any?>(
         "nomeProduto" to nomeProduto.trim(),
         "subCategoria" to subCategoria.trim(),
@@ -177,7 +177,9 @@ private fun ProductUpsert.toFirestoreMap(): Map<String, Any> {
         "estadoProduto" to estadoProduto?.trim(),
         "ParceiroExternoNome" to parceiroExternoNome?.trim(),
         "idFunc" to idFunc?.trim(),
-        "validade" to validade
+        "validade" to validade,
+        "alertaValidade7d" to alertaValidade7d,
+        "alertaValidade7dEm" to alertaValidade7dEm
     )
 
     val tamanhoList = if (tamanhoValor != null && !tamanhoUnidade.isNullOrBlank()) {
@@ -189,5 +191,6 @@ private fun ProductUpsert.toFirestoreMap(): Map<String, Any> {
     }
     base["tamanho"] = tamanhoList
 
-    return base.filterValues { it != null } as Map<String, Any>
+    val keepNullKeys = setOf("alertaValidade7dEm")
+    return base.filter { (key, value) -> value != null || key in keepNullKeys }
 }

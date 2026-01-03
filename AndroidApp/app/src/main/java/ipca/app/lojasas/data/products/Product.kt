@@ -13,6 +13,8 @@ data class Product(
     val doado: String? = null,
     val codBarras: String? = null,
     val validade: Date? = null,
+    val alertaValidade7d: Boolean = false,
+    val alertaValidade7dEm: Date? = null,
     val tamanhoValor: Double? = null,
     val tamanhoUnidade: String? = null,
     val descProduto: String? = null,
@@ -30,6 +32,8 @@ data class ProductUpsert(
     val doado: String? = null,
     val codBarras: String? = null,
     val validade: Date? = null,
+    val alertaValidade7d: Boolean = false,
+    val alertaValidade7dEm: Date? = null,
     val tamanhoValor: Double? = null,
     val tamanhoUnidade: String? = null,
     val descProduto: String? = null,
@@ -53,6 +57,12 @@ fun DocumentSnapshot.toProductOrNull(): Product? {
         is Date -> raw
         else -> getTimestamp("validade")?.toDate()
     }
+    val alertaValidade7dEm = when (val raw = get("alertaValidade7dEm")) {
+        is Timestamp -> raw.toDate()
+        is Date -> raw
+        else -> getTimestamp("alertaValidade7dEm")?.toDate()
+    }
+    val alertaValidade7d = (get("alertaValidade7d") as? Boolean) ?: false
 
     val categoria = getStringTrimmed("categoria")
 
@@ -66,6 +76,8 @@ fun DocumentSnapshot.toProductOrNull(): Product? {
         doado = getStringTrimmed("doado"),
         codBarras = getStringOrNumber("codBarras"),
         validade = validade,
+        alertaValidade7d = alertaValidade7d,
+        alertaValidade7dEm = alertaValidade7dEm,
         tamanhoValor = tamanhoValor,
         tamanhoUnidade = tamanhoUnidade,
         descProduto = getStringTrimmed("descProduto"),
