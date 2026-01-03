@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes
+package ipca.app.lojasas.ui.funcionario.pedidosurgentes
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -8,12 +8,14 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import java.util.Date
 
+// 1. ADICIONAR O CAMPO cestaId AQUI
 data class PedidoUrgenteItem(
     val id: String,
     val numeroMecanografico: String,
     val descricao: String,
     val estado: String,
-    val dataSubmissao: Date? = null
+    val dataSubmissao: Date? = null,
+    val cestaId: String? = null // <--- IMPORTANTE
 )
 
 data class UrgentRequestsState(
@@ -78,12 +80,15 @@ class UrgentRequestsViewModel : ViewModel() {
 
                 val pedidos = snapshot?.documents.orEmpty().map { doc ->
                     val dataSubmissao = doc.getTimestamp("dataSubmissao")?.toDate() ?: (doc.get("dataSubmissao") as? Date)
+
+                    // 2. LER O CAMPO cestaId DA BASE DE DADOS
                     PedidoUrgenteItem(
                         id = doc.id,
                         numeroMecanografico = doc.getString("numeroMecanografico")?.trim().orEmpty(),
                         descricao = doc.getString("descricao")?.trim().orEmpty(),
                         estado = doc.getString("estado")?.trim().orEmpty(),
-                        dataSubmissao = dataSubmissao
+                        dataSubmissao = dataSubmissao,
+                        cestaId = doc.getString("cestaId") // <--- IMPORTANTE
                     )
                 }.sortedByDescending { it.dataSubmissao ?: Date(0) }
 
