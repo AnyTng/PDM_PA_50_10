@@ -52,8 +52,9 @@ import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
-import ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes.UrgentRequestsView
+import ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes.UrgentRequestsView  
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
+import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
 import android.Manifest
 import android.os.Build
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     "menu",
                     "urgentRequests",
                     "cestasList",
+                    "cestaDetails/{cestaId}",
                     "createCesta",
                     "createCestaUrgente/{pedidoId}/{apoiadoId}",
                     "stockProducts",
@@ -106,6 +108,11 @@ class MainActivity : ComponentActivity() {
                     "menu" -> HeaderConfig(title = "Menu")
                     "urgentRequests" -> HeaderConfig(title = "Pedidos Urgentes", showBack = true, onBack = { navController.popBackStack() })
                     "cestasList" -> HeaderConfig(title = "Cestas")
+                    "cestaDetails/{cestaId}" -> HeaderConfig(
+                        title = "Detalhes da Cesta",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     "createCesta" -> HeaderConfig(title = "Criar Cesta", showBack = true, onBack = { navController.popBackStack() })
                     "createCestaUrgente/{pedidoId}/{apoiadoId}" -> HeaderConfig(title = "Criar Cesta", showBack = true, onBack = { navController.popBackStack() })
                     "menuApoiado" -> HeaderConfig(title = "Menu")
@@ -184,6 +191,15 @@ class MainActivity : ComponentActivity() {
                         composable("menu") { MenuView(navController = navController) }
                         composable("urgentRequests") { UrgentRequestsView(navController = navController) }
                         composable("cestasList") { CestasListView(navController = navController) }
+                        composable(
+                            route = "cestaDetails/{cestaId}",
+                            arguments = listOf(navArgument("cestaId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val cestaId = backStackEntry.arguments?.getString("cestaId")
+                                ?.let { Uri.decode(it) }
+                                .orEmpty()
+                            CestaDetailsView(cestaId = cestaId)
+                        }
                         composable("createCesta") { CreateCestaView(navController = navController, fromUrgent = false, pedidoId = null, apoiadoId = null) }
                         composable(
                             route = "createCestaUrgente/{pedidoId}/{apoiadoId}",
