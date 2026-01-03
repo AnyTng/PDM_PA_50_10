@@ -41,6 +41,7 @@ fun ValidateAccountsView(
     val context = LocalContext.current
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             AppHeader(title = "Validar Contas", showBack = true, onBack = { navController.popBackStack() })
         }

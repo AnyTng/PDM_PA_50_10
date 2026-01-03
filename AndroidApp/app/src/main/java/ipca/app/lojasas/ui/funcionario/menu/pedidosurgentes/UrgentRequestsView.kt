@@ -19,7 +19,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,7 +51,6 @@ fun UrgentRequestsView(
         modifier = Modifier
             .fillMaxSize()
             .background(GreyBg)
-            .padding(16.dp)
     ) {
         when {
             state.isLoading -> {
@@ -81,7 +79,12 @@ fun UrgentRequestsView(
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 90.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 120.dp
+                        ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(state.pedidos, key = { it.id }) { pedido ->

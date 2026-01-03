@@ -42,6 +42,7 @@ fun ApoiadosListView(
     var showSortMenu by remember { mutableStateOf(false) }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             AppHeader(title = "Gestão de Apoiados", showBack = true, onBack = { navController.popBackStack() })
         },
@@ -281,4 +282,3 @@ private fun DetailRow(label: String, value: String) {
         Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
-

@@ -51,6 +51,7 @@ fun CollaboratorsListView(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = { AppHeader("Colaboradores", true, { navController.popBackStack() }) }
     ) { padding ->
         Column(

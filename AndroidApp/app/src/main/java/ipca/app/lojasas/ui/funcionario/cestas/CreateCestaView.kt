@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -162,7 +163,8 @@ fun CreateCestaView(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
                                 selected = state.usarAgora,
-                                onClick = { viewModel.setUsarAgora(true) }
+                                onClick = { viewModel.setUsarAgora(true) },
+                                colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                             )
                             Text("Agora")
                         }
@@ -172,7 +174,8 @@ fun CreateCestaView(
                                 onClick = {
                                     viewModel.setUsarAgora(false)
                                     openDateTimePicker(state.dataAgendada) { viewModel.setDataAgendada(it) }
-                                }
+                                },
+                                colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                             )
                             Text(
                                 text = "Selecionar",
@@ -210,7 +213,8 @@ fun CreateCestaView(
                             RadioButton(
                                 selected = !state.recorrente,
                                 onClick = { viewModel.setRecorrente(false) },
-                                enabled = recorrenteEnabled
+                                enabled = recorrenteEnabled,
+                                colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                             )
                             Text("Única", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
                         }
@@ -222,7 +226,8 @@ fun CreateCestaView(
                             RadioButton(
                                 selected = state.recorrente,
                                 onClick = { viewModel.setRecorrente(true) },
-                                enabled = recorrenteEnabled
+                                enabled = recorrenteEnabled,
+                                colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                             )
                             Text("Sim", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
                         }
@@ -272,19 +277,22 @@ fun CreateCestaView(
 
             FloatingActionButton(
                 onClick = {
+                    if (state.isSubmitting) return@FloatingActionButton
                     viewModel.submitCesta {
                         navController.popBackStack()
                     }
                 },
                 containerColor = GreenSas,
+                contentColor = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
+                    .size(64.dp)
             ) {
                 if (state.isSubmitting) {
                     CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
                 } else {
-                    Icon(imageVector = Icons.Default.Check, contentDescription = "Guardar")
+                    Icon(imageVector = Icons.Default.Check, contentDescription = "Confirmar")
                 }
             }
         }
