@@ -2,6 +2,7 @@ package ipca.app.lojasas.ui.funcionario.cestas
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +66,7 @@ fun CestasListView(
     var cestaParaFaltaReagendar by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaTerceiraFalta by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaCancelar by remember { mutableStateOf<CestaItem?>(null) }
+    var cestaParaAcoes by remember { mutableStateOf<CestaItem?>(null) }
 
     fun openDateTimePicker(initial: Date?, onSelected: (Date) -> Unit) {
         val cal = Calendar.getInstance()
@@ -135,16 +137,10 @@ fun CestasListView(
                                     cesta = cesta,
                                     dateFmt = dateFmt,
                                     showActions = true,
-                                    onCancelar = { cestaParaCancelar = cesta },
-                                    onEntregue = { viewModel.marcarEntregue(cesta) },
-                                    onReagendar = { cestaParaReagendarEntrega = cesta },
-                                    onFaltou = {
-                                        // Na 3ª falta não permite escolher dia
-                                        if (cesta.faltas >= 2) {
-                                            cestaParaTerceiraFalta = cesta
-                                        } else {
-                                            cestaParaFaltaReagendar = cesta
-                                        }
+                                    onAcoes = { cestaParaAcoes = cesta },
+                                    onVerDetalhes = {
+                                        val cestaId = Uri.encode(cesta.id)
+                                        navController.navigate("cestaDetails/$cestaId")
                                     }
                                 )
                             }
@@ -164,10 +160,8 @@ fun CestasListView(
                                     cesta = cesta,
                                     dateFmt = dateFmt,
                                     showActions = false,
-                                    onCancelar = {},
-                                    onEntregue = {},
-                                    onReagendar = {},
-                                    onFaltou = {}
+                                    onAcoes = {},
+                                    onVerDetalhes = {}
                                 )
                             }
                         }
@@ -185,6 +179,68 @@ fun CestasListView(
                 }
             }
         }
+    }
+
+    // Ações Disponiveis
+    if (cestaParaAcoes != null) {
+        val cesta = cestaParaAcoes!!
+        AlertDialog(
+            onDismissRequest = { cestaParaAcoes = null },
+            title = { Text("Ações Disponiveis") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = {
+                            cestaParaAcoes = null
+                            cestaParaCancelar = cesta
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                    ) {
+                        Text("Cancelar")
+                    }
+                    Button(
+                        onClick = {
+                            cestaParaAcoes = null
+                            viewModel.marcarEntregue(cesta)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                    ) {
+                        Text("Entregar")
+                    }
+                    Button(
+                        onClick = {
+                            cestaParaAcoes = null
+                            cestaParaReagendarEntrega = cesta
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                    ) {
+                        Text("Reagendar")
+                    }
+                    Button(
+                        onClick = {
+                            cestaParaAcoes = null
+                            // Na 3ª falta não permite escolher dia
+                            if (cesta.faltas >= 2) {
+                                cestaParaTerceiraFalta = cesta
+                            } else {
+                                cestaParaFaltaReagendar = cesta
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                    ) {
+                        Text("Faltou")
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { cestaParaAcoes = null }) { Text("Fechar") }
+            }
+        )
     }
 
     // Cancelar
@@ -315,10 +371,8 @@ private fun CestaCard(
     cesta: CestaItem,
     dateFmt: SimpleDateFormat,
     showActions: Boolean,
-    onCancelar: () -> Unit,
-    onEntregue: () -> Unit,
-    onReagendar: () -> Unit,
-    onFaltou: () -> Unit
+    onAcoes: () -> Unit,
+    onVerDetalhes: () -> Unit
 ) {
     val estadoLabel = cesta.estadoLabel()
     val data = cesta.dataAgendada ?: cesta.dataRecolha
@@ -380,45 +434,23 @@ private fun CestaCard(
             if (showActions) {
                 Spacer(Modifier.height(14.dp))
 
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = onAcoes,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
                     ) {
-                        Button(
-                            onClick = onCancelar,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
-                        ) {
-                            Text("Cancelar")
-                        }
-                        Button(
-                            onClick = onEntregue,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                        ) {
-                            Text("Entregue")
-                        }
+                        Text("Ações Disponiveis")
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    Button(
+                        onClick = onVerDetalhes,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
                     ) {
-                        Button(
-                            onClick = onReagendar,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                        ) {
-                            Text("Reagendar")
-                        }
-                        Button(
-                            onClick = onFaltou,
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
-                        ) {
-                            Text("Faltou")
-                        }
+                        Text("Ver Detalhes")
                     }
                 }
             }

@@ -155,7 +155,7 @@ class CreateProfileViewModel : ViewModel() {
         val db = Firebase.firestore // Usa a instância DEFAULT (Admin logado)
 
         val userMap = hashMapOf(
-            "uid" to authUid,
+            "uid" to authUid, // O UID de autenticação fica guardado aqui para referência
             "numMecanografico" to state.numMecanografico,
             "nome" to state.nome,
             "contacto" to state.contacto,
@@ -168,14 +168,14 @@ class CreateProfileViewModel : ViewModel() {
             "mudarPass" to true
         )
 
+        // Grava APENAS na coleção "funcionarios"
         db.collection("funcionarios").document(state.numMecanografico)
             .set(userMap)
             .addOnSuccessListener {
-                db.collection("users").document(authUid).set(mapOf("role" to "Funcionario", "email" to state.email))
-                    .addOnSuccessListener {
-                        uiState.value = state.copy(isLoading = false, success = true)
-                        onSuccess()
-                    }
+                // Removida a escrita na coleção "users".
+                // Chamamos o sucesso diretamente.
+                uiState.value = state.copy(isLoading = false, success = true)
+                onSuccess()
             }
             .addOnFailureListener { e ->
                 uiState.value = state.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")
