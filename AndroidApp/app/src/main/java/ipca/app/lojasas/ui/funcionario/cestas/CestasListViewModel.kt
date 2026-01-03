@@ -95,7 +95,7 @@ class CestasListViewModel : ViewModel() {
                     val estado = prodSnap.getString("estadoProduto")?.trim().orEmpty()
 
                     val podeLibertar = reservaId.isBlank() || reservaId == cestaId ||
-                            estado.equals("Reservados", ignoreCase = true)
+                            estado.equals("Reservado", ignoreCase = true)
 
                     if (podeLibertar) {
                         txn.update(

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.data.campaigns.Campaign
+import ipca.app.lojasas.ui.funcionario.stock.components.ConfirmDeleteDialog
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
 import ipca.app.lojasas.ui.theme.GreenSas
@@ -44,6 +45,11 @@ fun ProductFormView(
 ) {
     val state by viewModel.uiState
     var showDatePicker by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val canDelete = !state.productId.isNullOrBlank() &&
+        state.estadoProduto.trim().ifBlank { "Disponivel" }
+            .lowercase(Locale.getDefault())
+            .startsWith("dispon")
 
     val startScan = rememberBarcodeScanner(
         onScanned = { code -> viewModel.onBarcodeScanned(code) },
@@ -79,6 +85,35 @@ fun ProductFormView(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showDeleteDialog && canDelete) {
+        ConfirmDeleteDialog(
+            title = "Remover Produto",
+            text = "Tem a certeza que deseja remover este produto? Esta ação é irreversível.",
+            isLoading = state.isDeleting,
+            onConfirm = {
+                viewModel.deleteProduct { nomeProduto, hasMore ->
+                    showDeleteDialog = false
+                    val trimmedName = nomeProduto.trim()
+                    val targetRoute = if (hasMore && trimmedName.isNotBlank()) {
+                        "stockProducts/${Uri.encode(trimmedName)}"
+                    } else {
+                        "stockProducts"
+                    }
+
+                    val poppedDetails = navController.popBackStack("stockProduct/{productId}", true)
+                    if (!poppedDetails) {
+                        navController.popBackStack("stockProductEdit/{productId}", true)
+                    }
+
+                    navController.navigate(targetRoute) {
+                        launchSingleTop = true
+                    }
+                }
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
     }
 
     Box(
@@ -130,7 +165,10 @@ fun ProductFormView(
 
                 error = state.error,
                 isSaving = state.isSaving,
-                onSaveClick = { viewModel.save { navController.popBackStack() } }
+                isDeleting = state.isDeleting,
+                showDeleteButton = canDelete,
+                onSaveClick = { viewModel.save { navController.popBackStack() } },
+                onDeleteClick = { showDeleteDialog = true }
             )
         }
     }
@@ -181,7 +219,10 @@ private fun ProductFormViewContent(
 
     error: String?,
     isSaving: Boolean,
-    onSaveClick: () -> Unit
+    isDeleting: Boolean,
+    showDeleteButton: Boolean,
+    onSaveClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -304,24 +345,73 @@ private fun ProductFormViewContent(
             Text(text = error, color = MaterialTheme.colorScheme.error)
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = onSaveClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = GreenSas,
-                contentColor = Color.White
-            )
-        ) {
-            Text(
-                if (isSaving) "A guardar..." else "Guardar Produto",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+        if (showDeleteButton) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                Button(
+                    onClick = onDeleteClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    enabled = !isSaving && !isDeleting,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE11D2E),
+                        contentColor = Color.White,
+                        disabledContainerColor = Color(0xFFE11D2E).copy(alpha = 0.6f),
+                        disabledContentColor = Color.White.copy(alpha = 0.8f)
+                    )
+                ) {
+                    Text(
+                        text = "Remover Produto",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Button(
+                    onClick = onSaveClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    enabled = !isSaving && !isDeleting,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GreenSas,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        if (isSaving) "A guardar..." else "Guardar Produto",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+            }
+        } else {
+            Button(
+                onClick = onSaveClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                enabled = !isSaving && !isDeleting,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenSas,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    if (isSaving) "A guardar..." else "Guardar Produto",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(120.dp))
@@ -591,7 +681,10 @@ private fun ProductFormViewPreview_New() {
 
             error = null,
             isSaving = false,
-            onSaveClick = {}
+            isDeleting = false,
+            showDeleteButton = false,
+            onSaveClick = {},
+            onDeleteClick = {}
         )
     }
 }
@@ -646,7 +739,10 @@ private fun ProductFormViewPreview_Edit() {
 
             error = null,
             isSaving = false,
-            onSaveClick = {}
+            isDeleting = false,
+            showDeleteButton = true,
+            onSaveClick = {},
+            onDeleteClick = {}
         )
     }
 }

@@ -105,6 +105,25 @@ class ProductsRepository(
             .addOnFailureListener { onError(it) }
     }
 
+    fun hasProductsByNomeProduto(
+        nomeProduto: String,
+        onSuccess: (Boolean) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = nomeProduto.trim()
+        if (normalized.isBlank()) {
+            onSuccess(false)
+            return
+        }
+
+        collection
+            .whereEqualTo("nomeProduto", normalized)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { snapshot -> onSuccess(!snapshot.isEmpty) }
+            .addOnFailureListener { onError(it) }
+    }
+
     fun createProduct(
         product: ProductUpsert,
         onSuccess: (String) -> Unit,

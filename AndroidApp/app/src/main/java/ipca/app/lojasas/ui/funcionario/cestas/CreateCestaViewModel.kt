@@ -331,7 +331,7 @@ class CreateCestaViewModel : ViewModel() {
                 txn.update(
                     ref,
                     mapOf(
-                        "estadoProduto" to "Reservados",
+                        "estadoProduto" to "Reservado",
                         "cestaReservaId" to cestaId,
                         "reservadoEm" to now
                     )

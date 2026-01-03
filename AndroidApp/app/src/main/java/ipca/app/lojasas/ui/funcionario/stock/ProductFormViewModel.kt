@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit
 data class ProductFormUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
+    val isDeleting: Boolean = false,
     val error: String? = null,
     val productId: String? = null,
 
@@ -195,7 +196,7 @@ class ProductFormViewModel(
 
     fun save(onSuccess: (String) -> Unit) {
         val current = _uiState.value
-        if (current.isSaving) return
+        if (current.isSaving || current.isDeleting) return
 
         val nomeProduto = current.nomeProduto.trim()
         val subCategoria = current.subCategoria.trim()
@@ -242,6 +243,40 @@ class ProductFormViewModel(
         } else {
             repository.updateProduct(current.productId!!, upsert, { handlerSuccess(current.productId) }, handlerError)
         }
+    }
+
+    fun deleteProduct(onSuccess: (String, Boolean) -> Unit) {
+        val current = _uiState.value
+        val id = current.productId?.trim().orEmpty()
+        if (id.isBlank() || current.isDeleting || current.isSaving) return
+
+        val nomeProduto = current.nomeProduto.trim()
+        _uiState.value = current.copy(isDeleting = true, error = null)
+        repository.deleteProduct(
+            productId = id,
+            onSuccess = {
+                repository.hasProductsByNomeProduto(
+                    nomeProduto = nomeProduto,
+                    onSuccess = { hasMore ->
+                        _uiState.value = _uiState.value.copy(isDeleting = false)
+                        onSuccess(nomeProduto, hasMore)
+                    },
+                    onError = { e ->
+                        _uiState.value = _uiState.value.copy(
+                            isDeleting = false,
+                            error = e.message ?: "Erro ao confirmar produto."
+                        )
+                        onSuccess(nomeProduto, false)
+                    }
+                )
+            },
+            onError = { e ->
+                _uiState.value = _uiState.value.copy(
+                    isDeleting = false,
+                    error = e.message ?: "Erro ao apagar produto."
+                )
+            }
+        )
     }
 
     private fun update(block: ProductFormUiState.() -> ProductFormUiState) {
