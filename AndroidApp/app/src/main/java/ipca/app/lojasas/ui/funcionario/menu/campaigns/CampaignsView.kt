@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,6 +37,7 @@ fun CampaignsView(navController: NavController) {
     val viewModel: CampaignsViewModel = viewModel()
     val state by viewModel.uiState
     var campaignToEdit by remember { mutableStateOf<Campaign?>(null) }
+    val context = LocalContext.current // Necessário para os Toasts
 
     val activeModels = remember(state.activeCampaigns) {
         state.activeCampaigns.map {
@@ -78,6 +80,18 @@ fun CampaignsView(navController: NavController) {
         inactive = inactiveModels,
         onCreate = { navController.navigate("campaignCreate") },
         onEdit = { campaign -> campaignToEdit = campaign },
+        // [CORREÇÃO AQUI] Adicionados onSuccess e onError vazios
+        onDeleteFuture = { campaign ->
+            viewModel.deleteCampaign(
+                campaign,
+                onSuccess = {
+                    android.widget.Toast.makeText(context, "Campanha eliminada com sucesso!", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                onError = { erro ->
+                    android.widget.Toast.makeText(context, erro, android.widget.Toast.LENGTH_LONG).show()
+                }
+            )
+        },
         onResults = { campaign -> navController.navigate("campaignResults/${campaign.nomeCampanha}") }
     )
 
@@ -115,6 +129,7 @@ private fun <T> CampaignsViewContent(
     inactive: List<CampaignCardModel<T>>,
     onCreate: () -> Unit,
     onEdit: (T) -> Unit,
+    onDeleteFuture: (T) -> Unit,
     onResults: (T) -> Unit
 ) {
     Box(
@@ -160,7 +175,8 @@ private fun <T> CampaignsViewContent(
                             dataFim = model.fim,
                             isEditable = true,
                             showResults = false,
-                            onAction = { onEdit(model.item) }
+                            onAction = { onEdit(model.item) },
+                            onDelete = { onDeleteFuture(model.item) }
                         )
                     }
                 }
@@ -201,7 +217,7 @@ private fun <T> CampaignsViewContent(
 }
 
 /**
- * Wrapper original (mantém compatível com o resto do teu código).
+ * Wrapper original.
  */
 @Composable
 fun CampaignCard(
@@ -222,7 +238,7 @@ fun CampaignCard(
 }
 
 /**
- * UI do cartão (stateless) -> dá para Preview sem Campaign real.
+ * UI do cartão.
  */
 @Composable
 private fun CampaignCardContent(
@@ -232,7 +248,8 @@ private fun CampaignCardContent(
     dataFim: Date,
     isEditable: Boolean,
     showResults: Boolean,
-    onAction: () -> Unit
+    onAction: () -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
@@ -245,13 +262,27 @@ private fun CampaignCardContent(
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(nome, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = GreenSas)
-                if (isEditable) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Editar",
-                        tint = Color.Gray,
-                        modifier = Modifier.clickable { onAction() }
-                    )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onDelete != null) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Apagar",
+                            tint = Color.Red,
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                                .clickable { onDelete() }
+                        )
+                    }
+
+                    if (isEditable) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            tint = Color.Gray,
+                            modifier = Modifier.clickable { onAction() }
+                        )
+                    }
                 }
             }
 
@@ -299,6 +330,8 @@ fun EditCampaignDialog(
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
+    val hasStarted = remember(campaign) { campaign.dataInicio.before(Date()) }
+
     fun showDatePicker(initialDate: Date, onDateSelected: (Date) -> Unit) {
         calendar.time = initialDate
         DatePickerDialog(
@@ -338,11 +371,15 @@ fun EditCampaignDialog(
                     OutlinedButton(
                         onClick = { showDatePicker(dataInicio) { dataInicio = it } },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = !hasStarted
                     ) {
                         Column {
-                            Text("Início", fontSize = 10.sp, color = Color.Gray)
-                            Text(dateFormat.format(dataInicio), color = Color.Black, fontSize = 14.sp)
+                            val color = if (hasStarted) Color.LightGray else Color.Black
+                            val labelColor = if (hasStarted) Color.LightGray else Color.Gray
+
+                            Text("Início", fontSize = 10.sp, color = labelColor)
+                            Text(dateFormat.format(dataInicio), color = color, fontSize = 14.sp)
                         }
                     }
 
@@ -356,6 +393,10 @@ fun EditCampaignDialog(
                             Text(dateFormat.format(dataFim), color = Color.Black, fontSize = 14.sp)
                         }
                     }
+                }
+
+                if (hasStarted) {
+                    Text("⚠️ Campanha ativa. Início bloqueado.", color = Color.Gray, fontSize = 11.sp)
                 }
 
                 if (dataInicio.after(dataFim)) {
@@ -434,8 +475,9 @@ private fun CampaignsViewPreview_Loading() {
         future = emptyList(),
         inactive = emptyList(),
         onCreate = {},
-        onEdit = { _ -> },      // <-- FIX
-        onResults = { _ -> }    // <-- FIX
+        onEdit = { _ -> },
+        onDeleteFuture = { _ -> },
+        onResults = { _ -> }
     )
 }
 
@@ -469,8 +511,9 @@ private fun CampaignsViewPreview_WithData() {
         future = future,
         inactive = inactive,
         onCreate = {},
-        onEdit = { _ -> },      // <-- FIX
-        onResults = { _ -> }    // <-- FIX
+        onEdit = { _ -> },
+        onDeleteFuture = { _ -> },
+        onResults = { _ -> }
     )
 }
 
@@ -483,7 +526,8 @@ private fun CampaignsViewPreview_EmptyHistory() {
         future = emptyList(),
         inactive = emptyList(),
         onCreate = {},
-        onEdit = { _ -> },      // <-- FIX
-        onResults = { _ -> }    // <-- FIX
+        onEdit = { _ -> },
+        onDeleteFuture = { _ -> },
+        onResults = { _ -> }
     )
 }

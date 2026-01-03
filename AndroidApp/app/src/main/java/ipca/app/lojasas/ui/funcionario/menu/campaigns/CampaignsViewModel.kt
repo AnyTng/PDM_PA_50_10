@@ -2,6 +2,7 @@ package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.google.firebase.firestore.FirebaseFirestore
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import java.util.Date
@@ -52,9 +53,27 @@ class CampaignsViewModel : ViewModel() {
     fun updateCampaign(campaign: Campaign, onSuccess: () -> Unit) {
         // Validação simples para garantir consistência
         if (campaign.dataInicio.after(campaign.dataFim)) {
-            // Se o utilizador puser o fim antes do início, não atualiza (poderíamos mostrar erro na UI)
+            // Se o utilizador puser o fim antes do início, não atualiza
             return
         }
         repo.updateCampaign(campaign, onSuccess) { /* Handle error */ }
+    }
+
+    // --- NOVA FUNÇÃO ---
+    fun deleteCampaign(campaign: Campaign, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        // --- ADIÇÃO: Log para debug e validação ---
+        android.util.Log.d("CampaignDelete", "A tentar apagar campanha: ${campaign.nomeCampanha} com ID: '${campaign.id}'")
+
+        if (campaign.id.isEmpty()) {
+            onError("Erro: O ID da campanha está vazio. Verifique o Repository.")
+            return
+        }
+        // ------------------------------------------
+
+        FirebaseFirestore.getInstance().collection("campanha")
+            .document(campaign.id)
+            .delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onError(e.message ?: "Erro ao apagar") }
     }
 }

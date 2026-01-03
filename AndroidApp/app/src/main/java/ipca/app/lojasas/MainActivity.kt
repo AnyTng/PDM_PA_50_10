@@ -114,6 +114,7 @@ class MainActivity : ComponentActivity() {
                     "profileFuncionario" -> HeaderConfig(title = "Perfil Gestor", showBack = true, onBack = { navController.popBackStack() })
                     "profileApoiado" -> HeaderConfig(title = "Meu Perfil", showBack = true, onBack = { navController.popBackStack() })
                     "createProfile" -> HeaderConfig(title = "Criar Perfil", showBack = true, onBack = { navController.popBackStack() })
+                    "UrgentHelpView" -> HeaderConfig(title = "Pedido Urgente", showBack = true, onBack = { navController.popBackStack() })
                     // "completeData" e "documentSubmission" cairão aqui (sem header)
                     "stockProducts/{productName}" -> HeaderConfig(
                         title = productNameArg ?: "Stock",
