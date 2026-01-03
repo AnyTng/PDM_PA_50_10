@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.pedidosurgentes
+package ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

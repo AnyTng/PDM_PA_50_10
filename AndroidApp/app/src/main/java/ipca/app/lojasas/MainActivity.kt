@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.NavHost
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -43,7 +42,6 @@ import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
 import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
 import ipca.app.lojasas.ui.funcionario.stock.ProductView
 import ipca.app.lojasas.ui.funcionario.stock.ProductsView
-import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
 import androidx.navigation.navArgument
@@ -54,7 +52,7 @@ import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
-import ipca.app.lojasas.ui.funcionario.pedidosurgentes.UrgentRequestsView
+import ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes.UrgentRequestsView
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
 import android.Manifest
