@@ -21,6 +21,7 @@ data class ProductDetailsUiState(
     val selectedBrand: String = BRAND_ALL,
     val availableCampaigns: List<CampaignFilterOption> = emptyList(),
     val selectedCampaign: String = CAMPAIGN_ALL,
+    val selectedStatus: ProductStatusFilter = ProductStatusFilter.ALL,
     val sortOption: ProductSortOption = ProductSortOption.EXPIRY_ASC
 )
 
@@ -40,6 +41,13 @@ enum class ProductSortOption {
     EXPIRY_DESC,
     SIZE_ASC,
     SIZE_DESC
+}
+
+enum class ProductStatusFilter(val label: String) {
+    ALL("Todos os estados"),
+    AVAILABLE("Disponivel"),
+    RESERVED("Reservado"),
+    EXPIRED("Fora do Prazo")
 }
 
 const val BRAND_ALL = "Todas as marcas"
@@ -109,6 +117,11 @@ class ProductDetailsViewModel(
 
     fun onCampaignSelected(value: String) {
         _uiState.value = _uiState.value.copy(selectedCampaign = value)
+        applyFilter()
+    }
+
+    fun onStatusSelected(value: ProductStatusFilter) {
+        _uiState.value = _uiState.value.copy(selectedStatus = value)
         applyFilter()
     }
 
@@ -193,6 +206,20 @@ class ProductDetailsViewModel(
             CAMPAIGN_ALL -> Unit
             else -> {
                 filtered = filtered.filter { it.product.campanha?.trim() == state.selectedCampaign }
+            }
+        }
+
+        val reference = Date()
+        when (state.selectedStatus) {
+            ProductStatusFilter.ALL -> Unit
+            ProductStatusFilter.AVAILABLE -> {
+                filtered = filtered.filter { it.product.isAvailableForCount(reference) }
+            }
+            ProductStatusFilter.RESERVED -> {
+                filtered = filtered.filter { it.product.isReserved() }
+            }
+            ProductStatusFilter.EXPIRED -> {
+                filtered = filtered.filter { it.product.isExpiredVisible(reference) }
             }
         }
 

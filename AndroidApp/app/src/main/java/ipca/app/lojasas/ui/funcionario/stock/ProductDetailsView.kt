@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +42,9 @@ import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
 import ipca.app.lojasas.ui.theme.GreenSas
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 
 @Composable
 fun ProductDetailsView(
@@ -67,6 +72,8 @@ fun ProductDetailsView(
         availableCampaigns = state.availableCampaigns,
         selectedCampaign = state.selectedCampaign,
         onCampaignSelected = viewModel::onCampaignSelected,
+        selectedStatus = state.selectedStatus,
+        onStatusSelected = viewModel::onStatusSelected,
         sortOption = state.sortOption,
         onSortSelected = viewModel::onSortSelected,
         groupRow = { group ->
@@ -100,11 +107,32 @@ private fun <T> ProductDetailsViewContent(
     availableCampaigns: List<CampaignFilterOption>,
     selectedCampaign: String,
     onCampaignSelected: (String) -> Unit,
+    selectedStatus: ProductStatusFilter,
+    onStatusSelected: (ProductStatusFilter) -> Unit,
     sortOption: ProductSortOption,
     onSortSelected: (ProductSortOption) -> Unit,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
+    var showBrandSection by remember { mutableStateOf(false) }
+    var showCampaignSection by remember { mutableStateOf(false) }
+    var showStatusSection by remember { mutableStateOf(false) }
+    var showExpirySortSection by remember { mutableStateOf(false) }
+    var showSizeSortSection by remember { mutableStateOf(false) }
+    val statusOptions = remember { ProductStatusFilter.values().toList() }
+    val expirySortOptions = remember {
+        listOf(
+            ProductSortOption.EXPIRY_ASC to "Proxima",
+            ProductSortOption.EXPIRY_DESC to "Distante"
+        )
+    }
+    val sizeSortOptions = remember {
+        listOf(
+            ProductSortOption.SIZE_ASC to "Crescente",
+            ProductSortOption.SIZE_DESC to "Decrescente"
+        )
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -114,18 +142,18 @@ private fun <T> ProductDetailsViewContent(
             StockSearchBar(
                 query = searchQuery,
                 onQueryChange = onSearchQueryChange,
-                showFilter = availableBrands.isNotEmpty() || availableCampaigns.isNotEmpty(),
+                showFilter = true,
                 filterMenuContent = { expanded, onDismiss ->
                     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-                        if (availableBrands.isNotEmpty()) {
-                            Text(
-                                text = "Marca",
-                                color = Color.Gray,
-                                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp)
-                            )
+                        DropdownMenuSectionHeader(
+                            title = "Marca",
+                            expanded = showBrandSection,
+                            onToggle = { showBrandSection = !showBrandSection }
+                        )
+                        if (showBrandSection) {
                             availableBrands.forEach { brand ->
                                 DropdownMenuItem(
-                                    text = { Text(brand) },
+                                    text = { Text(brand, modifier = Modifier.padding(start = 12.dp)) },
                                     onClick = {
                                         onBrandSelected(brand)
                                         onDismiss()
@@ -145,20 +173,49 @@ private fun <T> ProductDetailsViewContent(
 
                         if (availableCampaigns.isNotEmpty()) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                            Text(
-                                text = "Campanha",
-                                color = Color.Gray,
-                                modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)
+                            DropdownMenuSectionHeader(
+                                title = "Campanha",
+                                expanded = showCampaignSection,
+                                onToggle = { showCampaignSection = !showCampaignSection }
                             )
-                            availableCampaigns.forEach { option ->
+                            if (showCampaignSection) {
+                                availableCampaigns.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option.label, modifier = Modifier.padding(start = 12.dp)) },
+                                        onClick = {
+                                            onCampaignSelected(option.id)
+                                            onDismiss()
+                                        },
+                                        trailingIcon = {
+                                            if (option.id == selectedCampaign) {
+                                                Icon(
+                                                    imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    tint = GreenSas
+                                                )
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        DropdownMenuSectionHeader(
+                            title = "Estado",
+                            expanded = showStatusSection,
+                            onToggle = { showStatusSection = !showStatusSection }
+                        )
+                        if (showStatusSection) {
+                            statusOptions.forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(option.label) },
+                                    text = { Text(option.label, modifier = Modifier.padding(start = 12.dp)) },
                                     onClick = {
-                                        onCampaignSelected(option.id)
+                                        onStatusSelected(option)
                                         onDismiss()
                                     },
                                     trailingIcon = {
-                                        if (option.id == selectedCampaign) {
+                                        if (option == selectedStatus) {
                                             Icon(
                                                 imageVector = androidx.compose.material.icons.Icons.Default.Check,
                                                 contentDescription = null,
@@ -174,29 +231,57 @@ private fun <T> ProductDetailsViewContent(
                 showSort = true,
                 sortMenuContent = { expanded, onDismiss ->
                     DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-                        val options = listOf(
-                            ProductSortOption.EXPIRY_ASC to "Validade (mais próxima)",
-                            ProductSortOption.EXPIRY_DESC to "Validade (mais distante)",
-                            ProductSortOption.SIZE_ASC to "Quantidade (menor \u2192 maior)",
-                            ProductSortOption.SIZE_DESC to "Quantidade (maior \u2192 menor)"
+                        DropdownMenuSectionHeader(
+                            title = "Validade",
+                            expanded = showExpirySortSection,
+                            onToggle = { showExpirySortSection = !showExpirySortSection }
                         )
-                        options.forEach { (option, label) ->
-                            DropdownMenuItem(
-                                text = { Text(label) },
-                                onClick = {
-                                    onSortSelected(option)
-                                    onDismiss()
-                                },
-                                trailingIcon = {
-                                    if (option == sortOption) {
-                                        Icon(
-                                            imageVector = androidx.compose.material.icons.Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = GreenSas
-                                        )
+                        if (showExpirySortSection) {
+                            expirySortOptions.forEach { (option, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label, modifier = Modifier.padding(start = 12.dp)) },
+                                    onClick = {
+                                        onSortSelected(option)
+                                        onDismiss()
+                                    },
+                                    trailingIcon = {
+                                        if (option == sortOption) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = GreenSas
+                                            )
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        DropdownMenuSectionHeader(
+                            title = "Quantidade",
+                            expanded = showSizeSortSection,
+                            onToggle = { showSizeSortSection = !showSizeSortSection }
+                        )
+                        if (showSizeSortSection) {
+                            sizeSortOptions.forEach { (option, label) ->
+                                DropdownMenuItem(
+                                    text = { Text(label, modifier = Modifier.padding(start = 12.dp)) },
+                                    onClick = {
+                                        onSortSelected(option)
+                                        onDismiss()
+                                    },
+                                    trailingIcon = {
+                                        if (option == sortOption) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                contentDescription = null,
+                                                tint = GreenSas
+                                            )
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -285,6 +370,8 @@ private fun ProductDetailsViewPreview_Normal() {
         availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
         selectedCampaign = CAMPAIGN_ALL,
         onCampaignSelected = {},
+        selectedStatus = ProductStatusFilter.ALL,
+        onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
         groupRow = { g ->
@@ -335,6 +422,8 @@ private fun ProductDetailsViewPreview_Empty() {
         availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
         selectedCampaign = CAMPAIGN_ALL,
         onCampaignSelected = {},
+        selectedStatus = ProductStatusFilter.ALL,
+        onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
         groupRow = {},
@@ -359,6 +448,8 @@ private fun ProductDetailsViewPreview_Loading() {
         availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
         selectedCampaign = CAMPAIGN_ALL,
         onCampaignSelected = {},
+        selectedStatus = ProductStatusFilter.ALL,
+        onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
         groupRow = {},
@@ -383,9 +474,34 @@ private fun ProductDetailsViewPreview_Error() {
         availableCampaigns = listOf(CampaignFilterOption(CAMPAIGN_ALL, "Todas as campanhas")),
         selectedCampaign = CAMPAIGN_ALL,
         onCampaignSelected = {},
+        selectedStatus = ProductStatusFilter.ALL,
+        onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
         groupRow = {},
         onFabClick = {}
+    )
+}
+
+@Composable
+private fun DropdownMenuSectionHeader(
+    title: String,
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+    DropdownMenuItem(
+        text = { Text(title, color = Color.Gray) },
+        onClick = onToggle,
+        trailingIcon = {
+            Icon(
+                imageVector = if (expanded) {
+                    androidx.compose.material.icons.Icons.Default.KeyboardArrowUp
+                } else {
+                    androidx.compose.material.icons.Icons.Default.KeyboardArrowDown
+                },
+                contentDescription = null,
+                tint = Color.Gray
+            )
+        }
     )
 }

@@ -257,19 +257,19 @@ fun StockProductGroupCard(
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.weight(1f)) {
-                    StockLabelValue(label = "Product Type:", value = product.subCategoria)
+                    StockLabelValue(label = "Tipo:", value = product.subCategoria)
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    StockLabelValue(label = "Expiry Date:", value = formatDate(product.validade))
+                    StockLabelValue(label = "Data de Validade:", value = formatDate(product.validade))
                 }
             }
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.weight(1f)) {
-                    StockLabelValue(label = "Size:", value = productSizeLabel(product) ?: "—")
+                    StockLabelValue(label = "Tamanho:", value = productSizeLabel(product) ?: "—")
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    StockLabelValue(label = "Brand:", value = product.marca ?: "—")
+                    StockLabelValue(label = "Marca:", value = product.marca ?: "—")
                 }
             }
 
@@ -293,7 +293,7 @@ fun StockProductGroupCard(
                         if (barcodeBitmap != null) {
                             Image(
                                 bitmap = barcodeBitmap.asImageBitmap(),
-                                contentDescription = "Barcode",
+                                contentDescription = "Código de Barras",
                                 modifier = Modifier
                                     .height(50.dp)
                                     .fillMaxWidth(0.8f),
