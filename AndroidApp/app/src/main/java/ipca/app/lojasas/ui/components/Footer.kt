@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -20,6 +21,7 @@ import androidx.navigation.NavController
 import ipca.app.lojasas.R
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 enum class FooterType { FUNCIONARIO, APOIADO }
 
@@ -28,6 +30,13 @@ fun Footer(
     navController: NavController, // 1. Recebe o controlador aqui
     type: FooterType = FooterType.FUNCIONARIO
 ) {
+    val navBackStackEntry = navController.currentBackStackEntryAsState().value
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    fun isActiveRoute(vararg routes: String): Boolean {
+        return currentRoute != null && routes.any { it == currentRoute }
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -49,6 +58,22 @@ fun Footer(
 
         when (type) {
             FooterType.FUNCIONARIO -> {
+                val calendarActive = isActiveRoute("funcionarioHome")
+                val cestasActive = isActiveRoute(
+                    "cestasList",
+                    "cestaDetails/{cestaId}",
+                    "createCesta",
+                    "createCestaUrgente/{pedidoId}/{apoiadoId}"
+                )
+                val stockActive = isActiveRoute(
+                    "stockProducts",
+                    "stockProducts/{productName}",
+                    "stockProduct/{productId}",
+                    "stockProductEdit/{productId}",
+                    "stockProductCreate?productName={productName}"
+                )
+                val menuActive = isActiveRoute("menu")
+
                 FooterIcon(
                     painterRes = R.drawable.calendarmonth,
                     contentDescription = "Calendário",
@@ -58,6 +83,7 @@ fun Footer(
                             popUpTo("funcionarioHome") { inclusive = true }
                         }
                     },
+                    enabled = !calendarActive,
                     modifier = itemModifier
                 )
                 FooterIcon(
@@ -69,6 +95,7 @@ fun Footer(
                             launchSingleTop = true
                         }
                     },
+                    enabled = !cestasActive,
                     modifier = itemModifier
                 )
                 FooterIcon(
@@ -79,23 +106,29 @@ fun Footer(
                             launchSingleTop = true
                         }
                     },
+                    enabled = !stockActive,
                     modifier = itemModifier
                 )
                 FooterIcon(
                     painterRes = R.drawable.dehaze,
                     contentDescription = "Menu",
                     onClick = { navController.navigate("menu") },
+                    enabled = !menuActive,
                     modifier = itemModifier
                 )
             }
 
             FooterType.APOIADO -> {
+                val homeActive = isActiveRoute("apoiadoHome")
+                val menuActive = isActiveRoute("menuApoiado")
+
                 HeartHomeIcon(
                     onClick = {
                         navController.navigate("apoiadoHome") {
                             popUpTo("apoiadoHome") { inclusive = true }
                         }
                     },
+                    enabled = !homeActive,
                     modifier = itemModifier
                 )
                 FooterIcon(
@@ -105,6 +138,7 @@ fun Footer(
                         // ADICIONAR NAVEGAÇÃO AQUI
                         navController.navigate("menuApoiado")
                     },
+                    enabled = !menuActive,
                     modifier = itemModifier
                 )
             }
@@ -117,6 +151,7 @@ private fun FooterIcon(
     painterRes: Int,
     contentDescription: String,
     onClick: () -> Unit = {},
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -129,7 +164,8 @@ private fun FooterIcon(
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .size(44.dp)
-                .clickable { onClick() }
+                .alpha(if (enabled) 1f else 0.5f)
+                .then(if (enabled) Modifier.clickable { onClick() } else Modifier)
         )
     }
 }
@@ -137,24 +173,29 @@ private fun FooterIcon(
 @Composable
 private fun HeartHomeIcon(
     onClick: () -> Unit = {},
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .clickable { onClick() },
+            .then(if (enabled) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Filled.Home,
             contentDescription = "Início",
             tint = Color.White,
-            modifier = Modifier.size(42.dp)
+            modifier = Modifier
+                .size(42.dp)
+                .alpha(if (enabled) 1f else 0.5f)
         )
         Icon(
             imageVector = Icons.Filled.Favorite,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier
+                .size(18.dp)
+                .alpha(if (enabled) 1f else 0.5f)
         )
     }
 }
