@@ -37,7 +37,7 @@ fun Product.isAvailableForCount(reference: Date = Date()): Boolean {
 
 fun Product.displayStatus(reference: Date = Date()): String {
     if (isExpiredVisible(reference)) {
-        return "Fora do Prazo"
+        return "Fora de Validade"
     }
     return estadoProduto?.trim()?.takeIf { it.isNotBlank() } ?: "Disponivel"
 }

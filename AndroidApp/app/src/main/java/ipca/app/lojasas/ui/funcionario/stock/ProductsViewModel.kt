@@ -25,7 +25,8 @@ data class ProductsUiState(
     val groups: List<StockGroupUi> = emptyList(),
     val availableCategories: List<String> = emptyList(),
     val selectedCategory: String = CATEGORY_ALL,
-    val sortOption: StockSortOption = StockSortOption.NAME_ASC
+    val sortOption: StockSortOption = StockSortOption.NAME_ASC,
+    val expiredCount: Int = 0
 )
 
 enum class StockSortOption {
@@ -51,6 +52,10 @@ class ProductsViewModel(
         listener = repository.listenAllProducts(
             onSuccess = { products ->
                 allProducts = products
+                val reference = Date()
+                val expiredCount = products.count { product ->
+                    product.isExpiredVisible(reference) && product.doado.isNullOrBlank()
+                }
                 val categories = products
                     .mapNotNull { it.categoria?.trim() }
                     .filter { it.isNotBlank() }
@@ -64,7 +69,8 @@ class ProductsViewModel(
                 }
                 _uiState.value = _uiState.value.copy(
                     availableCategories = categories,
-                    selectedCategory = resolvedCategory
+                    selectedCategory = resolvedCategory,
+                    expiredCount = expiredCount
                 )
                 applyFilter()
             },
@@ -72,7 +78,8 @@ class ProductsViewModel(
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = e.message ?: "Erro ao carregar produtos.",
-                    groups = emptyList()
+                    groups = emptyList(),
+                    expiredCount = 0
                 )
             }
         )

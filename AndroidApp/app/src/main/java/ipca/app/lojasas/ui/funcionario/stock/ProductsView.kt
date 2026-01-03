@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
+import ipca.app.lojasas.ui.funcionario.stock.components.StockExpiredSummaryCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockGroupCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
 import ipca.app.lojasas.ui.theme.GreenSas
@@ -50,12 +51,14 @@ fun ProductsView(
         isLoading = state.isLoading,
         error = state.error,
         groups = state.groups,
+        expiredCount = state.expiredCount,
         availableCategories = state.availableCategories,
         selectedCategory = state.selectedCategory,
         onCategorySelected = viewModel::onCategorySelected,
         sortOption = state.sortOption,
         onSortSelected = viewModel::onSortSelected,
         onExportClick = { viewModel.exportToCSV(context) },
+        onExpiredClick = { navController.navigate("stockExpiredProducts") },
         groupRow = { group ->
             StockGroupCard(
                 group = group,
@@ -78,12 +81,14 @@ private fun <T> ProductsViewContent(
     isLoading: Boolean,
     error: String?,
     groups: List<T>,
+    expiredCount: Int,
     availableCategories: List<String>,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
     sortOption: StockSortOption,
     onSortSelected: (StockSortOption) -> Unit,
     onExportClick: () -> Unit,
+    onExpiredClick: () -> Unit,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
@@ -185,6 +190,12 @@ private fun <T> ProductsViewContent(
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        item {
+                            StockExpiredSummaryCard(
+                                expiredCount = expiredCount,
+                                onClick = onExpiredClick
+                            )
+                        }
                         items(groups.size) { index ->
                             groupRow(groups[index])
                         }
@@ -215,12 +226,14 @@ private fun ProductsViewPreview_Normal() {
         isLoading = false,
         error = null,
         groups = fakeGroups,
+        expiredCount = 12,
         availableCategories = listOf("Alimentar", "Higiene"),
         selectedCategory = CATEGORY_ALL,
         onCategorySelected = {},
         sortOption = StockSortOption.NAME_ASC,
         onSortSelected = {},
         onExportClick = {},
+        onExpiredClick = {},
         groupRow = { name ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -254,12 +267,14 @@ private fun ProductsViewPreview_Loading() {
         isLoading = true,
         error = null,
         groups = emptyList<String>(),
+        expiredCount = 0,
         availableCategories = emptyList(),
         selectedCategory = CATEGORY_ALL,
         onCategorySelected = {},
         sortOption = StockSortOption.NAME_ASC,
         onSortSelected = {},
         onExportClick = {},
+        onExpiredClick = {},
         groupRow = {},
         onFabClick = {}
     )
@@ -274,12 +289,14 @@ private fun ProductsViewPreview_Error() {
         isLoading = false,
         error = "Erro ao carregar grupos",
         groups = emptyList<String>(),
+        expiredCount = 0,
         availableCategories = emptyList(),
         selectedCategory = CATEGORY_ALL,
         onCategorySelected = {},
         sortOption = StockSortOption.NAME_ASC,
         onSortSelected = {},
         onExportClick = {},
+        onExpiredClick = {},
         groupRow = {},
         onFabClick = {}
     )

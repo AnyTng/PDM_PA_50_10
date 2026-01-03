@@ -42,6 +42,7 @@ import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
 import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
 import ipca.app.lojasas.ui.funcionario.stock.ProductView
 import ipca.app.lojasas.ui.funcionario.stock.ProductsView
+import ipca.app.lojasas.ui.funcionario.stock.ExpiredProductsView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
 import androidx.navigation.navArgument
@@ -89,6 +90,7 @@ class MainActivity : ComponentActivity() {
                     "createCestaUrgente/{pedidoId}/{apoiadoId}",
                     "stockProducts",
                     "stockProducts/{productName}",
+                    "stockExpiredProducts",
                     "stockProduct/{productId}",
                     "stockProductEdit/{productId}",
                     "stockProductCreate?productName={productName}"-> FooterType.FUNCIONARIO
@@ -120,6 +122,11 @@ class MainActivity : ComponentActivity() {
                     // "completeData" e "documentSubmission" cairão aqui (sem header)
                     "stockProducts/{productName}" -> HeaderConfig(
                         title = productNameArg ?: "Stock",
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    "stockExpiredProducts" -> HeaderConfig(
+                        title = "Fora de validade",
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
@@ -291,6 +298,9 @@ class MainActivity : ComponentActivity() {
 
                         composable("stockProducts") {
                             ProductsView(navController = navController)
+                        }
+                        composable("stockExpiredProducts") {
+                            ExpiredProductsView(navController = navController)
                         }
                         composable(
                             route = "stockProducts/{productName}",

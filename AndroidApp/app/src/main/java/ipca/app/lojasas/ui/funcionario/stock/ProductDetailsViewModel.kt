@@ -47,7 +47,7 @@ enum class ProductStatusFilter(val label: String) {
     ALL("Todos os estados"),
     AVAILABLE("Disponivel"),
     RESERVED("Reservado"),
-    EXPIRED("Fora do Prazo")
+    EXPIRED("Fora de Validade")
 }
 
 const val BRAND_ALL = "Todas as marcas"

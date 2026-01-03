@@ -68,6 +68,7 @@ fun Footer(
                 val stockActive = isActiveRoute(
                     "stockProducts",
                     "stockProducts/{productName}",
+                    "stockExpiredProducts",
                     "stockProduct/{productId}",
                     "stockProductEdit/{productId}",
                     "stockProductCreate?productName={productName}"

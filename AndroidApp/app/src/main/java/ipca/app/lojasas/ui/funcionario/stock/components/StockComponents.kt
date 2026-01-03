@@ -194,6 +194,53 @@ fun StockGroupCard(
 }
 
 @Composable
+fun StockExpiredSummaryCard(
+    expiredCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = StockExpired),
+        border = BorderStroke(2.dp, StockExpired)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Fora de validade",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = IntroFontFamily
+                ),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = expiredCountText(expiredCount),
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                color = Color.White
+            )
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Abrir",
+                tint = Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun StockProductGroupCard(
     product: Product,
     onViewClick: () -> Unit,
@@ -417,6 +464,11 @@ private fun availableText(count: Int): String = when (count) {
     0 -> "0 Disponíveis"
     1 -> "1 Disponível"
     else -> "$count Disponíveis"
+}
+
+private fun expiredCountText(count: Int): String = when (count) {
+    1 -> "1 item"
+    else -> "$count itens"
 }
 
 private fun formatDate(date: Date?): String {
