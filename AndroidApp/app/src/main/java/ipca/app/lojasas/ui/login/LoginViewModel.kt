@@ -9,6 +9,8 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 
 
 const val TAG = "LojaSocial"
@@ -82,13 +84,19 @@ class LoginViewModel : ViewModel() {
     }
     // -----------------------------------
 
-    private fun resolveRoleAndProceed(email: String, onLoginSuccess:(UserRole)->Unit) {
+    private fun resolveRoleAndProceed(email: String, onLoginSuccess: (UserRole) -> Unit) {
         UserRoleRepository.fetchUserRoleByEmail(
             email = email,
             onSuccess = { role ->
                 uiState.value = uiState.value.copy(isLoading = false, error = null)
 
+                // 1) Tópicos (funcionarios + admin)
                 configureTopicForRole(role)
+
+                // 2) Se for Apoiado, guarda token para notificações "1 a 1"
+                if (role.toString().equals("Apoiado", ignoreCase = true)) {
+                    saveApoiadoTokenToFirestore()
+                }
 
                 onLoginSuccess(role)
             },
@@ -101,6 +109,7 @@ class LoginViewModel : ViewModel() {
             }
         )
     }
+
 }
 
 
@@ -123,5 +132,74 @@ private fun configureTopicForRole(role: UserRole) {
     } else {
         messaging.unsubscribeFromTopic("funcionarios")
     }
+}
+
+//Para notificações
+private fun saveApoiadoTokenToFirestore() {
+    val email = FirebaseAuth.getInstance().currentUser?.email?.trim()
+    if (email.isNullOrEmpty()) {
+        Log.e(TAG, "FCM Apoiado: FirebaseAuth email está vazio ❌")
+        return
+    }
+
+    Log.d(TAG, "FCM Apoiado: vou guardar token para email=$email")
+
+    val db = FirebaseFirestore.getInstance()
+
+    FirebaseMessaging.getInstance().token
+        .addOnSuccessListener { token ->
+            Log.d(TAG, "FCM Apoiado: token obtido ✅ (tamanho=${token.length})")
+
+            fun saveTokenOnDoc(docId: String) {
+                Log.d(TAG, "FCM Apoiado: a guardar token no doc apoiados/$docId/fcmTokens/$token")
+
+                db.collection("apoiados")
+                    .document(docId)
+                    .collection("fcmTokens")
+                    .document(token)
+                    .set(mapOf("updatedAt" to FieldValue.serverTimestamp()))
+                    .addOnSuccessListener { Log.d(TAG, "FCM Apoiado: token guardado ✅") }
+                    .addOnFailureListener { e -> Log.e(TAG, "FCM Apoiado: ERRO a guardar token ❌", e) }
+            }
+
+            // 1) tenta por emailApoiado
+            db.collection("apoiados")
+                .whereEqualTo("emailApoiado", email)
+                .limit(1)
+                .get()
+                .addOnSuccessListener { snap ->
+                    val doc = snap.documents.firstOrNull()
+                    if (doc != null) {
+                        Log.d(TAG, "FCM Apoiado: encontrado por emailApoiado ✅ docId=${doc.id}")
+                        saveTokenOnDoc(doc.id)
+                    } else {
+                        Log.w(TAG, "FCM Apoiado: não encontrou por emailApoiado, vou tentar por 'email'…")
+
+                        // 2) fallback por email
+                        db.collection("apoiados")
+                            .whereEqualTo("email", email)
+                            .limit(1)
+                            .get()
+                            .addOnSuccessListener { snap2 ->
+                                val doc2 = snap2.documents.firstOrNull()
+                                if (doc2 != null) {
+                                    Log.d(TAG, "FCM Apoiado: encontrado por email ✅ docId=${doc2.id}")
+                                    saveTokenOnDoc(doc2.id)
+                                } else {
+                                    Log.e(TAG, "FCM Apoiado: NÃO encontrou apoiado com email=$email ❌")
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "FCM Apoiado: erro na query por 'email' ❌", e)
+                            }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "FCM Apoiado: erro na query por 'emailApoiado' ❌", e)
+                }
+        }
+        .addOnFailureListener { e ->
+            Log.e(TAG, "FCM Apoiado: erro a obter token FCM ❌", e)
+        }
 }
 
