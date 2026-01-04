@@ -82,7 +82,6 @@ class MainActivity : ComponentActivity() {
                 val productNameArg = navBackStackEntry?.arguments?.getString("productName")?.let { Uri.decode(it) }
 
                 // 1. CONFIGURAÇÃO DO FOOTER
-                // REMOVIDO: "documentSubmission" desta lista
                 val footerType = when (currentRoute) {
                     "funcionarioHome",
                     "menu",
@@ -90,16 +89,14 @@ class MainActivity : ComponentActivity() {
                     "createCestaUrgente/{pedidoId}/{apoiadoId}",
                     "stockProducts",
                     "stockProducts/{productName}",
-                    "stockExpiredProducts",
                     "stockProduct/{productId}",
                     "stockProductEdit/{productId}",
                     "stockProductCreate?productName={productName}"-> FooterType.FUNCIONARIO
                     "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
-                    else -> null // "completeData" e "documentSubmission" cairão aqui (sem footer)
+                    else -> null // itens sem footer vao cair aq
                 }
 
                 // 2. CONFIGURAÇÃO DO HEADER
-                // REMOVIDO: "documentSubmission" desta lista
                 val headerConfig = when (currentRoute) {
                     "apoiadoHome" -> HeaderConfig(title = "Home")
                     "funcionarioHome" -> HeaderConfig(title = "Calendário")
@@ -296,6 +293,7 @@ class MainActivity : ComponentActivity() {
                             ApoiadoProfileView(navController = navController)
                         }
 
+                        // As vistas do stock
                         composable("stockProducts") {
                             ProductsView(navController = navController)
                         }
@@ -348,7 +346,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // ... (resto do código igual) ...
+
             LaunchedEffect(Unit) {
                 val user = Firebase.auth.currentUser
                 val email = user?.email
@@ -368,7 +366,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-// ... (classes auxiliares HeaderConfig e Greeting mantêm-se)
+// Configuração do header
 private data class HeaderConfig(
     val title: String,
     val showBack: Boolean = false,
