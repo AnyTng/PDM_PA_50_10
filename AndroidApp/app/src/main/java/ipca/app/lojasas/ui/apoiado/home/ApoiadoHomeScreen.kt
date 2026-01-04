@@ -67,6 +67,10 @@ private val LightGreenCard = Color(0xFF9DD0BC)
 private val LightYellowCard = Color(0xFFF6E7A1)
 private val LightYellowText = Color(0xFF7A5D00)
 
+// Card para: "Entregas canceladas"
+private val LightGreyCard = Color(0xFF7B0A1F)
+private val DarkGreyText = Color(0xFFFFFFFF)
+
 // Card para: "Documentos em Falta"
 private val WarningOrange = Color(0xFFD07D1D)
 
@@ -76,7 +80,8 @@ private val DividerGrey = Color(0xFFD9D9D9)
 private enum class CestaCardStyle {
     PENDENTE,
     CONCLUIDA,
-    NAO_LEVANTADA
+    NAO_LEVANTADA,
+    CANCELADA
 }
 
 private data class ProfileStatusUi(
@@ -238,6 +243,16 @@ fun ApoiadoHomeScreen(
             }
         }
 
+        // Entregas canceladas (cinzento claro)
+        if (state.cestasCanceladas.isNotEmpty()) {
+            items(state.cestasCanceladas, key = { it.id }) { cesta ->
+                CestaHomeCard(
+                    cesta = cesta,
+                    style = CestaCardStyle.CANCELADA
+                )
+            }
+        }
+
         // Entregas não levantadas (amarelo claro)
         if (state.cestasNaoLevantadas.isNotEmpty()) {
             items(state.cestasNaoLevantadas, key = { it.id }) { cesta ->
@@ -368,6 +383,8 @@ private fun SectionSeparator(title: String) {
 private fun CardActionButton(
     text: String,
     accentColor: Color,
+    textColor: Color? = null,
+    iconColor: Color? = null,
     onClick: () -> Unit
 ) {
     Surface(
@@ -385,13 +402,13 @@ private fun CardActionButton(
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 12.sp,
-                color = accentColor
+                color = textColor ?: accentColor
             )
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
-                tint = accentColor,
+                tint = iconColor ?: accentColor,
                 modifier = Modifier.size(14.dp)
             )
         }
@@ -423,6 +440,12 @@ private fun CestaHomeCard(
             LightYellowCard,
             LightYellowText,
             LightYellowText
+        )
+        CestaCardStyle.CANCELADA -> Quadruple(
+            "Entrega cancelada",
+            LightGreyCard,
+            DarkGreyText,
+            DarkGreyText
         )
     }
 
@@ -478,6 +501,17 @@ private fun CestaHomeCard(
                 color = textColor
             )
 
+            if (style == CestaCardStyle.NAO_LEVANTADA) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Faltas: ${cesta.faltas}",
+                    fontFamily = IntroFontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                    color = textColor
+                )
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
@@ -487,6 +521,8 @@ private fun CestaHomeCard(
                 CardActionButton(
                     text = "Ver Mais",
                     accentColor = accentColor,
+                    textColor = if (style == CestaCardStyle.CANCELADA) background else null,
+                    iconColor = if (style == CestaCardStyle.CANCELADA) background else null,
                     onClick = { showDialog = true }
                 )
             }

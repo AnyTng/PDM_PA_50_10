@@ -22,6 +22,7 @@ data class Cesta(
     val dataAgendada: Date? = null,
     val estadoCesta: String = "",
     val numeroItens: Int = 0,
+    val faltas: Int = 0,
     val origem: String? = null,
     val pedidoUrgenteId: String? = null
 )
@@ -55,7 +56,8 @@ data class ApoiadoState(
     // --- NOVOS CAMPOS (Para os cartões Verdes) ---
     val cestasPendentes: List<Cesta> = emptyList(),
     val cestasRealizadas: List<Cesta> = emptyList(),
-    val cestasNaoLevantadas: List<Cesta> = emptyList()
+    val cestasNaoLevantadas: List<Cesta> = emptyList(),
+    val cestasCanceladas: List<Cesta> = emptyList()
 )
 
 class ApoiadoViewModel : ViewModel() {
@@ -149,7 +151,8 @@ class ApoiadoViewModel : ViewModel() {
             uiState.value = uiState.value.copy(
                 cestasPendentes = emptyList(),
                 cestasRealizadas = emptyList(),
-                cestasNaoLevantadas = emptyList()
+                cestasNaoLevantadas = emptyList(),
+                cestasCanceladas = emptyList()
             )
             return
         }
@@ -169,13 +172,12 @@ class ApoiadoViewModel : ViewModel() {
                 return@addSnapshotListener
             }
 
-            val now = Date()
-
             val todasCestas = snapshot?.documents?.map { doc ->
                 val dataRecolha = doc.getTimestamp("dataRecolha")?.toDate()
                 val dataAgendada = doc.getTimestamp("dataAgendada")?.toDate()
                 val estadoCesta = doc.getString("estadoCesta") ?: ""
                 val produtos = (doc.get("produtos") as? List<*>) ?: emptyList<Any?>()
+                val faltas = (doc.getLong("faltas") ?: 0L).toInt()
 
                 Cesta(
                     id = doc.id,
@@ -183,6 +185,7 @@ class ApoiadoViewModel : ViewModel() {
                     dataAgendada = dataAgendada,
                     estadoCesta = estadoCesta,
                     numeroItens = produtos.size,
+                    faltas = faltas,
                     origem = doc.getString("origem"),
                     pedidoUrgenteId = doc.getString("pedidoUrgenteId")
                 )
@@ -197,13 +200,13 @@ class ApoiadoViewModel : ViewModel() {
                         eLower.contains("finaliz")
             }
 
-            fun isMissed(estado: String, data: Date?): Boolean {
+            fun isMissed(estado: String): Boolean {
                 val eLower = estado.trim().lowercase(Locale.getDefault())
                 // Normalizamos para apanhar estados como "Nao_Levantou"
                 val normalized = eLower.replace('_', ' ')
-                val explicit = normalized.contains("não levant") || normalized.contains("nao levant")
-                val pastNotCompleted = (data != null && data.before(now) && !isCompleted(estado))
-                return explicit || pastNotCompleted
+                return normalized.contains("não levant") ||
+                        normalized.contains("nao levant") ||
+                        normalized.contains("faltou")
             }
 
             fun isCancelled(estado: String): Boolean {
@@ -211,25 +214,29 @@ class ApoiadoViewModel : ViewModel() {
                 return eLower.contains("cancel")
             }
 
-            // Cestas canceladas não devem aparecer ao apoiado
-            val cestasVisiveis = todasCestas.filterNot { isCancelled(it.estadoCesta) }
-
-            val naoLevantadas = cestasVisiveis
-                .filter { isMissed(it.estadoCesta, it.dataRecolha) }
+            val canceladas = todasCestas
+                .filter { isCancelled(it.estadoCesta) }
                 .sortedByDescending { it.dataRecolha }
 
-            val realizadas = cestasVisiveis
+            val cestasAtivas = todasCestas.filterNot { isCancelled(it.estadoCesta) }
+
+            val naoLevantadas = cestasAtivas
+                .filter { isMissed(it.estadoCesta) }
+                .sortedByDescending { it.dataRecolha }
+
+            val realizadas = cestasAtivas
                 .filter { isCompleted(it.estadoCesta) }
                 .sortedByDescending { it.dataRecolha }
 
-            val pendentes = cestasVisiveis
-                .filter { !isCompleted(it.estadoCesta) && !isMissed(it.estadoCesta, it.dataRecolha) }
+            val pendentes = cestasAtivas
+                .filter { !isCompleted(it.estadoCesta) && !isMissed(it.estadoCesta) }
                 .sortedBy { it.dataRecolha }
 
             uiState.value = uiState.value.copy(
                 cestasPendentes = pendentes,
                 cestasRealizadas = realizadas,
-                cestasNaoLevantadas = naoLevantadas
+                cestasNaoLevantadas = naoLevantadas,
+                cestasCanceladas = canceladas
             )
         }
     }
