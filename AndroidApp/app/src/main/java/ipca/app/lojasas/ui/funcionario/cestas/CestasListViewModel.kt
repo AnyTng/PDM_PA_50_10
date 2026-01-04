@@ -1,6 +1,8 @@
 package ipca.app.lojasas.ui.funcionario.cestas
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -14,6 +16,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.R
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
@@ -22,6 +25,7 @@ import java.text.SimpleDateFormat
 import java.text.Normalizer
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 data class CestaItem(
     val id: String,
@@ -236,54 +240,96 @@ class CestasListViewModel : ViewModel() {
             return
         }
 
-        val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val state = uiState.value
+        val dateFormatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+        val exportDate = dateFormatter.format(Date())
         val document = PdfDocument()
+        val pageWidth = 595
+        val pageHeight = 842
+        val headerHeight = 70f
+        val footerHeight = 40f
+        val margin = 36f
+        val topPadding = 20f
+        val bottomPadding = 18f
+        val contentTop = headerHeight + topPadding
+        val contentBottom = pageHeight - footerHeight - bottomPadding
+        val blockSpacing = 8f
+        val lineHeight = 12f
+        val maxWidth = pageWidth - margin * 2
+        val ipcaGreen = Color.parseColor("#094E33")
+        val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
+
         val titlePaint = Paint().apply {
             color = Color.BLACK
-            textSize = 14f
+            textSize = 16f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        val sectionPaint = Paint().apply {
+            color = ipcaGreen
+            textSize = 12f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
         val textPaint = Paint().apply {
             color = Color.BLACK
+            textSize = 11f
+        }
+        val mutedPaint = Paint().apply {
+            color = Color.DKGRAY
             textSize = 10f
         }
-
-        val pageWidth = 595
-        val pageHeight = 842
-        val margin = 36f
-        val lineHeight = 12f
-        val blockSpacing = 8f
-        val maxWidth = pageWidth - margin * 2
 
         var pageNumber = 1
         var page = document.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
         var canvas = page.canvas
-        var y = margin
+        var y = contentTop
 
-        fun drawHeader() {
-            drawTextClipped(canvas, "Cestas export", margin, y, titlePaint, maxWidth)
-            y += 16f
-            drawTextClipped(canvas, "Total: ${data.size}", margin, y, textPaint, maxWidth)
-            y += 16f
+        fun drawContentHeader() {
+            y = drawTextLine(canvas, "Cestas export", margin, y, titlePaint, maxWidth, lineHeight)
+            y = drawTextLine(canvas, "Total: ${data.size}", margin, y, textPaint, maxWidth, lineHeight)
+            y = drawTextLine(canvas, "Data de exportacao: $exportDate", margin, y, mutedPaint, maxWidth, lineHeight)
+            y = drawTextLine(canvas, "Estado: ${state.selectedEstado}", margin, y, mutedPaint, maxWidth, lineHeight)
+            y = drawTextLine(canvas, "Origem: ${state.selectedOrigem}", margin, y, mutedPaint, maxWidth, lineHeight)
+            y = drawTextLine(
+                canvas,
+                "Pesquisa: ${state.searchQuery.ifBlank { "-" }}",
+                margin,
+                y,
+                mutedPaint,
+                maxWidth,
+                lineHeight
+            )
+            y += blockSpacing
         }
 
-        fun ensureSpace(linesNeeded: Int) {
-            val needed = linesNeeded * lineHeight + blockSpacing
-            if (y + needed > pageHeight - margin) {
-                document.finishPage(page)
-                pageNumber += 1
-                page = document.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create())
-                canvas = page.canvas
-                y = margin
-                drawHeader()
+        fun startPage(number: Int) {
+            page = document.startPage(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, number).create())
+            canvas = page.canvas
+            drawPdfHeaderFooter(canvas, pageWidth, pageHeight, headerHeight, footerHeight, margin, number, branding)
+            drawPdfWatermark(canvas, pageWidth, contentTop, contentBottom, branding)
+            y = contentTop
+            drawContentHeader()
+        }
+
+        fun newPage() {
+            document.finishPage(page)
+            pageNumber += 1
+            startPage(pageNumber)
+        }
+
+        fun ensureSpace(linesNeeded: Int, extraSpacing: Float = 0f) {
+            val needed = linesNeeded * lineHeight + extraSpacing
+            if (y + needed > contentBottom) {
+                newPage()
             }
         }
 
-        drawHeader()
+        drawPdfHeaderFooter(canvas, pageWidth, pageHeight, headerHeight, footerHeight, margin, pageNumber, branding)
+        drawPdfWatermark(canvas, pageWidth, contentTop, contentBottom, branding)
+        drawContentHeader()
 
         data.forEach { cesta ->
-            ensureSpace(5)
-            y = drawTextLine(canvas, "Cesta: ${cesta.id}", margin, y, titlePaint, maxWidth, lineHeight)
+            ensureSpace(5, blockSpacing)
+            y = drawTextLine(canvas, "Cesta: ${cesta.id}", margin, y, sectionPaint, maxWidth, lineHeight)
             y = drawTextLine(canvas, "Apoiado: ${cesta.apoiadoId}", margin, y, textPaint, maxWidth, lineHeight)
             y = drawTextLine(
                 canvas,
@@ -565,6 +611,96 @@ private fun clipText(text: String, paint: Paint, maxWidth: Float): String {
         end -= 1
     }
     return if (end > 0) text.substring(0, end) + ellipsis else ellipsis
+}
+
+private data class PdfBranding(
+    val headerPaint: Paint,
+    val footerPaint: Paint,
+    val footerTextPaint: Paint,
+    val loginLogo: Bitmap,
+    val sasLogo: Bitmap,
+    val watermark: Bitmap,
+    val watermarkPaint: Paint
+)
+
+private fun createPdfBranding(
+    context: Context,
+    ipcaGreen: Int,
+    headerHeight: Float,
+    pageHeight: Int
+): PdfBranding {
+    val headerPaint = Paint().apply { color = ipcaGreen }
+    val footerPaint = Paint().apply { color = ipcaGreen }
+    val footerTextPaint = Paint().apply {
+        color = Color.WHITE
+        textSize = 9f
+    }
+
+    val loginLogo = BitmapFactory.decodeResource(context.resources, R.drawable.loginlogo)
+    val sasLogo = BitmapFactory.decodeResource(context.resources, R.drawable.sas)
+    val watermarkBase = BitmapFactory.decodeResource(context.resources, R.drawable.lswhitecircle)
+    val headerLogoHeight = headerHeight - 20f
+    val loginLogoScaled = scaleBitmapToHeight(loginLogo, headerLogoHeight)
+    val sasLogoScaled = scaleBitmapToHeight(sasLogo, headerLogoHeight)
+    val watermark = scaleBitmapToHeight(watermarkBase, pageHeight * 0.55f)
+    val watermarkPaint = Paint().apply { alpha = 35 }
+
+    return PdfBranding(
+        headerPaint = headerPaint,
+        footerPaint = footerPaint,
+        footerTextPaint = footerTextPaint,
+        loginLogo = loginLogoScaled,
+        sasLogo = sasLogoScaled,
+        watermark = watermark,
+        watermarkPaint = watermarkPaint
+    )
+}
+
+private fun drawPdfHeaderFooter(
+    canvas: Canvas,
+    pageWidth: Int,
+    pageHeight: Int,
+    headerHeight: Float,
+    footerHeight: Float,
+    margin: Float,
+    pageNumber: Int,
+    branding: PdfBranding
+) {
+    canvas.drawRect(0f, 0f, pageWidth.toFloat(), headerHeight, branding.headerPaint)
+    val headerPadding = 12f
+    val loginY = (headerHeight - branding.loginLogo.height) / 2f
+    canvas.drawBitmap(branding.loginLogo, headerPadding, loginY, null)
+    val sasX = pageWidth - headerPadding - branding.sasLogo.width
+    val sasY = (headerHeight - branding.sasLogo.height) / 2f
+    canvas.drawBitmap(branding.sasLogo, sasX, sasY, null)
+
+    val footerTop = pageHeight - footerHeight
+    canvas.drawRect(0f, footerTop, pageWidth.toFloat(), pageHeight.toFloat(), branding.footerPaint)
+    val footerTextY = footerTop + (footerHeight + branding.footerTextPaint.textSize) / 2f - 2f
+    branding.footerTextPaint.textAlign = Paint.Align.LEFT
+    canvas.drawText("Loja Social IPCA", margin, footerTextY, branding.footerTextPaint)
+    branding.footerTextPaint.textAlign = Paint.Align.RIGHT
+    canvas.drawText("Pagina $pageNumber", pageWidth - margin, footerTextY, branding.footerTextPaint)
+    branding.footerTextPaint.textAlign = Paint.Align.LEFT
+}
+
+private fun drawPdfWatermark(
+    canvas: Canvas,
+    pageWidth: Int,
+    contentTop: Float,
+    contentBottom: Float,
+    branding: PdfBranding
+) {
+    val wmX = pageWidth - branding.watermark.width * 0.5f
+    val wmY = (contentTop + contentBottom) / 2f - branding.watermark.height / 2f
+    canvas.drawBitmap(branding.watermark, wmX, wmY, branding.watermarkPaint)
+}
+
+private fun scaleBitmapToHeight(bitmap: Bitmap, targetHeight: Float): Bitmap {
+    val height = targetHeight.roundToInt().coerceAtLeast(1)
+    val ratio = height.toFloat() / bitmap.height.toFloat()
+    val width = (bitmap.width * ratio).roundToInt().coerceAtLeast(1)
+    return Bitmap.createScaledBitmap(bitmap, width, height, true)
 }
 
 private fun csvValue(value: String): String {

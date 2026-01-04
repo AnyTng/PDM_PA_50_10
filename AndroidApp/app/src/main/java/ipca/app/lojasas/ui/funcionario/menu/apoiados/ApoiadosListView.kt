@@ -127,7 +127,14 @@ fun ApoiadosListView(
                 }
 
                 // Download
-                IconButton(onClick = { viewModel.exportToCSV(context) }) {
+                IconButton(onClick = { viewModel.exportToPDF(context) }) {
+                    Icon(
+                        Icons.Default.PictureAsPdf,
+                        contentDescription = "Download PDF",
+                        tint = Color.Black
+                    )
+                }
+                IconButton(onClick = { viewModel.exportToCSV(context) }) {      
                     Icon(Icons.Default.FileDownload, contentDescription = "Download CSV", tint = Color.Black)
                 }
             }
@@ -176,6 +183,16 @@ fun ApoiadosListView(
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("Detalhes do Apoiado", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSas)
                         IconButton(onClick = { viewModel.selectApoiado(null) }) { Icon(Icons.Default.Close, null) }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.exportApoiadoPdf(context, user.id) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                    ) {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color.White)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Exportar PDF", color = Color.White)
                     }
                     HorizontalDivider(color = GreenSas, modifier = Modifier.padding(vertical = 8.dp))
 
