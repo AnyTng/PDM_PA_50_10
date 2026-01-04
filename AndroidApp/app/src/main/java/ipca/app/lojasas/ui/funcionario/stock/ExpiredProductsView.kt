@@ -7,16 +7,29 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,12 +37,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
+import ipca.app.lojasas.ui.funcionario.stock.components.StockExpired
 import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
 import ipca.app.lojasas.ui.theme.GreenSas
@@ -42,6 +58,17 @@ fun ExpiredProductsView(
     viewModel: ExpiredProductsViewModel = viewModel()
 ) {
     val state by viewModel.uiState
+    var showDonationDialog by remember { mutableStateOf(false) }
+    var associationName by remember { mutableStateOf("") }
+    var associationContact by remember { mutableStateOf("") }
+
+    LaunchedEffect(state.selectedIds, state.isDonating) {
+        if (state.selectedIds.isEmpty() && !state.isDonating) {
+            showDonationDialog = false
+            associationName = ""
+            associationContact = ""
+        }
+    }
 
     ExpiredProductsViewContent(
         searchQuery = state.searchQuery,
@@ -53,31 +80,100 @@ fun ExpiredProductsView(
         groups = state.groups,
         sortOption = state.sortOption,
         onSortSelected = viewModel::onSortSelected,
-        groupRow = { group ->
-            StockProductGroupCard(
-                product = group.product,
-                onViewClick = { navController.navigate("stockProduct/${group.product.id}") },
-                modifier = Modifier.clickable { navController.navigate("stockProduct/${group.product.id}") }
-            )
-        }
+        selectedIds = state.selectedIds,
+        onToggleSelection = viewModel::toggleSelection,
+        onClearSelection = viewModel::clearSelection,
+        isDonating = state.isDonating,
+        donationError = state.donationError,
+        onOpenDetails = { product -> navController.navigate("stockProduct/${product.id}") },
+        onDonateClick = { showDonationDialog = true }
     )
+
+    if (showDonationDialog) {
+        val canConfirm = associationName.isNotBlank() &&
+            associationContact.isNotBlank() &&
+            state.selectedIds.isNotEmpty() &&
+            !state.isDonating
+
+        AlertDialog(
+            onDismissRequest = { if (!state.isDonating) showDonationDialog = false },
+            title = { Text("Doar itens fora de validade") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = associationName,
+                        onValueChange = { associationName = it },
+                        label = { Text("Nome da associação") },
+                        singleLine = true,
+                        enabled = !state.isDonating,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = associationContact,
+                        onValueChange = { associationContact = it },
+                        label = { Text("Contacto") },
+                        singleLine = true,
+                        enabled = !state.isDonating,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (!state.donationError.isNullOrBlank()) {
+                        Text(text = state.donationError ?: "Erro", color = Color.Red)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.donateSelected(associationName, associationContact) },
+                    enabled = canConfirm,
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                ) {
+                    if (state.isDonating) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .height(16.dp)
+                                .width(16.dp)
+                        )
+                    }
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDonationDialog = false },
+                    enabled = !state.isDonating
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun <T> ExpiredProductsViewContent(
+private fun ExpiredProductsViewContent(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     isLoading: Boolean,
     error: String?,
     isEmpty: Boolean,
     emptyText: String,
-    groups: List<T>,
+    groups: List<ProductGroupUi>,
     sortOption: ProductSortOption,
     onSortSelected: (ProductSortOption) -> Unit,
-    groupRow: @Composable (T) -> Unit
+    selectedIds: Set<String>,
+    onToggleSelection: (ProductGroupUi) -> Unit,
+    onClearSelection: () -> Unit,
+    isDonating: Boolean,
+    donationError: String?,
+    onOpenDetails: (Product) -> Unit,
+    onDonateClick: () -> Unit
 ) {
     var showExpirySortSection by remember { mutableStateOf(false) }
     var showSizeSortSection by remember { mutableStateOf(false) }
+    val selectedCount = selectedIds.size
     val expirySortOptions = remember {
         listOf(
             ProductSortOption.EXPIRY_ASC to "Proxima",
@@ -159,6 +255,44 @@ private fun <T> ExpiredProductsViewContent(
                 }
             )
 
+            if (selectedCount > 0) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(text = "$selectedCount selecionado(s)")
+                    Spacer(modifier = Modifier.weight(1f))
+                    TextButton(
+                        onClick = onClearSelection,
+                        enabled = !isDonating,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = GreenSas,
+                            disabledContentColor = GreenSas.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Text("Limpar")
+                    }
+                    Button(
+                        onClick = onDonateClick,
+                        enabled = !isDonating,
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                    ) {
+                        Text("Doar")
+                    }
+                }
+            }
+
+            if (!donationError.isNullOrBlank()) {
+                Text(
+                    text = donationError ?: "Erro ao doar.",
+                    color = Color.Red,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                )
+            }
+
             when {
                 isLoading -> {
                     Box(
@@ -180,11 +314,7 @@ private fun <T> ExpiredProductsViewContent(
                 }
 
                 isEmpty -> {
-                    Text(
-                        text = emptyText,
-                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
-                        color = Color(0xFF333333)
-                    )
+                    ExpiredEmptyState(message = emptyText)
                 }
 
                 else -> {
@@ -199,7 +329,34 @@ private fun <T> ExpiredProductsViewContent(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(groups.size) { index ->
-                            groupRow(groups[index])
+                            val group = groups[index]
+                            val isSelected = group.productIds.all { selectedIds.contains(it) }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(enabled = !isDonating) { onToggleSelection(group) },
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = { onToggleSelection(group) },
+                                    enabled = !isDonating,
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = StockExpired,
+                                        uncheckedColor = Color.Gray,
+                                        checkmarkColor = Color.White,
+                                        disabledUncheckedColor = Color.LightGray
+                                    ),
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                StockProductGroupCard(
+                                    product = group.product,
+                                    onViewClick = { onOpenDetails(group.product) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
                 }
@@ -234,13 +391,13 @@ private fun ExpiredProductsViewPreview_Normal() {
         groups = fake,
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
-        groupRow = { g ->
-            StockProductGroupCard(
-                product = g.product,
-                onViewClick = {},
-                modifier = Modifier
-            )
-        }
+        selectedIds = setOf("p1"),
+        onToggleSelection = {},
+        onClearSelection = {},
+        isDonating = false,
+        donationError = null,
+        onOpenDetails = {},
+        onDonateClick = {}
     )
 }
 
@@ -265,4 +422,27 @@ private fun DropdownMenuSectionHeader(
             )
         }
     )
+}
+
+@Composable
+private fun ExpiredEmptyState(message: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "✓",
+            fontSize = 80.sp,
+            color = GreenSas.copy(alpha = 0.45f)
+        )
+        Text(
+            text = message,
+            textAlign = TextAlign.Center,
+            color = Color(0xFF333333),
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
 }

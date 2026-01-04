@@ -1,11 +1,13 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import ipca.app.lojasas.data.products.PRODUCT_STATE_DONATED_EXPIRED
 import ipca.app.lojasas.data.products.Product
 import java.util.Date
 
 private const val STATUS_AVAILABLE_PREFIX = "dispon"
 private const val STATUS_RESERVED_PREFIX = "reserv"
 private const val STATUS_DELIVERED_PREFIX = "entreg"
+private val STATUS_DONATED_EXPIRED = PRODUCT_STATE_DONATED_EXPIRED.trim().lowercase()
 
 fun Product.isBaseAvailable(): Boolean {
     val status = estadoProduto?.trim()?.lowercase().orEmpty()
@@ -28,7 +30,7 @@ fun Product.isExpired(reference: Date = Date()): Boolean {
 }
 
 fun Product.isExpiredVisible(reference: Date = Date()): Boolean {
-    return isExpired(reference) && !isDelivered() && !isReserved()
+    return isExpired(reference) && !isDelivered() && !isReserved() && !isDonatedExpired()
 }
 
 fun Product.isAvailableForCount(reference: Date = Date()): Boolean {
@@ -44,4 +46,9 @@ fun Product.displayStatus(reference: Date = Date()): String {
 
 fun Product.isVisibleInStockList(reference: Date = Date()): Boolean {
     return isReserved() || isBaseAvailable() || isExpiredVisible(reference)
+}
+
+fun Product.isDonatedExpired(): Boolean {
+    val status = estadoProduto?.trim()?.lowercase().orEmpty()
+    return status == STATUS_DONATED_EXPIRED
 }

@@ -224,18 +224,28 @@ fun StockExpiredSummaryCard(
                 modifier = Modifier.weight(1f)
             )
 
-            Text(
-                text = expiredCountText(expiredCount),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
-            )
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Abrir",
-                tint = Color.White,
-                modifier = Modifier.size(18.dp)
-            )
+            Surface(
+                color = Color.White,
+                contentColor = StockExpired,
+                shape = RoundedCornerShape(50)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = expiredCountText(expiredCount),
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Abrir",
+                        tint = StockExpired,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
         }
     }
 }

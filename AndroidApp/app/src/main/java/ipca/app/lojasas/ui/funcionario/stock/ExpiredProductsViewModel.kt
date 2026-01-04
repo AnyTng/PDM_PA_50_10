@@ -3,7 +3,9 @@ package ipca.app.lojasas.ui.funcionario.stock
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
+import ipca.app.lojasas.data.donations.ExpiredDonationsRepository
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Date
@@ -14,11 +16,15 @@ data class ExpiredProductsUiState(
     val error: String? = null,
     val searchQuery: String = "",
     val groups: List<ProductGroupUi> = emptyList(),
-    val sortOption: ProductSortOption = ProductSortOption.EXPIRY_ASC
+    val sortOption: ProductSortOption = ProductSortOption.EXPIRY_ASC,
+    val selectedIds: Set<String> = emptySet(),
+    val isDonating: Boolean = false,
+    val donationError: String? = null
 )
 
 class ExpiredProductsViewModel(
-    private val repository: ProductsRepository = ProductsRepository()
+    private val repository: ProductsRepository = ProductsRepository(),
+    private val donationsRepository: ExpiredDonationsRepository = ExpiredDonationsRepository()
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ExpiredProductsUiState())
@@ -35,6 +41,7 @@ class ExpiredProductsViewModel(
                     product.isExpiredVisible(reference) && product.doado.isNullOrBlank()
                 }
                 allGroups = groupIdenticalProducts(expired)
+                pruneSelection()
                 applyFilter()
             },
             onError = { e ->
@@ -55,6 +62,72 @@ class ExpiredProductsViewModel(
     fun onSortSelected(option: ProductSortOption) {
         _uiState.value = _uiState.value.copy(sortOption = option)
         applyFilter()
+    }
+
+    fun toggleSelection(group: ProductGroupUi) {
+        if (_uiState.value.isDonating) return
+        val ids = group.productIds
+        if (ids.isEmpty()) return
+        val current = _uiState.value.selectedIds
+        val allSelected = ids.all { current.contains(it) }
+        val updated = if (allSelected) {
+            current - ids
+        } else {
+            current + ids
+        }
+        _uiState.value = _uiState.value.copy(selectedIds = updated, donationError = null)
+    }
+
+    fun clearSelection() {
+        if (_uiState.value.isDonating) return
+        _uiState.value = _uiState.value.copy(selectedIds = emptySet(), donationError = null)
+    }
+
+    fun donateSelected(associationName: String, associationContact: String) {
+        val state = _uiState.value
+        if (state.isDonating) return
+        if (state.selectedIds.isEmpty()) {
+            _uiState.value = state.copy(donationError = "Selecione produtos para doar.")
+            return
+        }
+        val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        if (userId.isBlank()) {
+            _uiState.value = state.copy(donationError = "Sem utilizador autenticado.")
+            return
+        }
+
+        val reference = Date()
+        val validIds = allGroups
+            .filter { it.product.isExpiredVisible(reference) }
+            .flatMap { it.productIds }
+            .toSet()
+        val idsToDonate = state.selectedIds.intersect(validIds).toList()
+
+        if (idsToDonate.isEmpty()) {
+            _uiState.value = state.copy(donationError = "Selecao invalida para doar.")
+            return
+        }
+
+        _uiState.value = state.copy(isDonating = true, donationError = null)
+        donationsRepository.donateExpiredProducts(
+            productIds = idsToDonate,
+            associationName = associationName,
+            associationContact = associationContact,
+            employeeId = userId,
+            onSuccess = {
+                _uiState.value = _uiState.value.copy(
+                    isDonating = false,
+                    selectedIds = emptySet(),
+                    donationError = null
+                )
+            },
+            onError = { e ->
+                _uiState.value = _uiState.value.copy(
+                    isDonating = false,
+                    donationError = e.message ?: "Erro ao doar produtos."
+                )
+            }
+        )
     }
 
     private fun applyFilter() {
@@ -81,6 +154,16 @@ class ExpiredProductsViewModel(
             error = null,
             groups = sorted
         )
+    }
+
+    private fun pruneSelection() {
+        val selected = _uiState.value.selectedIds
+        if (selected.isEmpty()) return
+        val validIds = allGroups.flatMap { it.productIds }.toSet()
+        val pruned = selected.intersect(validIds)
+        if (pruned.size != selected.size) {
+            _uiState.value = _uiState.value.copy(selectedIds = pruned)
+        }
     }
 
     override fun onCleared() {
