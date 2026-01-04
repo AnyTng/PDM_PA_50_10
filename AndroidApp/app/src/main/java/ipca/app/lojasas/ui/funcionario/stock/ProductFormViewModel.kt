@@ -37,6 +37,12 @@ data class ProductFormUiState(
     val tamanhoUnidade: String = "gr"
 )
 
+private val DEFAULT_CATEGORIES = listOf(
+    "Alimentar",
+    "Higiene Pessoal",
+    "Limpeza"
+)
+
 class ProductFormViewModel(
     private val repository: ProductsRepository = ProductsRepository(),
     private val campaignRepository: CampaignRepository = CampaignRepository()
@@ -140,7 +146,8 @@ class ProductFormViewModel(
     private fun loadCategories() {
         repository.getUniqueCategories(
             onSuccess = { categories ->
-                _uiState.value = _uiState.value.copy(availableCategories = categories)
+                val merged = mergeCategories(categories)
+                _uiState.value = _uiState.value.copy(availableCategories = merged)
             },
             onError = { println("Erro ao carregar categorias: ${it.message}") }
         )
@@ -208,8 +215,7 @@ class ProductFormViewModel(
 
         val alertaValidade7dEm = alertDateFrom(current.validade)
 
-        // Correção Importante: Usar .trim() em vez de .normalizedOrNull()
-        // para permitir enviar strings vazias ("") e limpar o campo na BD.
+
         val upsert = ProductUpsert(
             nomeProduto = nomeProduto,
             categoria = current.categoria.trim(),
@@ -292,6 +298,27 @@ class ProductFormViewModel(
     private fun alertDateFrom(validade: Date?): Date? {
         return validade?.let { Date(it.time - TimeUnit.DAYS.toMillis(7)) }
     }
+}
+
+private fun mergeCategories(categories: List<String>): List<String> {
+    if (categories.isEmpty()) return DEFAULT_CATEGORIES
+
+    val merged = mutableListOf<String>()
+    val seen = mutableSetOf<String>()
+
+    fun addCategory(category: String) {
+        val trimmed = category.trim()
+        if (trimmed.isBlank()) return
+        val key = trimmed.lowercase()
+        if (seen.add(key)) {
+            merged.add(trimmed)
+        }
+    }
+
+    DEFAULT_CATEGORIES.forEach { addCategory(it) }
+    categories.forEach { addCategory(it) }
+
+    return merged
 }
 
 // Mantido apenas para lógica interna se necessário, mas removido do uso no save()
