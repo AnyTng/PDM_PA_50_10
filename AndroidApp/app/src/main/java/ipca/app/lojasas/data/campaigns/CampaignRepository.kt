@@ -84,4 +84,19 @@ class CampaignRepository {
             }
             .addOnFailureListener { onSuccess(CampaignStats(0, emptyMap(), emptyMap())) }
     }
+
+    fun getCampaignProducts(
+        campaignName: String,
+        onSuccess: (List<Product>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        db.collection("produtos")
+            .whereEqualTo("campanha", campaignName)
+            .get()
+            .addOnSuccessListener { result ->
+                val products = result.documents.mapNotNull { it.toProductOrNull() }
+                onSuccess(products)
+            }
+            .addOnFailureListener { onError(it) }
+    }
 }

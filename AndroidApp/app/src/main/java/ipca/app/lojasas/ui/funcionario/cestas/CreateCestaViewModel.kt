@@ -8,13 +8,24 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.toProductOrNull
+import java.util.Calendar
 import java.util.Date
 
 data class ApoiadoOption(
     val id: String,
     val nome: String,
-    val ultimoLevantamento: Date? = null
+    val ultimoLevantamento: Date? = null,
+    val rawStatus: String = "",
+    val displayStatus: String = ""
 )
+
+private fun mapApoiadoDisplayStatus(rawStatus: String): String {
+    return when (rawStatus) {
+        "Falta_Documentos", "Correcao_Dados", "" -> "Por Submeter"
+        "Suspenso" -> "Apoio Pausado"
+        else -> rawStatus
+    }
+}
 
 data class CreateCestaState(
     val isLoading: Boolean = true,
@@ -52,6 +63,9 @@ class CreateCestaViewModel : ViewModel() {
 
     private val db = Firebase.firestore
     private val auth = Firebase.auth
+    private companion object {
+        const val RECORRENCIA_DIAS_DEFAULT = 30
+    }
 
     var uiState = mutableStateOf(CreateCestaState())
         private set
@@ -128,9 +142,24 @@ class CreateCestaViewModel : ViewModel() {
                     .filter { p ->
                         p.estadoProduto.isNullOrBlank() || p.estadoProduto.equals("Disponivel", ignoreCase = true)
                     }
+                    // Nao mostrar produtos fora de validade
+                    .filter { p ->
+                        val validade = p.validade
+                        validade == null || !isExpired(validade)
+                    }
 
                 uiState.value = uiState.value.copy(isLoading = false, produtos = produtos)
             }
+    }
+
+    private fun isExpired(validade: Date): Boolean {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val startOfToday = calendar.time
+        return validade.before(startOfToday)
     }
 
     private fun listenApoiados() {
@@ -149,12 +178,16 @@ class CreateCestaViewModel : ViewModel() {
                         estado.equals("Bloqueado", ignoreCase = true)
                     }
                     .map { doc ->
+                        val rawStatus = doc.getString("estadoConta")?.trim().orEmpty()
+                        val displayStatus = mapApoiadoDisplayStatus(rawStatus)
                         val ultimo = doc.getTimestamp("ultimoLevantamento")?.toDate()
                             ?: (doc.get("ultimoLevantamento") as? Date)
                         ApoiadoOption(
                             id = doc.id,
                             nome = doc.getString("nome")?.trim().orEmpty().ifBlank { doc.id },
-                            ultimoLevantamento = ultimo
+                            ultimoLevantamento = ultimo,
+                            rawStatus = rawStatus,
+                            displayStatus = displayStatus
                         )
                     }
                     // Ordem por último levantamento (quem levantou há mais tempo primeiro)
@@ -186,10 +219,14 @@ class CreateCestaViewModel : ViewModel() {
             .addOnSuccessListener { doc ->
                 if (!doc.exists()) return@addOnSuccessListener
                 val ultimo = doc.getTimestamp("ultimoLevantamento")?.toDate() ?: (doc.get("ultimoLevantamento") as? Date)
+                val rawStatus = doc.getString("estadoConta")?.trim().orEmpty()
+                val displayStatus = mapApoiadoDisplayStatus(rawStatus)
                 val option = ApoiadoOption(
                     id = doc.id,
                     nome = doc.getString("nome")?.trim().orEmpty().ifBlank { doc.id },
-                    ultimoLevantamento = ultimo
+                    ultimoLevantamento = ultimo,
+                    rawStatus = rawStatus,
+                    displayStatus = displayStatus
                 )
                 uiState.value = uiState.value.copy(apoiadoSelecionado = option)
             }
@@ -223,7 +260,7 @@ class CreateCestaViewModel : ViewModel() {
 
         uiState.value = uiState.value.copy(
             recorrente = value,
-            recorrenciaDias = if (value) uiState.value.recorrenciaDias else ""
+            recorrenciaDias = if (value) RECORRENCIA_DIAS_DEFAULT.toString() else ""
         )
     }
 
@@ -269,14 +306,7 @@ class CreateCestaViewModel : ViewModel() {
         }
 
         val recorrente = if (s.fromUrgent) false else s.recorrente
-        val recDias: Int? = if (recorrente) {
-            val parsed = s.recorrenciaDias.trim().toIntOrNull()
-            if (parsed == null || parsed <= 0) {
-                uiState.value = s.copy(error = "Indique o número de dias (ex: 30).")
-                return
-            }
-            parsed
-        } else null
+        val recDias: Int? = if (recorrente) RECORRENCIA_DIAS_DEFAULT else null
 
         uiState.value = s.copy(isSubmitting = true, error = null)
 

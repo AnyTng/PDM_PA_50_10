@@ -232,25 +232,10 @@ fun CreateCestaView(
                             Text("Sim", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
                         }
 
-                        if (state.recorrente) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(top = 6.dp)
-                            ) {
-                                Text("a cada", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
-                                Spacer(Modifier.width(8.dp))
-                                OutlinedTextField(
-                                    value = state.recorrenciaDias,
-                                    onValueChange = { viewModel.setRecorrenciaDias(it) },
-                                    enabled = recorrenteEnabled && state.recorrente,
-                                    singleLine = true,
-                                    modifier = Modifier.width(90.dp),
-                                    placeholder = { Text("_", color = Color.Gray) }
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text("dias", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
-                            }
-                        }
+                       // if (state.recorrente) {
+                       //     Spacer(Modifier.height(6.dp))
+                       //     Text("Intervalo fixo: 30 dias", fontSize = 12.sp, color = Color.Gray)
+                       // }
                     }
                 }
 
@@ -441,6 +426,18 @@ private fun ApoiadoPickerDialog(
                     it.nome.lowercase(Locale.getDefault()).contains(q)
         }
     }
+    val grouped = remember(filtered) {
+        val order = listOf("Aprovado", "Analise", "Por Submeter", "Apoio Pausado", "Negado")
+        val orderMap = order.withIndex().associate { it.value to it.index }
+        filtered.groupBy { it.displayStatus.ifBlank { "Sem estado" } }
+            .toList()
+            .sortedWith(
+                compareBy<Pair<String, List<ApoiadoOption>>>(
+                    { orderMap[it.first] ?: Int.MAX_VALUE },
+                    { it.first }
+                )
+            )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -465,27 +462,32 @@ private fun ApoiadoPickerDialog(
                             .height(320.dp)
                             .verticalScroll(rememberScrollState())
                     ) {
-                        filtered.forEach { opt ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelect(opt) }
-                                    .padding(vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(opt.nome, fontWeight = FontWeight.SemiBold)
-                                    Text(opt.id, fontSize = 12.sp, color = Color.Gray)
+                        grouped.forEach { (status, items) ->
+                            Text(status, fontWeight = FontWeight.Bold, color = GreenSas)
+                            Spacer(Modifier.height(6.dp))
+                            items.forEach { opt ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onSelect(opt) }
+                                        .padding(vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(opt.nome, fontWeight = FontWeight.SemiBold)
+                                        Text(opt.id, fontSize = 12.sp, color = Color.Gray)
+                                    }
+                                    Text(
+                                        text = opt.ultimoLevantamento?.let {
+                                            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it)
+                                        } ?: "—",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray
+                                    )
                                 }
-                                Text(
-                                    text = opt.ultimoLevantamento?.let {
-                                        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it)
-                                    } ?: "—",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
                             }
+                            Spacer(Modifier.height(10.dp))
                         }
                     }
                 }
