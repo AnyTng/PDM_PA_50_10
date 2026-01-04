@@ -1,0 +1,64 @@
+/* Base reset + fundo branco */
+:root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  /* força light */
+  color-scheme: light;
+
+  /* cores base */
+  color: #111;
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* garantir que ocupa tudo e não fica cinza */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  background: #ffffff;
+}
+
+body {
+  /* remover o flex do Vite */
+  display: block;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* links simples */
+a {
+  color: #111;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* botões neutros (wireframe) */
+button {
+  border-radius: 6px;
+  border: 1px solid #111;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  background: #fff;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* inputs padrão */
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
