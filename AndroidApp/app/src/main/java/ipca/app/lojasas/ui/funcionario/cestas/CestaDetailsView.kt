@@ -18,15 +18,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PictureAsPdf
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.io.File
@@ -89,13 +92,6 @@ fun CestaDetailsView(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     state.cesta?.let { cesta ->
-                        Button(
-                            onClick = { exportCestaDetailsPdf(context, state) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                        ) {
-                            Text("Transferir PDF")
-                        }
                         DetailsCard(title = "Detalhes da Cesta") {
                             DetailRow("ID", cesta.id)
                             DetailRow("Estado", cesta.estadoLabel())
@@ -196,7 +192,21 @@ fun CestaDetailsView(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(90.dp))
+                }
+
+                if (state.cesta != null) {
+                    FloatingActionButton(
+                        onClick = { exportCestaDetailsPdf(context, state) },
+                        containerColor = GreenSas,
+                        contentColor = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                            .size(64.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.PictureAsPdf, contentDescription = "Transferir PDF")
+                    }
                 }
             }
         }
