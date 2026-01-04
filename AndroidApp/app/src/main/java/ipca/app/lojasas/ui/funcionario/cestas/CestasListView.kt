@@ -14,15 +14,27 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +55,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import java.text.SimpleDateFormat
+import java.text.Normalizer
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -57,6 +71,9 @@ fun CestasListView(
     val state by viewModel.uiState
     val context = LocalContext.current
     val dateFmt = rememberDateFormatter()
+
+    var showEstadoMenu by remember { mutableStateOf(false) }
+    var showOrigemMenu by remember { mutableStateOf(false) }
 
     // Diálogos
     var cestaParaReagendarEntrega by remember { mutableStateOf<CestaItem?>(null) }
@@ -104,67 +121,180 @@ fun CestasListView(
             state.isLoading -> CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
 
             else -> {
-                val (agendadas, historico) = remember(state.cestas) {
-                    val ag = state.cestas.filter { it.isAgendada() }
+                val (agendadas, historico) = remember(state.filteredCestas) {
+                    val ag = state.filteredCestas.filter { it.isAgendada() }
                         .sortedBy { it.dataAgendada ?: it.dataRecolha ?: Date(Long.MAX_VALUE) }
-                    val hist = state.cestas.filterNot { it.isAgendada() }
+                    val hist = state.filteredCestas.filterNot { it.isAgendada() }
                         .sortedByDescending { it.dataAgendada ?: it.dataRecolha ?: Date(0) }
                     ag to hist
                 }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 120.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    state.error?.let {
-                        item {
-                            Text(it, color = Color.Red, fontSize = 12.sp)
-                            Spacer(Modifier.height(10.dp))
-                        }
-                    }
-
-                    if (agendadas.isEmpty()) {
-                        item {
-                            Text("Sem cestas agendadas.", color = Color.Gray)
-                        }
-                    } else {
-                        items(agendadas, key = { it.id }) { cesta ->
-                            CestaCard(
-                                cesta = cesta,
-                                dateFmt = dateFmt,
-                                showActions = true,
-                                onAcoes = { cestaParaAcoes = cesta },
-                                onVerDetalhes = {
-                                    val cestaId = Uri.encode(cesta.id)
-                                    navController.navigate("cestaDetails/$cestaId")
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            BasicTextField(
+                                value = state.searchQuery,
+                                onValueChange = { viewModel.onSearchQueryChange(it) },
+                                modifier = Modifier.weight(1f),
+                                textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                                singleLine = true,
+                                decorationBox = { innerTextField ->
+                                    if (state.searchQuery.isEmpty()) {
+                                        Text(
+                                            "Pesquisar numero mecanografico...",
+                                            color = Color.Gray,
+                                            fontSize = 14.sp
+                                        )
+                                    }
+                                    innerTextField()
                                 }
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box {
+                                    val estadoColor = if (state.selectedEstado != ESTADO_TODOS) GreenSas else Color.Gray
+                                    TextButton(onClick = { showEstadoMenu = true }) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Estado: ${state.selectedEstado}", color = estadoColor, fontSize = 12.sp)
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = estadoColor)
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = showEstadoMenu,
+                                        onDismissRequest = { showEstadoMenu = false }
+                                    ) {
+                                        state.availableEstados.forEach { estado ->
+                                            DropdownMenuItem(
+                                                text = { Text(estado) },
+                                                onClick = {
+                                                    viewModel.onEstadoSelected(estado)
+                                                    showEstadoMenu = false
+                                                },
+                                                trailingIcon = {
+                                                    if (state.selectedEstado == estado) {
+                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Box {
+                                    val origemColor = if (state.selectedOrigem != ORIGEM_TODOS) GreenSas else Color.Gray
+                                    TextButton(onClick = { showOrigemMenu = true }) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Origem: ${state.selectedOrigem}", color = origemColor, fontSize = 12.sp)
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = origemColor)
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = showOrigemMenu,
+                                        onDismissRequest = { showOrigemMenu = false }
+                                    ) {
+                                        state.availableOrigens.forEach { origem ->
+                                            DropdownMenuItem(
+                                                text = { Text(origem) },
+                                                onClick = {
+                                                    viewModel.onOrigemSelected(origem)
+                                                    showOrigemMenu = false
+                                                },
+                                                trailingIcon = {
+                                                    if (state.selectedOrigem == origem) {
+                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            IconButton(onClick = { viewModel.exportToCSV(context) }) {
+                                Icon(Icons.Default.FileDownload, contentDescription = "Exportar CSV", tint = Color.Black)
+                            }
+                            IconButton(onClick = { viewModel.exportToPDF(context) }) {
+                                Icon(Icons.Default.PictureAsPdf, contentDescription = "Exportar PDF", tint = Color.Black)
+                            }
+                        }
                     }
 
-                    if (historico.isNotEmpty()) {
-                        item {
-                            Spacer(Modifier.height(10.dp))
-                            Text(
-                                "Entregue / Não levantou",
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Gray
-                            )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 16.dp,
+                            bottom = 120.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        state.error?.let {
+                            item {
+                                Text(it, color = Color.Red, fontSize = 12.sp)
+                                Spacer(Modifier.height(10.dp))
+                            }
                         }
-                        items(historico, key = { it.id }) { cesta ->
-                            CestaCard(
-                                cesta = cesta,
-                                dateFmt = dateFmt,
-                                showActions = false,
-                                onAcoes = {},
-                                onVerDetalhes = {}
-                            )
+
+                        if (agendadas.isEmpty()) {
+                            item {
+                                Text("Sem cestas agendadas.", color = Color.Gray)
+                            }
+                        } else {
+                            items(agendadas, key = { it.id }) { cesta ->
+                                CestaCard(
+                                    cesta = cesta,
+                                    dateFmt = dateFmt,
+                                    showActions = true,
+                                    onAcoes = { cestaParaAcoes = cesta },
+                                    onVerDetalhes = {
+                                        val cestaId = Uri.encode(cesta.id)
+                                        navController.navigate("cestaDetails/$cestaId")
+                                    }
+                                )
+                            }
+                        }
+
+                        if (historico.isNotEmpty()) {
+                            item {
+                                Spacer(Modifier.height(10.dp))
+                                Text(
+                                    "Entregue / Não levantou",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Gray
+                                )
+                            }
+                            items(historico, key = { it.id }) { cesta ->
+                                CestaCard(
+                                    cesta = cesta,
+                                    dateFmt = dateFmt,
+                                    showActions = false,
+                                    onAcoes = {},
+                                    onVerDetalhes = {
+                                        val cestaId = Uri.encode(cesta.id)
+                                        navController.navigate("cestaDetails/$cestaId")
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -182,6 +312,7 @@ fun CestasListView(
     // Ações Disponiveis
     if (cestaParaAcoes != null) {
         val cesta = cestaParaAcoes!!
+        val isOverdue = cesta.isOverdue()
         AlertDialog(
             onDismissRequest = { cestaParaAcoes = null },
             title = { Text("Ações Disponiveis") },
@@ -228,9 +359,20 @@ fun CestasListView(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                        enabled = isOverdue,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF616161),
+                            disabledContainerColor = Color(0xFFBDBDBD)
+                        )
                     ) {
                         Text("Faltou")
+                    }
+                    if (!isOverdue) {
+                        Text(
+                            text = "So pode marcar falta depois de passar a data agendada.",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
                     }
                 }
             },
@@ -373,7 +515,8 @@ private fun CestaCard(
     onVerDetalhes: () -> Unit
 ) {
     val estadoLabel = cesta.estadoLabel()
-    val data = cesta.dataAgendada ?: cesta.dataRecolha
+    val data = cesta.dataReferencia()
+    val isOverdue = showActions && cesta.isOverdue()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -420,6 +563,16 @@ private fun CestaCard(
                 )
             }
 
+            if (isOverdue) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "Passou da data agendada",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFFB00020)
+                )
+            }
+
             if (cesta.faltas > 0) {
                 Spacer(Modifier.height(6.dp))
                 Text(
@@ -451,6 +604,15 @@ private fun CestaCard(
                         Text("Ver Detalhes")
                     }
                 }
+            } else {
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = onVerDetalhes,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                ) {
+                    Text("Ver Detalhes")
+                }
             }
         }
     }
@@ -461,15 +623,34 @@ private fun CestaItem.isAgendada(): Boolean {
     return n == "agendada" || n == "por preparar" || n == "por_preparar" || n == "em preparar" || n == "em_preparar"
 }
 
+private fun CestaItem.dataReferencia(): Date? {
+    return dataAgendada ?: dataRecolha
+}
+
+private fun CestaItem.isOverdue(reference: Date = Date()): Boolean {
+    val data = dataReferencia()
+    return data != null && reference.after(data)
+}
+
 private fun CestaItem.estadoLabel(): String {
-    val n = estado.trim().lowercase(Locale.getDefault())
+    val n = normalizeEstadoKey(estado)
     return when {
         n == "entregue" -> "Entregue"
         n == "agendada" -> "Agendada"
-        n == "nao_levantou" || n == "não levantou" || n == "nao levantou" -> "Nao levantou"
+        n == "por preparar" || n == "por_preparar" -> "Por preparar"
+        n == "em preparar" || n == "em_preparar" -> "Em preparar"
+        n == "nao_levantou" || n == "nao levantou" -> "Nao levantou"
         n == "cancelada" -> "Cancelada"
-        else -> if (estado.isBlank()) "—" else estado
+        n.isBlank() -> "-"
+        else -> estado
     }
+}
+
+private val estadoDiacriticsRegex = "\\p{Mn}+".toRegex()
+
+private fun normalizeEstadoKey(value: String): String {
+    val normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+    return estadoDiacriticsRegex.replace(normalized, "").trim().lowercase(Locale.getDefault())
 }
 
 @Composable
