@@ -141,8 +141,11 @@ fun ApoiadoHomeScreen(
     }
 
     // Pedidos urgentes que já têm cesta associada devem ser apresentados como cesta (e não duplicar cartões)
-    val urgentToShow = remember(state.urgentRequests) {
-        state.urgentRequests.filter { it.cestaId.isNullOrBlank() }
+    val (urgentToShow, deniedUrgentRequests) = remember(state.urgentRequests) {
+        val withoutCesta = state.urgentRequests.filter { it.cestaId.isNullOrBlank() }
+        val denied = withoutCesta.filter { isDeniedUrgentRequest(it) }
+        val active = withoutCesta.filterNot { isDeniedUrgentRequest(it) }
+        active to denied
     }
 
     LazyColumn(
@@ -228,6 +231,12 @@ fun ApoiadoHomeScreen(
         // Secção: Anteriormente
         // -----------------------------------------------------------------
         item { SectionSeparator(title = "Anteriormente") }
+
+        if (deniedUrgentRequests.isNotEmpty()) {
+            items(deniedUrgentRequests, key = { it.id }) { request ->
+                UrgentRequestHomeCard(request = request)
+            }
+        }
 
         // Entregas não levantadas (amarelo claro)
         if (state.cestasNaoLevantadas.isNotEmpty()) {
@@ -494,6 +503,8 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
         "Pedido de Ajuda"
     }
 
+    val isDenied = isDeniedUrgentRequest(request)
+    val background = if (isDenied) BlueGreyCard.copy(alpha = 0.85f) else BlueGreyCard
     val estadoLabel = formatPedidoEstado(request.estado)
 
     var showDialog by remember { mutableStateOf(false) }
@@ -504,7 +515,7 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = BlueGreyCard),
+        colors = CardDefaults.cardColors(containerColor = background),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -534,7 +545,7 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
             ) {
                 CardActionButton(
                     text = "Ver Mais",
-                    accentColor = BlueGreyCard,
+                    accentColor = background,
                     onClick = { showDialog = true }
                 )
             }
@@ -925,5 +936,12 @@ private fun formatPedidoEstado(raw: String): String {
     }
 }
 
-/** Pequeno helper para evitar criar uma data class só para 4 valores. */
+private fun isDeniedUrgentRequest(request: UrgentRequest): Boolean {
+    val tipo = request.tipo.trim().lowercase(Locale.getDefault())
+    if (tipo != "urgente") return false
+    val estado = request.estado.trim().lowercase(Locale.getDefault())
+    return estado == "negado" || estado == "rejeitado"
+}
+
+/** Pequeno helper para evitar criar uma data class só para 4 valores. */      
 private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
