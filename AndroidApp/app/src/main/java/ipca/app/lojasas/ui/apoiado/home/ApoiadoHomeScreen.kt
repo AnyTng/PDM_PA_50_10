@@ -614,7 +614,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
+                /*Surface(
                     color = Color.White,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.weight(1f)
@@ -627,7 +627,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                         fontSize = 12.sp,
                         color = WarningOrange
                     )
-                }
+                }*/
 
                 Spacer(modifier = Modifier.width(12.dp))
 
