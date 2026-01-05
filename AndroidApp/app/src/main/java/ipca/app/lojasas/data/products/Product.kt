@@ -67,6 +67,9 @@ fun DocumentSnapshot.toProductOrNull(): Product? {
     val categoria = getStringTrimmed("categoria")
 
 
+    val rawStatus = getStringTrimmed("estadoProduto")
+    val normalizedStatus = ProductStatus.normalizeFirestoreValue(rawStatus) ?: rawStatus?.trim()
+
     return Product(
         id = id,
         nomeProduto = nomeProduto,
@@ -81,7 +84,7 @@ fun DocumentSnapshot.toProductOrNull(): Product? {
         tamanhoValor = tamanhoValor,
         tamanhoUnidade = tamanhoUnidade,
         descProduto = getStringTrimmed("descProduto"),
-        estadoProduto = getStringTrimmed("estadoProduto"),
+        estadoProduto = normalizedStatus,
         parceiroExternoNome = getStringTrimmed("ParceiroExternoNome"),
         idFunc = getStringTrimmed("idFunc"),
         categoria = getStringTrimmed("categoria")

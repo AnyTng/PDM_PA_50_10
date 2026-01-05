@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockExpired
@@ -85,7 +86,7 @@ fun ExpiredProductsView(
         onClearSelection = viewModel::clearSelection,
         isDonating = state.isDonating,
         donationError = state.donationError,
-        onOpenDetails = { product -> navController.navigate("stockProduct/${product.id}") },
+        onOpenDetails = { product -> navController.navigate(Screen.StockProduct.createRoute(product.id)) },
         onDonateClick = { showDonationDialog = true }
     )
 

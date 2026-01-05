@@ -1,6 +1,5 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
@@ -79,12 +79,12 @@ fun ProductDetailsView(
         groupRow = { group ->
             StockProductGroupCard(
                 product = group.product,
-                onViewClick = { navController.navigate("stockProduct/${group.product.id}") },
-                modifier = Modifier.clickable { navController.navigate("stockProduct/${group.product.id}") }
+                onViewClick = { navController.navigate(Screen.StockProduct.createRoute(group.product.id)) },
+                modifier = Modifier.clickable { navController.navigate(Screen.StockProduct.createRoute(group.product.id)) }
             )
         },
         onFabClick = {
-            navController.navigate("stockProductCreate?productName=${Uri.encode(nomeProduto)}")
+            navController.navigate(Screen.StockProductCreate.createRoute(nomeProduto))
         }
     )
 }

@@ -1,6 +1,7 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.data.products.ProductStatus
 import java.util.concurrent.TimeUnit
 
 data class ProductIdentity(
@@ -31,9 +32,11 @@ fun Product.identity(): ProductIdentity {
         tamanhoValor = tamanhoValor ?: -1.0,
         tamanhoUnidade = tamanhoUnidade?.trim()?.lowercase().orEmpty(),
         descProduto = descProduto?.trim()?.lowercase().orEmpty(),
-        estadoProduto = estadoProduto?.trim()?.lowercase().orEmpty(),
+        estadoProduto = ProductStatus.normalizeFirestoreValue(estadoProduto)
+            ?.trim()
+            ?.lowercase()
+            .orEmpty(),
         parceiroExternoNome = parceiroExternoNome?.trim()?.lowercase().orEmpty(),
         categoria = categoria?.trim()?.lowercase().orEmpty()
     )
 }
-

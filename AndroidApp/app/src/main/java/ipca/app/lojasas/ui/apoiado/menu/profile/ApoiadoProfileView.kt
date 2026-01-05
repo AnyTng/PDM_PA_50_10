@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.menu.profile.*
 import ipca.app.lojasas.ui.login.GreenIPCA
 import java.text.SimpleDateFormat
@@ -197,7 +198,7 @@ fun ApoiadoProfileView(
                 confirmButton = {
                     TextButton(onClick = {
                         showDeleteDialog = false
-                        viewModel.deleteAccount { navController.navigate("login") { popUpTo(0) } }
+                        viewModel.deleteAccount { navController.navigate(Screen.Login.route) { popUpTo(0) } }
                     }) { Text("Apagar", color = Color.Red) }
                 },
                 dismissButton = {
@@ -208,5 +209,3 @@ fun ApoiadoProfileView(
         }
     }
 }
-
-

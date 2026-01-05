@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
+import ipca.app.lojasas.core.navigation.Screen
 
 @Composable
 fun MenuApoiadoView(
@@ -55,7 +56,7 @@ fun MenuApoiadoView(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuApoiadoRow(title = "O meu Perfil") { navController.navigate("profileApoiado") }
+                    MenuApoiadoRow(title = "O meu Perfil") { navController.navigate(Screen.ProfileApoiado.route) }
                     MenuApoiadoDivider()
                 }
             }
@@ -72,7 +73,7 @@ fun MenuApoiadoView(
                     // Nota: Verificamos se não está vazia para evitar erro de navegação
                     MenuApoiadoRow(title = "Fazer Pedido de Ajuda Urgente",enabled = !isBlock) {
                         if (numeroMecanografico.isNotEmpty()) {
-                            navController.navigate("urgent_help_screen/$numeroMecanografico")
+                            navController.navigate(Screen.UrgentHelp.createRoute(numeroMecanografico))
                         }
                     }
 
@@ -81,11 +82,11 @@ fun MenuApoiadoView(
                     MenuApoiadoRow(
                         title = "Entregar Documentos",
                         enabled = !isApproved && !isBlock,
-                        onClick = { navController.navigate("documentSubmission") }
+                        onClick = { navController.navigate(Screen.DocumentSubmission.route) }
                     )
 
                     MenuApoiadoDivider()
-                    MenuApoiadoRow(title = "Documentos Entregues",enabled = !isBlock) { navController.navigate("submittedDocuments") }
+                    MenuApoiadoRow(title = "Documentos Entregues",enabled = !isBlock) { navController.navigate(Screen.SubmittedDocuments.route) }
                 }
             }
 
@@ -102,7 +103,7 @@ fun MenuApoiadoView(
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
-                        navController.navigate("login") {
+                        navController.navigate(Screen.Login.route) {
                             popUpTo(0)
                         }
                     }

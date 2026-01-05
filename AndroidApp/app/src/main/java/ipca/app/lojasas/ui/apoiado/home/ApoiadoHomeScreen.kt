@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
@@ -168,7 +169,7 @@ fun ApoiadoHomeScreen(
             HomeHeader(
                 nome = state.nome,
                 statusUi = statusUi,
-                onVerPerfil = { navController.navigate("profileApoiado") }
+                onVerPerfil = { navController.navigate(Screen.ProfileApoiado.route) }
             )
         }
 
@@ -199,7 +200,7 @@ fun ApoiadoHomeScreen(
         ) {
             item {
                 MissingDocumentsCard(
-                    onEnviar = { navController.navigate("documentSubmission") }
+                    onEnviar = { navController.navigate(Screen.DocumentSubmission.route) }
                 )
             }
         }
@@ -861,7 +862,7 @@ fun BlockedAccountScreen(navController: NavController) {
         Button(
             onClick = {
                 FirebaseAuth.getInstance().signOut()
-                navController.navigate("login") { popUpTo(0) }
+                navController.navigate(Screen.Login.route) { popUpTo(0) }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
         ) {

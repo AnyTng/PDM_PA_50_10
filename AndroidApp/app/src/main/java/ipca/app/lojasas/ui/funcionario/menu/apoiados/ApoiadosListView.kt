@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
@@ -47,7 +48,7 @@ fun ApoiadosListView(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("createApoiado") },
+                onClick = { navController.navigate(Screen.CreateApoiado.route) },
                 containerColor = GreenSas,
                 contentColor = Color.White,
                 modifier = Modifier.size(64.dp)

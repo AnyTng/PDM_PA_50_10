@@ -1,6 +1,5 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import ipca.app.lojasas.ui.funcionario.stock.components.StockExpiredSummaryCard
@@ -58,16 +58,16 @@ fun ProductsView(
         sortOption = state.sortOption,
         onSortSelected = viewModel::onSortSelected,
         onExportClick = { viewModel.exportToCSV(context) },
-        onExpiredClick = { navController.navigate("stockExpiredProducts") },
+        onExpiredClick = { navController.navigate(Screen.StockExpiredProducts.route) },
         groupRow = { group ->
             StockGroupCard(
                 group = group,
                 onClick = {
-                    navController.navigate("stockProducts/${Uri.encode(group.name)}")
+                    navController.navigate(Screen.StockProductsByName.createRoute(group.name))
                 }
             )
         },
-        onFabClick = { navController.navigate("stockProductCreate") }
+        onFabClick = { navController.navigate(Screen.StockProductCreate.createRoute()) }
     )
 }
 

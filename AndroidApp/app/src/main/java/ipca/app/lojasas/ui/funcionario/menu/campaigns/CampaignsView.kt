@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
@@ -77,7 +78,7 @@ fun CampaignsView(navController: NavController) {
         active = activeModels,
         future = futureModels,
         inactive = inactiveModels,
-        onCreate = { navController.navigate("campaignCreate") },
+        onCreate = { navController.navigate(Screen.CampaignCreate.route) },
         onEdit = { campaign -> campaignToEdit = campaign },
         // [CORREÇÃO AQUI] Adicionados onSuccess e onError vazios
         onDeleteFuture = { campaign ->
@@ -91,7 +92,9 @@ fun CampaignsView(navController: NavController) {
                 }
             )
         },
-        onResults = { campaign -> navController.navigate("campaignResults/${campaign.nomeCampanha}") }
+        onResults = { campaign ->
+            navController.navigate(Screen.CampaignResults.createRoute(campaign.nomeCampanha))
+        }
     )
 
     // POP-UP DE EDIÇÃO

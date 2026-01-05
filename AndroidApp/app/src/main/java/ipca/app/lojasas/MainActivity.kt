@@ -14,50 +14,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.compose.NavHost
-import androidx.navigation.NavType
-import androidx.navigation.compose.composable
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import ipca.app.lojasas.ui.login.LoginView
+import ipca.app.lojasas.data.UserRole
+import ipca.app.lojasas.core.navigation.AppNavGraph
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
-import ipca.app.lojasas.data.UserRole
-import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
-import ipca.app.lojasas.ui.apoiado.menu.document.DocumentSubmissionView
-import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
-import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
+import ipca.app.lojasas.R
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
-import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
-import ipca.app.lojasas.ui.funcionario.menu.MenuView
-import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView
-import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView
-import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
-import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
-import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
-import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
-import ipca.app.lojasas.ui.funcionario.stock.ProductView
-import ipca.app.lojasas.ui.funcionario.stock.ProductsView
-import ipca.app.lojasas.ui.funcionario.stock.ExpiredProductsView
-import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
-import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
-import androidx.navigation.navArgument
-import ipca.app.lojasas.ui.apoiado.menu.help.UrgentHelpView
-import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignsView
-import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
-import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
-import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView
-import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
-import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
-import ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes.UrgentRequestsView
-import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
-import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
-import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
 import android.Manifest
 import android.content.Context
 import android.os.Build
@@ -81,82 +52,112 @@ class MainActivity : ComponentActivity() {
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
+                val currentScreen = Screen.fromRoute(currentRoute)
                 val productNameArg = navBackStackEntry?.arguments?.getString("productName")?.let { Uri.decode(it) }
 
                 // 1. CONFIGURAÇÃO DO FOOTER
-                val footerType = when (currentRoute) {
-                    "funcionarioHome",
-                    "menu",
-                    "cestasList",
-                    "createCestaUrgente/{pedidoId}/{apoiadoId}",
-                    "stockProducts",
-                    "stockProducts/{productName}",
-                    "stockProduct/{productId}",
-                    "stockProductEdit/{productId}",
-                    "stockProductCreate?productName={productName}"-> FooterType.FUNCIONARIO
-                    "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
+                val footerType = when (currentScreen) {
+                    Screen.FuncionarioHome,
+                    Screen.MenuFuncionario,
+                    Screen.CestasList,
+                    Screen.CreateCestaUrgente,
+                    Screen.StockProducts,
+                    Screen.StockProductsByName,
+                    Screen.StockProduct,
+                    Screen.StockProductEdit,
+                    Screen.StockProductCreate -> FooterType.FUNCIONARIO
+                    Screen.ApoiadoHome,
+                    Screen.MenuApoiado -> FooterType.APOIADO
                     else -> null // itens sem footer vao cair aq
                 }
                 val useNativeFooter = true
 
                 // 2. CONFIGURAÇÃO DO HEADER
-                val headerConfig = when (currentRoute) {
-                    "apoiadoHome" -> HeaderConfig(title = "Home")
-                    "funcionarioHome" -> HeaderConfig(title = "Calendário")
-                    "stockProducts" -> HeaderConfig(title = "Stock")
-                    "menu" -> HeaderConfig(title = "Menu")
-                    "urgentRequests" -> HeaderConfig(title = "Pedidos Urgentes", showBack = true, onBack = { navController.popBackStack() })
-                    "cestasList" -> HeaderConfig(title = "Cestas")
-                    "cestaDetails/{cestaId}" -> HeaderConfig(
-                        title = "Detalhes da Cesta",
+                val headerConfig = when (currentScreen) {
+                    Screen.ApoiadoHome -> HeaderConfig(title = stringResource(R.string.header_home))
+                    Screen.FuncionarioHome -> HeaderConfig(title = stringResource(R.string.header_calendar))
+                    Screen.StockProducts -> HeaderConfig(title = stringResource(R.string.header_stock))
+                    Screen.MenuFuncionario -> HeaderConfig(title = stringResource(R.string.header_menu))
+                    Screen.UrgentRequests -> HeaderConfig(
+                        title = stringResource(R.string.header_urgent_requests),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "createCesta" -> HeaderConfig(title = "Criar Cesta", showBack = true, onBack = { navController.popBackStack() })
-                    "createCestaUrgente/{pedidoId}/{apoiadoId}" -> HeaderConfig(title = "Criar Cesta", showBack = true, onBack = { navController.popBackStack() })
-                    "menuApoiado" -> HeaderConfig(title = "Menu")
-                    "profileFuncionario" -> HeaderConfig(title = "Perfil Gestor", showBack = true, onBack = { navController.popBackStack() })
-                    "profileApoiado" -> HeaderConfig(title = "Meu Perfil", showBack = true, onBack = { navController.popBackStack() })
-                    "createProfile" -> HeaderConfig(title = "Criar Perfil", showBack = true, onBack = { navController.popBackStack() })
-                    "UrgentHelpView" -> HeaderConfig(title = "Pedido Urgente", showBack = true, onBack = { navController.popBackStack() })
+                    Screen.CestasList -> HeaderConfig(title = stringResource(R.string.header_cestas))
+                    Screen.CestaDetails -> HeaderConfig(
+                        title = stringResource(R.string.header_cesta_details),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.CreateCesta -> HeaderConfig(
+                        title = stringResource(R.string.header_create_cesta),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.CreateCestaUrgente -> HeaderConfig(
+                        title = stringResource(R.string.header_create_cesta),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.MenuApoiado -> HeaderConfig(title = stringResource(R.string.header_menu))
+                    Screen.ProfileFuncionario -> HeaderConfig(
+                        title = stringResource(R.string.header_profile_funcionario),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.ProfileApoiado -> HeaderConfig(
+                        title = stringResource(R.string.header_profile_apoiado),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.CreateProfile -> HeaderConfig(
+                        title = stringResource(R.string.header_create_profile),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.UrgentHelp -> HeaderConfig(
+                        title = stringResource(R.string.header_urgent_help),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     // "completeData" e "documentSubmission" cairão aqui (sem header)
-                    "stockProducts/{productName}" -> HeaderConfig(
-                        title = productNameArg ?: "Stock",
+                    Screen.StockProductsByName -> HeaderConfig(
+                        title = productNameArg ?: stringResource(R.string.header_stock),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "stockExpiredProducts" -> HeaderConfig(
-                        title = "Fora de validade",
+                    Screen.StockExpiredProducts -> HeaderConfig(
+                        title = stringResource(R.string.header_expired_products),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "stockProduct/{productId}" -> HeaderConfig(
-                        title = "Detalhes",
+                    Screen.StockProduct -> HeaderConfig(
+                        title = stringResource(R.string.header_product_details),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "stockProductEdit/{productId}" -> HeaderConfig(
-                        title = "Editar Produto",
+                    Screen.StockProductEdit -> HeaderConfig(
+                        title = stringResource(R.string.header_edit_product),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "stockProductCreate?productName={productName}" -> HeaderConfig(
-                        title = "Novo Produto",
+                    Screen.StockProductCreate -> HeaderConfig(
+                        title = stringResource(R.string.header_new_product),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "campaigns" -> HeaderConfig(
-                        title = "Campanhas",
+                    Screen.Campaigns -> HeaderConfig(
+                        title = stringResource(R.string.header_campaigns),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "campaignCreate" -> HeaderConfig(
-                        title = "Nova Campanha",
+                    Screen.CampaignCreate -> HeaderConfig(
+                        title = stringResource(R.string.header_new_campaign),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    "campaignResults/{campaignName}" -> HeaderConfig(
-                        title = "Resultados",
+                    Screen.CampaignResults -> HeaderConfig(
+                        title = stringResource(R.string.header_campaign_results),
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
@@ -178,148 +179,10 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-
-                    NavHost(
+                    AppNavGraph(
                         navController = navController,
-                        startDestination = "login",
                         modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("login") { LoginView(navController = navController) }
-                        composable("apoiadoHome") {
-                            ApoiadoHomeScreen(
-                                navController = navController,
-                                userId = Firebase.auth.currentUser?.uid ?: ""
-                            )
-                        }
-                        composable("funcionarioHome") { CalendarView(navController = navController) }
-                        composable("menu") { MenuView(navController = navController) }
-                        composable("urgentRequests") { UrgentRequestsView(navController = navController) }
-                        composable("cestasList") { CestasListView(navController = navController) }
-                        composable(
-                            route = "cestaDetails/{cestaId}",
-                            arguments = listOf(navArgument("cestaId") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val cestaId = backStackEntry.arguments?.getString("cestaId")
-                                ?.let { Uri.decode(it) }
-                                .orEmpty()
-                            CestaDetailsView(cestaId = cestaId)
-                        }
-                        composable("createCesta") { CreateCestaView(navController = navController, fromUrgent = false, pedidoId = null, apoiadoId = null) }
-                        composable(
-                            route = "createCestaUrgente/{pedidoId}/{apoiadoId}",
-                            arguments = listOf(
-                                navArgument("pedidoId") { type = NavType.StringType },
-                                navArgument("apoiadoId") { type = NavType.StringType }
-                            )
-                        ) { backStackEntry ->
-                            val pedidoId = backStackEntry.arguments?.getString("pedidoId").orEmpty()
-                            val apoiadoId = backStackEntry.arguments?.getString("apoiadoId").orEmpty()
-                            CreateCestaView(
-                                navController = navController,
-                                fromUrgent = true,
-                                pedidoId = pedidoId,
-                                apoiadoId = apoiadoId
-                            )
-                        }
-                        composable("createProfile") { CreateProfileView(navController = navController) }
-                        composable("createProfileApoiado") { CreateProfileApoiadoView(navController = navController) }
-                        composable("documentSubmission") { DocumentSubmissionView(navController = navController) }
-                        composable("menuApoiado") { ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView(navController = navController) }
-                        composable("profileFuncionario") { ProfileView(navController = navController) }
-                        composable("profileApoiado") { ApoiadoProfileView(navController = navController) }
-                        composable("validateAccounts") { ValidateAccountsView(navController = navController) }
-                        composable("accountBlocked") { BlockedAccountScreen(navController = navController) }
-                        composable("submittedDocuments") {SubmittedDocumentsView(navController = navController)}
-                        composable("campaigns") { CampaignsView(navController = navController) }
-                        composable("createApoiado") { CreateApoiadoView(navController = navController) }
-                        composable("apoiadosList") { ApoiadosListView(navController = navController) }
-
-                        composable(
-                            route = "urgent_help_screen/{numeroMecanografico}",
-                            arguments = listOf(navArgument("numeroMecanografico") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val numMec = backStackEntry.arguments?.getString("numeroMecanografico") ?: ""
-                            UrgentHelpView(navController = navController, numeroMecanografico = numMec)
-                        }
-
-                        composable("campaignCreate") {
-                            CampaignCreateView(navController = navController)
-                        }
-
-                        composable("collaboratorsList") {
-                            CollaboratorsListView(navController = navController)
-                        }
-
-                        composable(
-                            route = "campaignResults/{campaignName}",
-                            arguments = listOf(navArgument("campaignName") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val name = backStackEntry.arguments?.getString("campaignName") ?: ""
-                            CampaignResultsView(navController = navController, campaignName = name)
-                        }
-
-                        composable("completeData/{docId}") { backStackEntry ->
-                            val docId = backStackEntry.arguments?.getString("docId") ?: ""
-                            CompleteDataView(
-                                docId = docId,
-                                onSuccess = {
-                                    navController.navigate("apoiadoHome") {
-                                        popUpTo("completeData/{docId}") { inclusive = true }
-                                    }
-                                },
-                                navController = navController
-                            )
-                        }
-
-                        composable("stockProducts") {
-                            ProductsView(navController = navController)
-                        }
-                        composable("stockExpiredProducts") {
-                            ExpiredProductsView(navController = navController)
-                        }
-                        composable(
-                            route = "stockProducts/{productName}",
-                            arguments = listOf(navArgument("productName") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val productName = backStackEntry.arguments?.getString("productName")?.let { Uri.decode(it) }.orEmpty()
-                            ProductDetailsView(navController = navController, nomeProduto = productName)
-                        }
-                        composable(
-                            route = "stockProduct/{productId}",
-                            arguments = listOf(navArgument("productId") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val productId = backStackEntry.arguments?.getString("productId").orEmpty()
-                            ProductView(navController = navController, productId = productId)
-                        }
-                        composable(
-                            route = "stockProductEdit/{productId}",
-                            arguments = listOf(navArgument("productId") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val productId = backStackEntry.arguments?.getString("productId").orEmpty()
-                            ProductFormView(
-                                navController = navController,
-                                productId = productId,
-                                prefillNomeProduto = null
-                            )
-                        }
-                        composable(
-                            route = "stockProductCreate?productName={productName}",
-                            arguments = listOf(
-                                navArgument("productName") {
-                                    type = NavType.StringType
-                                    nullable = true
-                                    defaultValue = ""
-                                }
-                            )
-                        ) { backStackEntry ->
-                            val productName = backStackEntry.arguments?.getString("productName").orEmpty()
-                            ProductFormView(
-                                navController = navController,
-                                productId = null,
-                                prefillNomeProduto = Uri.decode(productName).takeIf { it.isNotBlank() }
-                            )
-                        }
-                    }
+                    )
                 }
             }
 
@@ -336,7 +199,7 @@ class MainActivity : ComponentActivity() {
                         try {
                             val role = UserRole.valueOf(cachedRoleStr)
                             navController.navigate(role.destination()) {
-                                popUpTo("login") { inclusive = true }
+                                popUpTo(Screen.Login.route) { inclusive = true }
                             }
                         } catch (e: Exception) {
                             // Se falhar o parse (raro), ignora e busca na rede
@@ -354,11 +217,19 @@ class MainActivity : ComponentActivity() {
                                 prefs.edit().putString("role_${email}", role.name).apply()
 
                                 navController.navigate(role.destination()) {
-                                    popUpTo("login") { inclusive = true }
+                                    popUpTo(Screen.Login.route) { inclusive = true }
                                 }
                             },
-                            onNotFound = { navController.navigate("login") { popUpTo("login") { inclusive = true } } },
-                            onError = { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
+                            onNotFound = {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
+                            },
+                            onError = {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
+                            }
                         )
                     }
                 }

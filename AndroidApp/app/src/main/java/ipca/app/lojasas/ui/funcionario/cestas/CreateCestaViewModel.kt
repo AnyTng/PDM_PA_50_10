@@ -7,6 +7,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.toProductOrNull
 import java.util.Calendar
 import java.util.Date
@@ -140,7 +141,7 @@ class CreateCestaViewModel : ViewModel() {
                     .mapNotNull { it.toProductOrNull() }
                     // Apenas produtos disponíveis (quando o campo existe)
                     .filter { p ->
-                        p.estadoProduto.isNullOrBlank() || p.estadoProduto.equals("Disponivel", ignoreCase = true)
+                        ProductStatus.fromFirestore(p.estadoProduto) == ProductStatus.AVAILABLE
                     }
                     // Nao mostrar produtos fora de validade
                     .filter { p ->
@@ -350,7 +351,7 @@ class CreateCestaViewModel : ViewModel() {
                     throw IllegalStateException("Produto não encontrado: $pid")
                 }
                 val estado = snap.getString("estadoProduto")?.trim().orEmpty()
-                val isDisponivel = estado.isBlank() || estado.equals("Disponivel", ignoreCase = true)
+                val isDisponivel = ProductStatus.fromFirestore(estado) == ProductStatus.AVAILABLE
                 if (!isDisponivel) {
                     throw IllegalStateException("O produto '$pid' já não está disponível.")
                 }
@@ -361,7 +362,7 @@ class CreateCestaViewModel : ViewModel() {
                 txn.update(
                     ref,
                     mapOf(
-                        "estadoProduto" to "Reservado",
+                        "estadoProduto" to ProductStatus.RESERVED.firestoreValue,
                         "cestaReservaId" to cestaId,
                         "reservadoEm" to now
                     )

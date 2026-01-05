@@ -47,6 +47,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PictureAsPdf
 import ipca.app.lojasas.R
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.io.File
 import java.io.FileOutputStream
@@ -258,7 +259,7 @@ private fun ProdutoRow(produto: Product) {
     val subCategoria = produto.subCategoria.takeIf { it.isNotBlank() } ?: "-"
     val marca = produto.marca?.takeIf { it.isNotBlank() } ?: "-"
     val tamanho = formatTamanho(produto.tamanhoValor, produto.tamanhoUnidade)
-    val estado = produto.estadoProduto?.takeIf { it.isNotBlank() } ?: "-"
+    val estado = ProductStatus.displayLabel(produto.estadoProduto).ifBlank { "-" }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -429,7 +430,7 @@ private fun exportCestaDetailsPdf(context: Context, state: CestaDetailsState) {
                 val subCategoria = produto.subCategoria.takeIf { it.isNotBlank() } ?: "-"
                 val marca = produto.marca?.takeIf { it.isNotBlank() } ?: "-"
                 val tamanho = formatTamanho(produto.tamanhoValor, produto.tamanhoUnidade)
-                val estado = produto.estadoProduto?.takeIf { it.isNotBlank() } ?: "-"
+                val estado = ProductStatus.displayLabel(produto.estadoProduto).ifBlank { "-" }
                 drawLine("- ${produto.nomeProduto.ifBlank { produto.id }} | $categoria / $subCategoria | $marca | $tamanho | $estado")
             }
         }

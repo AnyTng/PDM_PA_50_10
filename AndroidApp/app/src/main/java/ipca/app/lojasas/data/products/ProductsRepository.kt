@@ -193,7 +193,7 @@ private fun ProductUpsert.toFirestoreMap(): Map<String, Any?> {
         "doado" to doado?.trim(),
         "codBarras" to codBarras?.trim(),
         "descProduto" to descProduto?.trim(),
-        "estadoProduto" to estadoProduto?.trim(),
+        "estadoProduto" to (ProductStatus.normalizeFirestoreValue(estadoProduto) ?: estadoProduto?.trim()),
         "ParceiroExternoNome" to parceiroExternoNome?.trim(),
         "idFunc" to idFunc?.trim(),
         "validade" to validade,

@@ -1,6 +1,5 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,7 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
+import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.ui.funcionario.stock.components.ConfirmDeleteDialog
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
@@ -45,12 +46,10 @@ fun ProductFormView(
     var showDatePicker by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val canDelete = !state.productId.isNullOrBlank() &&
-        state.estadoProduto.trim().ifBlank { "Disponivel" }
-            .lowercase(Locale.getDefault())
-            .startsWith("dispon")
+        ProductStatus.fromFirestore(state.form.estadoProduto) == ProductStatus.AVAILABLE
 
     val startScan = rememberBarcodeScanner(
-        onScanned = { code -> viewModel.onBarcodeScanned(code) },
+        onScanned = { code -> viewModel.onEvent(ProductFormEvent.BarcodeScanned(code)) },
         onError = { /* Log error */ }
     )
 
@@ -58,17 +57,42 @@ fun ProductFormView(
         viewModel.start(productId, prefillNomeProduto)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                ProductFormEffect.NavigateBack -> navController.popBackStack()
+                is ProductFormEffect.NavigateAfterDelete -> {
+                    val trimmedName = effect.nomeProduto.trim()
+                    val targetRoute = if (effect.hasMore && trimmedName.isNotBlank()) {
+                        Screen.StockProductsByName.createRoute(trimmedName)
+                    } else {
+                        Screen.StockProducts.route
+                    }
+
+                    val poppedDetails = navController.popBackStack(Screen.StockProduct.route, true)
+                    if (!poppedDetails) {
+                        navController.popBackStack(Screen.StockProductEdit.route, true)
+                    }
+
+                    navController.navigate(targetRoute) {
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
+    }
+
     // Date Picker (fica aqui para não aparecer nos previews)
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = state.validade?.time ?: System.currentTimeMillis()
+            initialSelectedDateMillis = state.form.validade?.time ?: System.currentTimeMillis()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        viewModel.setValidade(Date(millis))
+                        viewModel.onEvent(ProductFormEvent.ValidadeChanged(Date(millis)))
                     }
                     showDatePicker = false
                 }) {
@@ -91,24 +115,8 @@ fun ProductFormView(
             text = "Tem a certeza que deseja remover este produto? Esta ação é irreversível.",
             isLoading = state.isDeleting,
             onConfirm = {
-                viewModel.deleteProduct { nomeProduto, hasMore ->
-                    showDeleteDialog = false
-                    val trimmedName = nomeProduto.trim()
-                    val targetRoute = if (hasMore && trimmedName.isNotBlank()) {
-                        "stockProducts/${Uri.encode(trimmedName)}"
-                    } else {
-                        "stockProducts"
-                    }
-
-                    val poppedDetails = navController.popBackStack("stockProduct/{productId}", true)
-                    if (!poppedDetails) {
-                        navController.popBackStack("stockProductEdit/{productId}", true)
-                    }
-
-                    navController.navigate(targetRoute) {
-                        launchSingleTop = true
-                    }
-                }
+                viewModel.onEvent(ProductFormEvent.DeleteConfirmed)
+                showDeleteDialog = false
             },
             onDismiss = { showDeleteDialog = false }
         )
@@ -123,49 +131,11 @@ fun ProductFormView(
             CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
         } else {
             ProductFormViewContent(
-                title = if (productId == null) "Novo Produto" else "Editar Produto",
-
-                categoria = state.categoria,
-                availableCategories = state.availableCategories,
-                onCategoriaChange = { viewModel.setCategoria(it) },
-
-                nomeProduto = state.nomeProduto,
-                onNomeProdutoChange = { viewModel.setNomeProduto(it) },
-
-                subCategoria = state.subCategoria,
-                onSubCategoriaChange = { viewModel.setSubCategoria(it) },
-
-                marca = state.marca,
-                onMarcaChange = { viewModel.setMarca(it) },
-
-                campanhaId = state.campanha,
-                campaigns = state.availableCampaigns,
-                onCampaignSelected = { viewModel.setCampanha(it) },
-
-                doado = state.doado,
-                onDoadoChange = { viewModel.setDoado(it) },
-
-                tamanhoValor = state.tamanhoValor,
-                onTamanhoValorChange = { viewModel.setTamanhoValor(it) },
-
-                tamanhoUnidade = state.tamanhoUnidade,
-                onTamanhoUnidadeChange = { viewModel.setTamanhoUnidade(it) },
-
-                validade = state.validade,
-                onValidadeClick = { showDatePicker = true },
-
-                descProduto = state.descProduto,
-                onDescProdutoChange = { viewModel.setDescProduto(it) },
-
-                codBarras = state.codBarras,
-                onCodBarrasChange = { viewModel.setCodBarras(it) },
-                onScanClick = startScan,
-
-                error = state.error,
-                isSaving = state.isSaving,
-                isDeleting = state.isDeleting,
+                state = state,
                 showDeleteButton = canDelete,
-                onSaveClick = { viewModel.save { navController.popBackStack() } },
+                onEvent = viewModel::onEvent,
+                onValidadeClick = { showDatePicker = true },
+                onScanClick = startScan,
                 onDeleteClick = { showDeleteDialog = true }
             )
         }
@@ -177,51 +147,16 @@ fun ProductFormView(
  */
 @Composable
 private fun ProductFormViewContent(
-    title: String,
-
-    categoria: String,
-    availableCategories: List<String>,
-    onCategoriaChange: (String) -> Unit,
-
-    nomeProduto: String,
-    onNomeProdutoChange: (String) -> Unit,
-
-    subCategoria: String,
-    onSubCategoriaChange: (String) -> Unit,
-
-    marca: String,
-    onMarcaChange: (String) -> Unit,
-
-    campanhaId: String,
-    campaigns: List<Campaign>,
-    onCampaignSelected: (String) -> Unit,
-
-    doado: String,
-    onDoadoChange: (String) -> Unit,
-
-    tamanhoValor: String,
-    onTamanhoValorChange: (String) -> Unit,
-
-    tamanhoUnidade: String,
-    onTamanhoUnidadeChange: (String) -> Unit,
-
-    validade: Date?,
-    onValidadeClick: () -> Unit,
-
-    descProduto: String,
-    onDescProdutoChange: (String) -> Unit,
-
-    codBarras: String,
-    onCodBarrasChange: (String) -> Unit,
-    onScanClick: () -> Unit,
-
-    error: String?,
-    isSaving: Boolean,
-    isDeleting: Boolean,
+    state: ProductFormUiState,
     showDeleteButton: Boolean,
-    onSaveClick: () -> Unit,
+    onEvent: (ProductFormEvent) -> Unit,
+    onValidadeClick: () -> Unit,
+    onScanClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val title = if (state.productId.isNullOrBlank()) "Novo Produto" else "Editar Produto"
+    val form = state.form
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -245,43 +180,43 @@ private fun ProductFormViewContent(
         // 1. Campos Principais
         StockAutocomplete(
             label = "Categoria (Ex: Alimentar)",
-            value = categoria,
-            suggestions = availableCategories,
-            onValueChange = onCategoriaChange
+            value = form.categoria,
+            suggestions = state.availableCategories,
+            onValueChange = { onEvent(ProductFormEvent.CategoriaChanged(it)) }
         )
 
         StockInput(
             label = "Produto (Ex: Arroz)",
-            value = nomeProduto,
-            onValueChange = onNomeProdutoChange
+            value = form.nomeProduto,
+            onValueChange = { onEvent(ProductFormEvent.NomeProdutoChanged(it)) }
         )
 
         StockInput(
             label = "Tipo / Variedade (Ex: Carolino)",
-            value = subCategoria,
-            onValueChange = onSubCategoriaChange
+            value = form.subCategoria,
+            onValueChange = { onEvent(ProductFormEvent.SubCategoriaChanged(it)) }
         )
 
         StockInput(
             label = "Marca",
-            value = marca,
-            onValueChange = onMarcaChange
+            value = form.marca,
+            onValueChange = { onEvent(ProductFormEvent.MarcaChanged(it)) }
         )
 
         // 2. Detalhes de Origem (Campanha e Doador)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StockCampaignSelector(
                 label = "Campanha",
-                selectedId = campanhaId,
-                campaigns = campaigns,
-                onCampaignSelected = onCampaignSelected,
+                selectedId = form.campanha,
+                campaigns = state.availableCampaigns,
+                onCampaignSelected = { onEvent(ProductFormEvent.CampanhaChanged(it)) },
                 modifier = Modifier.weight(1f)
             )
 
             StockInput(
                 label = "Origem / Doador",
-                value = doado,
-                onValueChange = onDoadoChange,
+                value = form.doado,
+                onValueChange = { onEvent(ProductFormEvent.DoadoChanged(it)) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -290,15 +225,15 @@ private fun ProductFormViewContent(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StockInput(
                 label = "Tamanho (Valor)",
-                value = tamanhoValor,
-                onValueChange = onTamanhoValorChange,
+                value = form.tamanhoValor,
+                onValueChange = { onEvent(ProductFormEvent.TamanhoValorChanged(it)) },
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.weight(1f)
             )
             StockInput(
                 label = "Unidade (Kg...)",
-                value = tamanhoUnidade,
-                onValueChange = onTamanhoUnidadeChange,
+                value = form.tamanhoUnidade,
+                onValueChange = { onEvent(ProductFormEvent.TamanhoUnidadeChanged(it)) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -306,15 +241,15 @@ private fun ProductFormViewContent(
         // 4. Validade
         StockDateInput(
             label = "Validade",
-            date = validade,
+            date = form.validade,
             onClick = onValidadeClick
         )
 
         // 5. Descrição
         StockInput(
             label = "Descrição / Notas",
-            value = descProduto,
-            onValueChange = onDescProdutoChange,
+            value = form.descProduto,
+            onValueChange = { onEvent(ProductFormEvent.DescProdutoChanged(it)) },
             singleLine = false
         )
 
@@ -325,8 +260,8 @@ private fun ProductFormViewContent(
         ) {
             StockInput(
                 label = "Código de Barras",
-                value = codBarras,
-                onValueChange = onCodBarrasChange,
+                value = form.codBarras,
+                onValueChange = { onEvent(ProductFormEvent.CodBarrasChanged(it)) },
                 modifier = Modifier.weight(1f)
             )
             IconButton(
@@ -339,8 +274,8 @@ private fun ProductFormViewContent(
             }
         }
 
-        if (error != null) {
-            Text(text = error, color = MaterialTheme.colorScheme.error)
+        if (state.error != null) {
+            Text(text = state.error, color = MaterialTheme.colorScheme.error)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -356,7 +291,7 @@ private fun ProductFormViewContent(
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
-                    enabled = !isSaving && !isDeleting,
+                    enabled = !state.isSaving && !state.isDeleting,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFE11D2E),
@@ -372,11 +307,11 @@ private fun ProductFormViewContent(
                     )
                 }
                 Button(
-                    onClick = onSaveClick,
+                    onClick = { onEvent(ProductFormEvent.SaveClicked) },
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
-                    enabled = !isSaving && !isDeleting,
+                    enabled = !state.isSaving && !state.isDeleting,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GreenSas,
@@ -384,7 +319,7 @@ private fun ProductFormViewContent(
                     )
                 ) {
                     Text(
-                        if (isSaving) "A guardar..." else "Guardar Produto",
+                        if (state.isSaving) "A guardar..." else "Guardar Produto",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -393,11 +328,11 @@ private fun ProductFormViewContent(
             }
         } else {
             Button(
-                onClick = onSaveClick,
+                onClick = { onEvent(ProductFormEvent.SaveClicked) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !isSaving && !isDeleting,
+                enabled = !state.isSaving && !state.isDeleting,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = GreenSas,
@@ -405,7 +340,7 @@ private fun ProductFormViewContent(
                 )
             ) {
                 Text(
-                    if (isSaving) "A guardar..." else "Guardar Produto",
+                    if (state.isSaving) "A guardar..." else "Guardar Produto",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -638,50 +573,27 @@ private fun ProductFormViewPreview_New() {
             .background(StockBackground)
             .padding(16.dp)
     ) {
-        ProductFormViewContent(
-            title = "Novo Produto",
-
-            categoria = "Alimentar",
+        val previewState = ProductFormUiState(
             availableCategories = listOf("Alimentar", "Higiene", "Bebidas", "Infantil"),
-            onCategoriaChange = {},
-
-            nomeProduto = "Arroz",
-            onNomeProdutoChange = {},
-
-            subCategoria = "Carolino",
-            onSubCategoriaChange = {},
-
-            marca = "Nacional",
-            onMarcaChange = {},
-
-            campanhaId = "",
-            campaigns = emptyList(), // sem precisar instanciar Campaign no preview
-            onCampaignSelected = {},
-
-            doado = "Doação Particular",
-            onDoadoChange = {},
-
-            tamanhoValor = "1",
-            onTamanhoValorChange = {},
-
-            tamanhoUnidade = "kg",
-            onTamanhoUnidadeChange = {},
-
-            validade = Date(),
-            onValidadeClick = {},
-
-            descProduto = "Em bom estado. Armazenar em local seco.",
-            onDescProdutoChange = {},
-
-            codBarras = "5601234567890",
-            onCodBarrasChange = {},
-            onScanClick = {},
-
-            error = null,
-            isSaving = false,
-            isDeleting = false,
+            form = ProductFormState(
+                categoria = "Alimentar",
+                nomeProduto = "Arroz",
+                subCategoria = "Carolino",
+                marca = "Nacional",
+                doado = "Doação Particular",
+                tamanhoValor = "1",
+                tamanhoUnidade = "kg",
+                validade = Date(),
+                descProduto = "Em bom estado. Armazenar em local seco.",
+                codBarras = "5601234567890"
+            )
+        )
+        ProductFormViewContent(
+            state = previewState,
             showDeleteButton = false,
-            onSaveClick = {},
+            onEvent = {},
+            onValidadeClick = {},
+            onScanClick = {},
             onDeleteClick = {}
         )
     }
@@ -696,50 +608,26 @@ private fun ProductFormViewPreview_Edit() {
             .background(StockBackground)
             .padding(16.dp)
     ) {
-        ProductFormViewContent(
-            title = "Editar Produto",
-
-            categoria = "Higiene",
+        val previewState = ProductFormUiState(
+            productId = "preview",
             availableCategories = listOf("Alimentar", "Higiene", "Bebidas", "Infantil"),
-            onCategoriaChange = {},
-
-            nomeProduto = "Gel de Banho",
-            onNomeProdutoChange = {},
-
-            subCategoria = "Neutro",
-            onSubCategoriaChange = {},
-
-            marca = "Marca X",
-            onMarcaChange = {},
-
-            campanhaId = "",
-            campaigns = emptyList(),
-            onCampaignSelected = {},
-
-            doado = "Parceiro Externo",
-            onDoadoChange = {},
-
-            tamanhoValor = "0.75",
-            onTamanhoValorChange = {},
-
-            tamanhoUnidade = "L",
-            onTamanhoUnidadeChange = {},
-
-            validade = null,
-            onValidadeClick = {},
-
-            descProduto = "Sem observações.",
-            onDescProdutoChange = {},
-
-            codBarras = "",
-            onCodBarrasChange = {},
-            onScanClick = {},
-
-            error = null,
-            isSaving = false,
-            isDeleting = false,
+            form = ProductFormState(
+                categoria = "Higiene",
+                nomeProduto = "Gel de Banho",
+                subCategoria = "Neutro",
+                marca = "Marca X",
+                doado = "Parceiro Externo",
+                tamanhoValor = "0.75",
+                tamanhoUnidade = "L",
+                descProduto = "Sem observações."
+            )
+        )
+        ProductFormViewContent(
+            state = previewState,
             showDeleteButton = true,
-            onSaveClick = {},
+            onEvent = {},
+            onValidadeClick = {},
+            onScanClick = {},
             onDeleteClick = {}
         )
     }

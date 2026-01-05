@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -62,7 +63,7 @@ fun AppHeader(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Voltar",
+                        contentDescription = stringResource(R.string.cd_back),
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
@@ -83,7 +84,7 @@ fun AppHeader(
 
         Image(
             painter = painterResource(id = R.drawable.icon),
-            contentDescription = "Serviços de Ação Social IPCA",
+            contentDescription = stringResource(R.string.cd_header_logo),
             contentScale = ContentScale.FillBounds,
             modifier = Modifier
                 .width(40.dp)
@@ -99,4 +100,3 @@ fun AppHeaderPreview(){
     AppHeader(title = "Home", showBack = true, onBack = {})
 
 }
-

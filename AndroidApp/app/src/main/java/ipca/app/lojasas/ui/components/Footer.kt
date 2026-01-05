@@ -20,9 +20,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ipca.app.lojasas.R
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.theme.GreenSas
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
@@ -51,93 +53,93 @@ fun Footer(
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
 
-    fun isActiveRoute(vararg routes: String): Boolean {
-        return currentRoute != null && routes.any { it == currentRoute }
+    fun isActiveRoute(vararg screens: Screen): Boolean {
+        return currentRoute != null && screens.any { it.route == currentRoute }
     }
 
     val items = when (type) {
         FooterType.FUNCIONARIO -> {
-            val calendarActive = isActiveRoute("funcionarioHome")
+            val calendarActive = isActiveRoute(Screen.FuncionarioHome)
             val cestasActive = isActiveRoute(
-                "cestasList",
-                "cestaDetails/{cestaId}",
-                "createCesta",
-                "createCestaUrgente/{pedidoId}/{apoiadoId}"
+                Screen.CestasList,
+                Screen.CestaDetails,
+                Screen.CreateCesta,
+                Screen.CreateCestaUrgente
             )
             val stockActive = isActiveRoute(
-                "stockProducts",
-                "stockProducts/{productName}",
-                "stockExpiredProducts",
-                "stockProduct/{productId}",
-                "stockProductEdit/{productId}",
-                "stockProductCreate?productName={productName}"
+                Screen.StockProducts,
+                Screen.StockProductsByName,
+                Screen.StockExpiredProducts,
+                Screen.StockProduct,
+                Screen.StockProductEdit,
+                Screen.StockProductCreate
             )
-            val menuActive = isActiveRoute("menu")
+            val menuActive = isActiveRoute(Screen.MenuFuncionario)
 
             listOf(
                 FooterItem(
                     icon = FooterIconSpec.Drawable(R.drawable.calendarmonth),
-                    contentDescription = "Calendário",
+                    contentDescription = stringResource(R.string.footer_calendar),
                     selected = calendarActive,
                     onClick = {
                         // Navega para a Home do Funcionário e limpa a pilha para não acumular ecrãs
-                        navController.navigate("funcionarioHome") {
-                            popUpTo("funcionarioHome") { inclusive = true }
+                        navController.navigate(Screen.FuncionarioHome.route) {
+                            popUpTo(Screen.FuncionarioHome.route) { inclusive = true }
                         }
                     }
                 ),
                 FooterItem(
                     icon = FooterIconSpec.Drawable(R.drawable.shoppingbag),
-                    contentDescription = "Saco",
+                    contentDescription = stringResource(R.string.footer_bag),
                     selected = cestasActive,
                     onClick = {
                         // Lista/Gestão de Cestas
-                        navController.navigate("cestasList") {
+                        navController.navigate(Screen.CestasList.route) {
                             launchSingleTop = true
                         }
                     }
                 ),
                 FooterItem(
                     icon = FooterIconSpec.Drawable(R.drawable.grocery),
-                    contentDescription = "Mercearia",
+                    contentDescription = stringResource(R.string.footer_grocery),
                     selected = stockActive,
                     onClick = {
-                        navController.navigate("stockProducts") {
+                        navController.navigate(Screen.StockProducts.route) {
                             launchSingleTop = true
                         }
                     }
                 ),
                 FooterItem(
                     icon = FooterIconSpec.Drawable(R.drawable.dehaze),
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(R.string.footer_menu),
                     selected = menuActive,
-                    onClick = { navController.navigate("menu") }
+                    onClick = { navController.navigate(Screen.MenuFuncionario.route) }
                 )
             )
         }
 
         FooterType.APOIADO -> {
-            val homeActive = isActiveRoute("apoiadoHome")
-            val menuActive = isActiveRoute("menuApoiado")
+            val homeActive = isActiveRoute(Screen.ApoiadoHome)
+            val menuActive = isActiveRoute(Screen.MenuApoiado)
 
             listOf(
                 FooterItem(
                     icon = FooterIconSpec.HeartHome,
-                    contentDescription = "Início",
+                    contentDescription = stringResource(R.string.footer_home),
                     selected = homeActive,
                     onClick = {
-                        navController.navigate("apoiadoHome") {
-                            popUpTo("apoiadoHome") { inclusive = true }
+                        navController.navigate(Screen.ApoiadoHome.route) {
+                            popUpTo(Screen.ApoiadoHome.route) { inclusive = true }
                         }
                     }
                 ),
                 FooterItem(
                     icon = FooterIconSpec.Drawable(R.drawable.dehaze),
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(R.string.footer_menu),
                     selected = menuActive,
                     onClick = {
                         // ADICIONAR NAVEGAÇÃO AQUI
-                        navController.navigate("menuApoiado")
+                        navController.navigate(Screen.MenuApoiado.route)
                     }
                 )
             )

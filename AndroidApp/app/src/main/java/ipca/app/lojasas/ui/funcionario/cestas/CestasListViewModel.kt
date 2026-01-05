@@ -17,6 +17,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.products.ProductStatus
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
@@ -392,13 +393,13 @@ class CestasListViewModel : ViewModel() {
                     val estado = prodSnap.getString("estadoProduto")?.trim().orEmpty()
 
                     val podeLibertar = reservaId.isBlank() || reservaId == cestaId ||
-                            estado.equals("Reservado", ignoreCase = true)
+                            ProductStatus.fromFirestore(estado) == ProductStatus.RESERVED
 
                     if (podeLibertar) {
                         txn.update(
                             prodRef,
                             mapOf(
-                                "estadoProduto" to "Disponivel",
+                                "estadoProduto" to ProductStatus.AVAILABLE.firestoreValue,
                                 "cestaReservaId" to FieldValue.delete(),
                                 "reservadoEm" to FieldValue.delete()
                             )
@@ -437,7 +438,7 @@ class CestasListViewModel : ViewModel() {
                 txn.update(
                     prodRef,
                     mapOf(
-                        "estadoProduto" to "Entregue",
+                        "estadoProduto" to ProductStatus.DELIVERED.firestoreValue,
                         "cestaEntregaId" to cesta.id,
                         "entregueEm" to now,
                         "cestaReservaId" to FieldValue.delete(),
@@ -533,7 +534,7 @@ class CestasListViewModel : ViewModel() {
                 txn.update(
                     prodRef,
                     mapOf(
-                        "estadoProduto" to "Disponivel",
+                        "estadoProduto" to ProductStatus.AVAILABLE.firestoreValue,
                         "cestaReservaId" to FieldValue.delete(),
                         "reservadoEm" to FieldValue.delete()
                     )

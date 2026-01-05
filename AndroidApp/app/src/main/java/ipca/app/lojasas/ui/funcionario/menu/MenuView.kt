@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import ipca.app.lojasas.core.navigation.Screen
 
 @Composable
 fun MenuView(
@@ -54,7 +55,7 @@ fun MenuView(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            navController.navigate("login") { popUpTo(0) }
+            navController.navigate(Screen.Login.route) { popUpTo(0) }
         },
         modifier = modifier
     )
@@ -92,13 +93,13 @@ private fun MenuViewContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Gerir o meu Perfil") { onNavigate("profileFuncionario") }
+                    MenuRow(title = "Gerir o meu Perfil") { onNavigate(Screen.ProfileFuncionario.route) }
 
                     if (isAdmin) {
                         MenuDivider()
-                        MenuRow(title = "Criar novo Colaborador") { onNavigate("createProfile") }
+                        MenuRow(title = "Criar novo Colaborador") { onNavigate(Screen.CreateProfile.route) }
                         MenuDivider()
-                        MenuRow(title = "Ver Colaboradores") { onNavigate("collaboratorsList") }
+                        MenuRow(title = "Ver Colaboradores") { onNavigate(Screen.CollaboratorsList.route) }
                     }
                     MenuDivider()
                 }
@@ -127,13 +128,13 @@ private fun MenuViewContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Apoiados") { onNavigate("apoiadosList") }
+                    MenuRow(title = "Apoiados") { onNavigate(Screen.ApoiadosList.route) }
                     MenuDivider()
-                    MenuRow(title = "Pedidos Urgentes") { onNavigate("urgentRequests") }
+                    MenuRow(title = "Pedidos Urgentes") { onNavigate(Screen.UrgentRequests.route) }
                     MenuDivider()
-                    MenuRow(title = "Validar Beneficiario") { onNavigate("validateAccounts") }
+                    MenuRow(title = "Validar Beneficiario") { onNavigate(Screen.ValidateAccounts.route) }
                     MenuDivider()
-                    MenuRow(title = "Ver Campanhas") { onNavigate("campaigns") }
+                    MenuRow(title = "Ver Campanhas") { onNavigate(Screen.Campaigns.route) }
                 }
             }
 

@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
@@ -84,7 +86,7 @@ fun ProductView(
                         codBarras = prod.codBarras,
                         descProduto = prod.descProduto,
                         onEditClick = { id ->
-                            navController.navigate("stockProductEdit/$id")
+                            navController.navigate(Screen.StockProductEdit.createRoute(id))
                         }
                     )
                 }
@@ -406,7 +408,7 @@ private fun ProductViewPreview_Disponivel() {
         ProductViewContent(
             id = "p1",
             nomeProduto = "Leite UHT Meio-Gordo",
-            estadoLabel = "Disponivel",
+            estadoLabel = ProductStatus.AVAILABLE.displayLabel,
             isDisponivel = true,
             categoria = "Alimentar",
             subCategoria = "Laticínios",
@@ -435,7 +437,7 @@ private fun ProductViewPreview_Indisponivel() {
         ProductViewContent(
             id = "p2",
             nomeProduto = "Arroz Carolino",
-            estadoLabel = "Reservado",
+            estadoLabel = ProductStatus.RESERVED.displayLabel,
             isDisponivel = false,
             categoria = "Alimentar",
             subCategoria = "Cereais",

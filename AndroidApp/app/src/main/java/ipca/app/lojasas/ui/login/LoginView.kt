@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 
@@ -91,12 +92,12 @@ fun LoginView(
         if (!uiState.isLoading) {
             viewModel.login { role ->
                 val destination = when (role) {
-                    UserRole.APOIADO -> "apoiadoHome"
-                    UserRole.FUNCIONARIO -> "funcionarioHome"
-                    UserRole.ADMIN -> "funcionarioHome" // Admin segue o mesmo fluxo inicial que o funcionário
+                    UserRole.APOIADO -> Screen.ApoiadoHome.route
+                    UserRole.FUNCIONARIO -> Screen.FuncionarioHome.route
+                    UserRole.ADMIN -> Screen.FuncionarioHome.route // Admin segue o mesmo fluxo inicial que o funcionário
                 }
                 navController.navigate(destination) {
-                    popUpTo("login") { inclusive = true }
+                    popUpTo(Screen.Login.route) { inclusive = true }
                 }
             }
         }
@@ -227,7 +228,7 @@ fun LoginView(
                                 .border(width = 0.7.dp, color = GreenIPCA, shape = RoundedCornerShape(5.dp))
                                 .background(color = WhiteColor, shape = RoundedCornerShape(5.dp))
                                 .clickable {
-                                    navController.navigate("createProfileApoiado")
+                                    navController.navigate(Screen.CreateProfileApoiado.route)
                                 }
                         ) {
                             Text(

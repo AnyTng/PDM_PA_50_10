@@ -2,7 +2,6 @@ package ipca.app.lojasas.ui.funcionario.cestas
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import java.text.SimpleDateFormat
 import java.text.Normalizer
@@ -267,8 +267,7 @@ fun CestasListView(
                                     showActions = true,
                                     onAcoes = { cestaParaAcoes = cesta },
                                     onVerDetalhes = {
-                                        val cestaId = Uri.encode(cesta.id)
-                                        navController.navigate("cestaDetails/$cestaId")
+                                        navController.navigate(Screen.CestaDetails.createRoute(cesta.id))
                                     }
                                 )
                             }
@@ -290,8 +289,7 @@ fun CestasListView(
                                     showActions = false,
                                     onAcoes = {},
                                     onVerDetalhes = {
-                                        val cestaId = Uri.encode(cesta.id)
-                                        navController.navigate("cestaDetails/$cestaId")
+                                        navController.navigate(Screen.CestaDetails.createRoute(cesta.id))
                                     }
                                 )
                             }
@@ -300,7 +298,7 @@ fun CestasListView(
                 }
 
                 StockFab(
-                    onClick = { navController.navigate("createCesta") },
+                    onClick = { navController.navigate(Screen.CreateCesta.route) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 22.dp, bottom = 22.dp)

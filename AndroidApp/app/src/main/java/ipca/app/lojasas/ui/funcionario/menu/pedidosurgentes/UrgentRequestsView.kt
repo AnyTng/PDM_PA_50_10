@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.pedidosurgentes.PedidoUrgenteItem
 import ipca.app.lojasas.ui.funcionario.pedidosurgentes.UrgentRequestsViewModel
 import java.text.SimpleDateFormat
@@ -100,7 +101,7 @@ fun UrgentRequestsView(
                                         if (ok) {
                                             // 2) Encaminha para criar cesta
                                             navController.navigate(
-                                                "createCestaUrgente/${pedido.id}/${pedido.numeroMecanografico}"
+                                                Screen.CreateCestaUrgente.createRoute(pedido.id, pedido.numeroMecanografico)
                                             )
                                         }
                                     }
@@ -108,7 +109,7 @@ fun UrgentRequestsView(
                                 onCriarCesta = {
                                     // Botão de recuperação: Vai direto para a criação de cesta
                                     navController.navigate(
-                                        "createCestaUrgente/${pedido.id}/${pedido.numeroMecanografico}"
+                                        Screen.CreateCestaUrgente.createRoute(pedido.id, pedido.numeroMecanografico)
                                     )
                                 }
                             )

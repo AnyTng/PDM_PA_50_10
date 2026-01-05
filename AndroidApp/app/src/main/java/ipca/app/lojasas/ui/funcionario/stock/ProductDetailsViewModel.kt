@@ -7,6 +7,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Date
 import java.util.Locale
@@ -45,8 +46,8 @@ enum class ProductSortOption {
 
 enum class ProductStatusFilter(val label: String) {
     ALL("Todos os estados"),
-    AVAILABLE("Disponivel"),
-    RESERVED("Reservado"),
+    AVAILABLE(ProductStatus.AVAILABLE.displayLabel),
+    RESERVED(ProductStatus.RESERVED.displayLabel),
     EXPIRED("Fora de Validade")
 }
 
