@@ -25,10 +25,11 @@ import ipca.app.lojasas.ui.login.LoginView
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
+import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.menu.document.DocumentSubmissionView
 import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
-import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView // Import necessário
+import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
@@ -37,7 +38,7 @@ import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView
 import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView
 import ipca.app.lojasas.ui.apoiado.menu.profile.CreateProfileApoiadoView
-import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView // Importe a nova view
+import ipca.app.lojasas.ui.apoiado.menu.profile.ApoiadoProfileView
 import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
 import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
 import ipca.app.lojasas.ui.funcionario.stock.ProductView
@@ -50,14 +51,15 @@ import ipca.app.lojasas.ui.apoiado.menu.help.UrgentHelpView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignsView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignCreateView
 import ipca.app.lojasas.ui.funcionario.menu.campaigns.CampaignResultsView
-import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView // Adiciona este import
+import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
-import ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes.UrgentRequestsView  
+import ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes.UrgentRequestsView
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
 import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
 import android.Manifest
+import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -232,29 +234,21 @@ class MainActivity : ComponentActivity() {
                         composable("apoiadosList") { ApoiadosListView(navController = navController) }
 
                         composable(
-                            route = "urgent_help_screen/{numeroMecanografico}", // Rota com placeholder
+                            route = "urgent_help_screen/{numeroMecanografico}",
                             arguments = listOf(navArgument("numeroMecanografico") { type = NavType.StringType })
                         ) { backStackEntry ->
-                            // Extrai o argumento "a1" que vem da navegação
                             val numMec = backStackEntry.arguments?.getString("numeroMecanografico") ?: ""
-
-                            // Passa "a1" para a View
                             UrgentHelpView(navController = navController, numeroMecanografico = numMec)
                         }
 
-
-
-// 2. Rota de Criação
                         composable("campaignCreate") {
                             CampaignCreateView(navController = navController)
                         }
-                        composable("createProfile") { CreateProfileView(navController = navController) }
 
-// NOVA ROTA: Lista de Colaboradores
                         composable("collaboratorsList") {
                             CollaboratorsListView(navController = navController)
                         }
-// 3. Rota de Resultados (passando o nome da campanha)
+
                         composable(
                             route = "campaignResults/{campaignName}",
                             arguments = listOf(navArgument("campaignName") { type = NavType.StringType })
@@ -262,13 +256,12 @@ class MainActivity : ComponentActivity() {
                             val name = backStackEntry.arguments?.getString("campaignName") ?: ""
                             CampaignResultsView(navController = navController, campaignName = name)
                         }
-                        // --- NOVA ROTA PARA O FORMUL ÁRIO DE DADOS ---
+
                         composable("completeData/{docId}") { backStackEntry ->
                             val docId = backStackEntry.arguments?.getString("docId") ?: ""
                             CompleteDataView(
                                 docId = docId,
                                 onSuccess = {
-                                    // Ao terminar, volta para a Home
                                     navController.navigate("apoiadoHome") {
                                         popUpTo("completeData/{docId}") { inclusive = true }
                                     }
@@ -276,24 +269,7 @@ class MainActivity : ComponentActivity() {
                                 navController = navController
                             )
                         }
-                        composable("documentSubmission") {
-                            DocumentSubmissionView(navController = navController)
-                        }
-                        composable("menuApoiado") {
-                            // Importe o MenuApoiadoView que criamos no passo 1
-                            ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView(navController = navController)
-                        }
-                        // Perfil do Funcionario (Usa a view antiga)
-                        composable("profileFuncionario") {
-                            ProfileView(navController = navController)
-                        }
 
-                        // Perfil do Apoiado (Usa a NOVA view)
-                        composable("profileApoiado") {
-                            ApoiadoProfileView(navController = navController)
-                        }
-
-                        // As vistas do stock
                         composable("stockProducts") {
                             ProductsView(navController = navController)
                         }
@@ -351,16 +327,39 @@ class MainActivity : ComponentActivity() {
                 val user = Firebase.auth.currentUser
                 val email = user?.email
                 if (email != null) {
-                    UserRoleRepository.fetchUserRoleByEmail(
-                        email = email,
-                        onSuccess = { role ->
+                    // OTIMIZAÇÃO: Verifica cache primeiro
+                    val prefs = this@MainActivity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    val cachedRoleStr = prefs.getString("role_${email}", null)
+
+                    if (cachedRoleStr != null) {
+                        try {
+                            val role = UserRole.valueOf(cachedRoleStr)
                             navController.navigate(role.destination()) {
                                 popUpTo("login") { inclusive = true }
                             }
-                        },
-                        onNotFound = { navController.navigate("login") { popUpTo("login") { inclusive = true } } },
-                        onError = { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
-                    )
+                        } catch (e: Exception) {
+                            // Se falhar o parse (raro), ignora e busca na rede
+                        }
+                    }
+
+                    // Busca na rede (se não houver cache ou como fallback/update silencioso se quiséssemos)
+                    // Mas para velocidade, se temos cache, o código acima já navegou.
+                    // Se NÃO temos cache, executamos o fetch:
+                    if (cachedRoleStr == null) {
+                        UserRoleRepository.fetchUserRoleByEmail(
+                            email = email,
+                            onSuccess = { role ->
+                                // Salva na cache para a próxima vez
+                                prefs.edit().putString("role_${email}", role.name).apply()
+
+                                navController.navigate(role.destination()) {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            },
+                            onNotFound = { navController.navigate("login") { popUpTo("login") { inclusive = true } } },
+                            onError = { navController.navigate("login") { popUpTo("login") { inclusive = true } } }
+                        )
+                    }
                 }
             }
         }
