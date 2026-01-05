@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.utils.AccountValidity
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
 
@@ -163,6 +164,9 @@ class CompleteDataViewModel : ViewModel() {
 
         val precisaDocumentos = !state.apoioEmergencia
 
+        // ✅ A validade da conta passa a ser atribuída no momento da submissão do formulário.
+        val validadeConta = AccountValidity.nextAugust31()
+
         val updateMap = hashMapOf<String, Any>(
             "relacaoIPCA" to state.relacaoIPCA,
             "apoioEmergenciaSocial" to state.apoioEmergencia,
@@ -172,7 +176,8 @@ class CompleteDataViewModel : ViewModel() {
             "dataNascimento" to Date(birth),
             "estadoConta" to if (precisaDocumentos) "Falta_Documentos" else "Analise",
             "dadosIncompletos" to false,
-            "faltaDocumentos" to precisaDocumentos
+            "faltaDocumentos" to precisaDocumentos,
+            "validadeConta" to validadeConta
         )
 
         // Campos opcionais (mas validados acima quando aplicável)

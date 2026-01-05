@@ -9,6 +9,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.utils.AccountValidity
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -100,6 +101,51 @@ class ApoiadoViewModel : ViewModel() {
                         val validadeDate = validadeTimestamp?.toDate()
                         val validadeString = validadeDate?.let {
                             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it)
+                        }
+
+                        // -----------------------------------------------------------------
+                        // ✅ Regra de negócio: se a conta estiver fora de validade, o apoiado
+                        // deve preencher novamente o formulário (exceto se estiver Bloqueado).
+                        //
+                        // Implementação:
+                        // - Se validUntil < agora e estado != Bloqueado:
+                        //   - marcamos dadosIncompletos=true para forçar o CompleteDataView
+                        //   - opcionalmente colocamos estadoConta=Correcao_Dados para ficar
+                        //     registado na BD que precisa de re-submissão
+                        // -----------------------------------------------------------------
+                        val isBlocked = estado.equals("Bloqueado", ignoreCase = true)
+                        val isExpired = validadeDate?.let { AccountValidity.isExpired(it) } ?: false
+
+                        if (isExpired && !isBlocked) {
+                            // Atualização na BD apenas se ainda não estiver marcado, para evitar writes repetidos.
+                            if (!isIncomplete || !estado.equals("Correcao_Dados", ignoreCase = true)) {
+                                db.collection("apoiados").document(doc.id)
+                                    .update(
+                                        mapOf(
+                                            "estadoConta" to "Correcao_Dados",
+                                            "dadosIncompletos" to true,
+                                            "faltaDocumentos" to false
+                                        )
+                                    )
+                                    .addOnFailureListener { e ->
+                                        // Se falhar (regras/permissões), ainda assim forçamos a UI localmente.
+                                        Log.w("ApoiadoHome", "Falha ao marcar conta expirada: ${e.message}")
+                                    }
+                            }
+
+                            uiState.value = uiState.value.copy(
+                                isLoading = false,
+                                dadosIncompletos = true,
+                                faltaDocumentos = false,
+                                estadoConta = "Correcao_Dados",
+                                showMandatoryPasswordChange = mudarPass,
+                                docId = doc.id,
+                                nome = nomeUser,
+                                validade = validadeDate,
+                                validadeConta = validadeString,
+                                numeroMecanografico = numMec
+                            )
+                            return@addOnSuccessListener
                         }
 
                         uiState.value = uiState.value.copy(

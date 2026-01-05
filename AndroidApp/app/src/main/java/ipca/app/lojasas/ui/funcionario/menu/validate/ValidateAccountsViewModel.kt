@@ -6,7 +6,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
-import java.util.Calendar
+import ipca.app.lojasas.utils.AccountValidity
 import java.util.Date
 
 // Estado da UI
@@ -171,14 +171,34 @@ class ValidateAccountsViewModel : ViewModel() {
 
     fun approveAccount(apoiadoId: String, onSuccess: () -> Unit) {
         getCurrentFuncionarioId { funcionarioId ->
-            val nextAugust = getNextAugust31()
-            val updates = hashMapOf<String, Any>(
-                "estadoConta" to "Aprovado",
-                "validadoPor" to funcionarioId,
-                "dataValidacao" to Date(),
-                "validadeConta" to nextAugust
-            )
-            updateApoiadoStatus(apoiadoId, updates, onSuccess)
+            // ✅ A validade é atribuída na submissão do formulário.
+            // Porém, para contas antigas (submetidas antes desta alteração),
+            // podemos não ter "validadeConta" ainda. Nesse caso, atribuimos
+            // aqui apenas como fallback para não deixar a conta sem validade.
+            db.collection("apoiados").document(apoiadoId).get()
+                .addOnSuccessListener { doc ->
+                    val updates = hashMapOf<String, Any>(
+                        "estadoConta" to "Aprovado",
+                        "validadoPor" to funcionarioId,
+                        "dataValidacao" to Date()
+                    )
+
+                    val hasValidity = (doc.getTimestamp("validadeConta") != null) || (doc.get("validadeConta") != null)
+                    if (!hasValidity) {
+                        updates["validadeConta"] = AccountValidity.nextAugust31()
+                    }
+
+                    updateApoiadoStatus(apoiadoId, updates, onSuccess)
+                }
+                .addOnFailureListener {
+                    // Se falhar a leitura, aprovamos na mesma sem mexer na validade.
+                    val updates = hashMapOf<String, Any>(
+                        "estadoConta" to "Aprovado",
+                        "validadoPor" to funcionarioId,
+                        "dataValidacao" to Date()
+                    )
+                    updateApoiadoStatus(apoiadoId, updates, onSuccess)
+                }
         }
     }
 
@@ -233,20 +253,6 @@ class ValidateAccountsViewModel : ViewModel() {
                 if (!it.isEmpty) onResult(it.documents[0].id)
                 else onResult("unknown_staff")
             }
-    }
-
-    // Calcula validade até 31 de Agosto do ano letivo seguinte/corrente
-    private fun getNextAugust31(): Date {
-        val calendar = Calendar.getInstance()
-        val currentYear = calendar.get(Calendar.YEAR)
-        val thisYearAug = Calendar.getInstance().apply {
-            set(currentYear, Calendar.SEPTEMBER, 31, 23, 59, 59)
-        }
-        return if (calendar.time.after(thisYearAug.time)) {
-            thisYearAug.apply { add(Calendar.YEAR, 1) }.time
-        } else {
-            thisYearAug.time
-        }
     }
 
     fun getFileUri(path: String, onResult: (android.net.Uri?) -> Unit) {

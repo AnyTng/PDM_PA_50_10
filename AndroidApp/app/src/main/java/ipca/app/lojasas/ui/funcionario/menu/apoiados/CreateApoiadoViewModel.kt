@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.app
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.utils.AccountValidity
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
 
@@ -267,7 +268,10 @@ class CreateApoiadoViewModel : ViewModel() {
             "faltaDocumentos" to false,
             "dadosIncompletos" to false,
             "mudarPass" to true,
-            "role" to "Apoiado"
+            "role" to "Apoiado",
+
+            // ✅ Validade atribuída na criação (conta criada diretamente por funcionário)
+            "validadeConta" to AccountValidity.nextAugust31()
         )
 
         // Guardar na coleção 'apoiados'
