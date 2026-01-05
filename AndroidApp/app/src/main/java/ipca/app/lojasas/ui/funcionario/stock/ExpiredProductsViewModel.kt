@@ -38,7 +38,7 @@ class ExpiredProductsViewModel(
             onSuccess = { products ->
                 val reference = Date()
                 val expired = products.filter { product ->
-                    product.isExpiredVisible(reference) && product.doado.isNullOrBlank()
+                    product.isExpiredVisible(reference)
                 }
                 allGroups = groupIdenticalProducts(expired)
                 pruneSelection()

@@ -54,7 +54,7 @@ class ProductsViewModel(
                 allProducts = products
                 val reference = Date()
                 val expiredCount = products.count { product ->
-                    product.isExpiredVisible(reference) && product.doado.isNullOrBlank()
+                    product.isExpiredVisible(reference)
                 }
                 val categories = products
                     .mapNotNull { it.categoria?.trim() }

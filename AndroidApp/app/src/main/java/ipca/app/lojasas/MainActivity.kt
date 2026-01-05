@@ -97,6 +97,7 @@ class MainActivity : ComponentActivity() {
                     "apoiadoHome", "menuApoiado" -> FooterType.APOIADO
                     else -> null // itens sem footer vao cair aq
                 }
+                val useNativeFooter = true
 
                 // 2. CONFIGURAÇÃO DO HEADER
                 val headerConfig = when (currentRoute) {
@@ -173,7 +174,7 @@ class MainActivity : ComponentActivity() {
                     },
                     bottomBar = {
                         footerType?.let {
-                            Footer(navController = navController, type = it)
+                            Footer(navController = navController, type = it, useNative = useNativeFooter)
                         }
                     }
                 ) { innerPadding ->
