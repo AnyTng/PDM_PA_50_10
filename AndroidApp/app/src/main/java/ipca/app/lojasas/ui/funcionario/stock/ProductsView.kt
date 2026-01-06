@@ -1,6 +1,5 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import ipca.app.lojasas.ui.funcionario.stock.components.StockExpiredSummaryCard
@@ -58,16 +59,17 @@ fun ProductsView(
         sortOption = state.sortOption,
         onSortSelected = viewModel::onSortSelected,
         onExportClick = { viewModel.exportToCSV(context) },
-        onExpiredClick = { navController.navigate("stockExpiredProducts") },
+        onExpiredClick = { navController.navigate(Screen.StockExpiredProducts.route) },
+        itemKey = { it.name },
         groupRow = { group ->
             StockGroupCard(
                 group = group,
                 onClick = {
-                    navController.navigate("stockProducts/${Uri.encode(group.name)}")
+                    navController.navigate(Screen.StockProductsByName.createRoute(group.name))
                 }
             )
         },
-        onFabClick = { navController.navigate("stockProductCreate") }
+        onFabClick = { navController.navigate(Screen.StockProductCreate.createRoute()) }
     )
 }
 
@@ -89,6 +91,7 @@ private fun <T> ProductsViewContent(
     onSortSelected: (StockSortOption) -> Unit,
     onExportClick: () -> Unit,
     onExpiredClick: () -> Unit,
+    itemKey: ((T) -> Any)? = null,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
@@ -196,8 +199,8 @@ private fun <T> ProductsViewContent(
                                 onClick = onExpiredClick
                             )
                         }
-                        items(groups.size) { index ->
-                            groupRow(groups[index])
+                        items(items = groups, key = itemKey) { group ->
+                            groupRow(group)
                         }
                     }
                 }

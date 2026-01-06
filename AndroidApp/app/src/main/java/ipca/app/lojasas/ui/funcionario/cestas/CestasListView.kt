@@ -2,7 +2,6 @@ package ipca.app.lojasas.ui.funcionario.cestas
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import java.text.SimpleDateFormat
 import java.text.Normalizer
@@ -74,6 +74,7 @@ fun CestasListView(
 
     var showEstadoMenu by remember { mutableStateOf(false) }
     var showOrigemMenu by remember { mutableStateOf(false) }
+    var showYearMenu by remember { mutableStateOf(false) }
 
     // Diálogos
     var cestaParaReagendarEntrega by remember { mutableStateOf<CestaItem?>(null) }
@@ -225,6 +226,34 @@ fun CestasListView(
                                         }
                                     }
                                 }
+                                Box {
+                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
+                                    TextButton(onClick = { showYearMenu = true }) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Ano: ${state.selectedYear}", color = yearColor, fontSize = 12.sp)
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = yearColor)
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = showYearMenu,
+                                        onDismissRequest = { showYearMenu = false }
+                                    ) {
+                                        state.availableYears.forEach { year ->
+                                            DropdownMenuItem(
+                                                text = { Text(year) },
+                                                onClick = {
+                                                    viewModel.onYearSelected(year)
+                                                    showYearMenu = false
+                                                },
+                                                trailingIcon = {
+                                                    if (state.selectedYear == year) {
+                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             IconButton(onClick = { viewModel.exportToCSV(context) }) {
@@ -267,8 +296,7 @@ fun CestasListView(
                                     showActions = true,
                                     onAcoes = { cestaParaAcoes = cesta },
                                     onVerDetalhes = {
-                                        val cestaId = Uri.encode(cesta.id)
-                                        navController.navigate("cestaDetails/$cestaId")
+                                        navController.navigate(Screen.CestaDetails.createRoute(cesta.id))
                                     }
                                 )
                             }
@@ -290,8 +318,7 @@ fun CestasListView(
                                     showActions = false,
                                     onAcoes = {},
                                     onVerDetalhes = {
-                                        val cestaId = Uri.encode(cesta.id)
-                                        navController.navigate("cestaDetails/$cestaId")
+                                        navController.navigate(Screen.CestaDetails.createRoute(cesta.id))
                                     }
                                 )
                             }
@@ -300,7 +327,7 @@ fun CestasListView(
                 }
 
                 StockFab(
-                    onClick = { navController.navigate("createCesta") },
+                    onClick = { navController.navigate(Screen.CreateCesta.route) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(end = 22.dp, bottom = 22.dp)

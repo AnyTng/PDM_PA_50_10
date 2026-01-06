@@ -1,27 +1,21 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
-import ipca.app.lojasas.data.products.PRODUCT_STATE_DONATED_EXPIRED
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.data.products.ProductStatus
 import java.util.Date
 
-private const val STATUS_AVAILABLE_PREFIX = "dispon"
-private const val STATUS_RESERVED_PREFIX = "reserv"
-private const val STATUS_DELIVERED_PREFIX = "entreg"
-private val STATUS_DONATED_EXPIRED = PRODUCT_STATE_DONATED_EXPIRED.trim().lowercase()
+fun Product.status(): ProductStatus = ProductStatus.fromFirestore(estadoProduto)
 
 fun Product.isBaseAvailable(): Boolean {
-    val status = estadoProduto?.trim()?.lowercase().orEmpty()
-    return status.isBlank() || status.startsWith(STATUS_AVAILABLE_PREFIX)
+    return status() == ProductStatus.AVAILABLE
 }
 
 fun Product.isReserved(): Boolean {
-    val status = estadoProduto?.trim()?.lowercase().orEmpty()
-    return status.startsWith(STATUS_RESERVED_PREFIX)
+    return status() == ProductStatus.RESERVED
 }
 
 fun Product.isDelivered(): Boolean {
-    val status = estadoProduto?.trim()?.lowercase().orEmpty()
-    return status.startsWith(STATUS_DELIVERED_PREFIX)
+    return status() == ProductStatus.DELIVERED
 }
 
 fun Product.isExpired(reference: Date = Date()): Boolean {
@@ -41,7 +35,7 @@ fun Product.displayStatus(reference: Date = Date()): String {
     if (isExpiredVisible(reference)) {
         return "Fora de Validade"
     }
-    return estadoProduto?.trim()?.takeIf { it.isNotBlank() } ?: "Disponivel"
+    return ProductStatus.displayLabel(estadoProduto)
 }
 
 fun Product.isVisibleInStockList(reference: Date = Date()): Boolean {
@@ -49,6 +43,5 @@ fun Product.isVisibleInStockList(reference: Date = Date()): Boolean {
 }
 
 fun Product.isDonatedExpired(): Boolean {
-    val status = estadoProduto?.trim()?.lowercase().orEmpty()
-    return status == STATUS_DONATED_EXPIRED
+    return status() == ProductStatus.DONATED_EXPIRED
 }

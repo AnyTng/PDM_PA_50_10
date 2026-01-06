@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.login.GreenIPCA
 
 @Composable
@@ -201,7 +202,7 @@ fun ProfileView(
                             onClick = {
                                 showDeleteDialog = false
                                 viewModel.deleteAccount {
-                                    navController.navigate("login") { popUpTo(0) }
+                                    navController.navigate(Screen.Login.route) { popUpTo(0) }
                                 }
                             },
                             colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)

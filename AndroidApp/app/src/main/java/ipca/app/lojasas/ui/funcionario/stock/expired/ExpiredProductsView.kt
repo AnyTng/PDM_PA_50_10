@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.stock
+package ipca.app.lojasas.ui.funcionario.stock.expired
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.AlertDialog
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockExpired
@@ -51,6 +54,8 @@ import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
 import ipca.app.lojasas.ui.theme.GreenSas
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
+import ipca.app.lojasas.ui.funcionario.stock.ProductSortOption
 
 @Composable
 fun ExpiredProductsView(
@@ -85,7 +90,7 @@ fun ExpiredProductsView(
         onClearSelection = viewModel::clearSelection,
         isDonating = state.isDonating,
         donationError = state.donationError,
-        onOpenDetails = { product -> navController.navigate("stockProduct/${product.id}") },
+        onOpenDetails = { product -> navController.navigate(Screen.StockProduct.createRoute(product.id)) },
         onDonateClick = { showDonationDialog = true }
     )
 
@@ -215,7 +220,7 @@ private fun ExpiredProductsViewContent(
                                     trailingIcon = {
                                         if (option == sortOption) {
                                             Icon(
-                                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                imageVector = Icons.Default.Check,
                                                 contentDescription = null,
                                                 tint = GreenSas
                                             )
@@ -242,7 +247,7 @@ private fun ExpiredProductsViewContent(
                                     trailingIcon = {
                                         if (option == sortOption) {
                                             Icon(
-                                                imageVector = androidx.compose.material.icons.Icons.Default.Check,
+                                                imageVector = Icons.Default.Check,
                                                 contentDescription = null,
                                                 tint = GreenSas
                                             )
@@ -328,8 +333,7 @@ private fun ExpiredProductsViewContent(
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(groups.size) { index ->
-                            val group = groups[index]
+                        items(items = groups, key = { it.product.id }) { group ->
                             val isSelected = group.productIds.all { selectedIds.contains(it) }
 
                             Row(
@@ -370,7 +374,11 @@ private fun ExpiredProductsViewContent(
 private fun ExpiredProductsViewPreview_Normal() {
     val fake = listOf(
         ProductGroupUi(
-            product = Product(id = "p1", nomeProduto = "Leite UHT Meio-Gordo", subCategoria = "Laticinios"),
+            product = Product(
+                id = "p1",
+                nomeProduto = "Leite UHT Meio-Gordo",
+                subCategoria = "Laticinios"
+            ),
             quantity = 2,
             productIds = listOf("p1")
         ),
@@ -413,9 +421,9 @@ private fun DropdownMenuSectionHeader(
         trailingIcon = {
             Icon(
                 imageVector = if (expanded) {
-                    androidx.compose.material.icons.Icons.Default.KeyboardArrowUp
+                    Icons.Default.KeyboardArrowUp
                 } else {
-                    androidx.compose.material.icons.Icons.Default.KeyboardArrowDown
+                    Icons.Default.KeyboardArrowDown
                 },
                 contentDescription = null,
                 tint = Color.Gray

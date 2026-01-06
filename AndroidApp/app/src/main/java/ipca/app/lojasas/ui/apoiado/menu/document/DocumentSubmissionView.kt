@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -93,8 +94,8 @@ fun DocumentSubmissionView(
             if (viewModel.hasAllMandatoryFiles()) {
                 viewModel.finalizeSubmission {
                     Toast.makeText(context, "Pedido enviado para validação!", Toast.LENGTH_SHORT).show()
-                    navController.navigate("apoiadoHome") {
-                        popUpTo("documentSubmission") { inclusive = true }
+                    navController.navigate(Screen.ApoiadoHome.route) {
+                        popUpTo(Screen.DocumentSubmission.route) { inclusive = true }
                     }
                 }
             } else {

@@ -7,11 +7,29 @@ import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.ProductUpsert
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
+
+data class ProductFormState(
+    val nomeProduto: String = "",
+    val categoria: String = "",
+    val subCategoria: String = "",
+    val marca: String = "",
+    val campanha: String = "", // Guarda o ID da campanha
+    val doado: String = "",
+    val codBarras: String = "",
+    val descProduto: String = "",
+    val estadoProduto: String = ProductStatus.AVAILABLE.firestoreValue,
+    val validade: Date? = null,
+    val tamanhoValor: String = "",
+    val tamanhoUnidade: String = "gr"
+)
 
 data class ProductFormUiState(
     val isLoading: Boolean = false,
@@ -22,19 +40,7 @@ data class ProductFormUiState(
 
     val availableCategories: List<String> = emptyList(),
     val availableCampaigns: List<Campaign> = emptyList(),
-
-    val nomeProduto: String = "",
-    val categoria: String = "",
-    val subCategoria: String = "",
-    val marca: String = "",
-    val campanha: String = "", // Guarda o ID da campanha
-    val doado: String = "",
-    val codBarras: String = "",
-    val descProduto: String = "",
-    val estadoProduto: String = "Disponivel",
-    val validade: Date? = null,
-    val tamanhoValor: String = "",
-    val tamanhoUnidade: String = "gr"
+    val form: ProductFormState = ProductFormState()
 )
 
 private val DEFAULT_CATEGORIES = listOf(
@@ -43,6 +49,29 @@ private val DEFAULT_CATEGORIES = listOf(
     "Limpeza"
 )
 
+sealed interface ProductFormEvent {
+    data class NomeProdutoChanged(val value: String) : ProductFormEvent
+    data class CategoriaChanged(val value: String) : ProductFormEvent
+    data class SubCategoriaChanged(val value: String) : ProductFormEvent
+    data class MarcaChanged(val value: String) : ProductFormEvent
+    data class CampanhaChanged(val value: String) : ProductFormEvent
+    data class DoadoChanged(val value: String) : ProductFormEvent
+    data class CodBarrasChanged(val value: String) : ProductFormEvent
+    data class DescProdutoChanged(val value: String) : ProductFormEvent
+    data class EstadoProdutoChanged(val value: String) : ProductFormEvent
+    data class ValidadeChanged(val value: Date?) : ProductFormEvent
+    data class TamanhoValorChanged(val value: String) : ProductFormEvent
+    data class TamanhoUnidadeChanged(val value: String) : ProductFormEvent
+    data class BarcodeScanned(val value: String) : ProductFormEvent
+    object SaveClicked : ProductFormEvent
+    object DeleteConfirmed : ProductFormEvent
+}
+
+sealed interface ProductFormEffect {
+    object NavigateBack : ProductFormEffect
+    data class NavigateAfterDelete(val nomeProduto: String, val hasMore: Boolean) : ProductFormEffect
+}
+
 class ProductFormViewModel(
     private val repository: ProductsRepository = ProductsRepository(),
     private val campaignRepository: CampaignRepository = CampaignRepository()
@@ -50,6 +79,9 @@ class ProductFormViewModel(
 
     private val _uiState = mutableStateOf(ProductFormUiState())
     val uiState: State<ProductFormUiState> = _uiState
+
+    private val _effects = Channel<ProductFormEffect>(Channel.BUFFERED)
+    val effects = _effects.receiveAsFlow()
 
     private var initializedKey: String? = null
 
@@ -95,7 +127,9 @@ class ProductFormViewModel(
 
         if (productId.isNullOrBlank()) {
             _uiState.value = _uiState.value.copy(
-                nomeProduto = prefillNomeProduto?.trim().orEmpty()
+                form = _uiState.value.form.copy(
+                    nomeProduto = prefillNomeProduto?.trim().orEmpty()
+                )
             )
             return
         }
@@ -115,23 +149,27 @@ class ProductFormViewModel(
                 val sizeValue = product.tamanhoValor?.let {
                     if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
                 }.orEmpty()
+                val normalizedStatus = ProductStatus.normalizeFirestoreValue(product.estadoProduto)
+                    ?: ProductStatus.AVAILABLE.firestoreValue
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = null,
                     productId = product.id,
-                    nomeProduto = product.nomeProduto,
-                    categoria = product.categoria.orEmpty(),
-                    subCategoria = product.subCategoria,
-                    marca = product.marca.orEmpty(),
-                    campanha = product.campanha.orEmpty(),
-                    doado = product.doado.orEmpty(),
-                    codBarras = product.codBarras.orEmpty(),
-                    descProduto = product.descProduto.orEmpty(),
-                    estadoProduto = product.estadoProduto?.takeIf { it.isNotBlank() } ?: "Disponivel",
-                    validade = product.validade,
-                    tamanhoValor = sizeValue,
-                    tamanhoUnidade = product.tamanhoUnidade?.takeIf { it.isNotBlank() } ?: "gr"
+                    form = _uiState.value.form.copy(
+                        nomeProduto = product.nomeProduto,
+                        categoria = product.categoria.orEmpty(),
+                        subCategoria = product.subCategoria,
+                        marca = product.marca.orEmpty(),
+                        campanha = product.campanha.orEmpty(),
+                        doado = product.doado.orEmpty(),
+                        codBarras = product.codBarras.orEmpty(),
+                        descProduto = product.descProduto.orEmpty(),
+                        estadoProduto = normalizedStatus,
+                        validade = product.validade,
+                        tamanhoValor = sizeValue,
+                        tamanhoUnidade = product.tamanhoUnidade?.takeIf { it.isNotBlank() } ?: "gr"
+                    )
                 )
             },
             onError = { e ->
@@ -153,24 +191,34 @@ class ProductFormViewModel(
         )
     }
 
-    fun setNomeProduto(value: String) = update { copy(nomeProduto = value) }
-    fun setCategoria(value: String) = update { copy(categoria = value) }
-    fun setSubCategoria(value: String) = update { copy(subCategoria = value) }
-    fun setMarca(value: String) = update { copy(marca = value) }
-    fun setCampanha(value: String) = update { copy(campanha = value) }
-    fun setDoado(value: String) = update { copy(doado = value) }
-    fun setCodBarras(value: String) = update { copy(codBarras = value) }
-    fun setDescProduto(value: String) = update { copy(descProduto = value) }
-    fun setEstadoProduto(value: String) = update { copy(estadoProduto = value) }
-    fun setValidade(value: Date?) = update { copy(validade = value) }
-    fun setTamanhoValor(value: String) = update { copy(tamanhoValor = value) }
-    fun setTamanhoUnidade(value: String) = update { copy(tamanhoUnidade = value) }
+    fun onEvent(event: ProductFormEvent) {
+        when (event) {
+            is ProductFormEvent.NomeProdutoChanged -> updateForm { copy(nomeProduto = event.value) }
+            is ProductFormEvent.CategoriaChanged -> updateForm { copy(categoria = event.value) }
+            is ProductFormEvent.SubCategoriaChanged -> updateForm { copy(subCategoria = event.value) }
+            is ProductFormEvent.MarcaChanged -> updateForm { copy(marca = event.value) }
+            is ProductFormEvent.CampanhaChanged -> updateForm { copy(campanha = event.value) }
+            is ProductFormEvent.DoadoChanged -> updateForm { copy(doado = event.value) }
+            is ProductFormEvent.CodBarrasChanged -> updateForm { copy(codBarras = event.value) }
+            is ProductFormEvent.DescProdutoChanged -> updateForm { copy(descProduto = event.value) }
+            is ProductFormEvent.EstadoProdutoChanged -> updateForm { copy(estadoProduto = event.value) }
+            is ProductFormEvent.ValidadeChanged -> updateForm { copy(validade = event.value) }
+            is ProductFormEvent.TamanhoValorChanged -> updateForm { copy(tamanhoValor = event.value) }
+            is ProductFormEvent.TamanhoUnidadeChanged -> updateForm { copy(tamanhoUnidade = event.value) }
+            is ProductFormEvent.BarcodeScanned -> onBarcodeScanned(event.value)
+            ProductFormEvent.SaveClicked -> save()
+            ProductFormEvent.DeleteConfirmed -> deleteProduct()
+        }
+    }
 
-    fun onBarcodeScanned(value: String) {
+    private fun onBarcodeScanned(value: String) {
         val normalized = value.trim()
         if (normalized.isBlank()) return
 
-        _uiState.value = _uiState.value.copy(codBarras = normalized, error = null)
+        _uiState.value = _uiState.value.copy(
+            form = _uiState.value.form.copy(codBarras = normalized),
+            error = null
+        )
 
         repository.fetchProductByBarcode(
             codBarras = normalized,
@@ -183,14 +231,17 @@ class ProductFormViewModel(
                 }
 
                 _uiState.value = current.copy(
-                    nomeProduto = product.nomeProduto,
-                    categoria = product.categoria.orEmpty(),
-                    subCategoria = product.subCategoria,
-                    marca = product.marca.orEmpty(),
-                    codBarras = normalized,
-                    tamanhoValor = sizeValueFrom(product),
-                    tamanhoUnidade = product.tamanhoUnidade?.trim().orEmpty(),
-                    estadoProduto = product.estadoProduto?.takeIf { it.isNotBlank() } ?: current.estadoProduto
+                    form = current.form.copy(
+                        nomeProduto = product.nomeProduto,
+                        categoria = product.categoria.orEmpty(),
+                        subCategoria = product.subCategoria,
+                        marca = product.marca.orEmpty(),
+                        codBarras = normalized,
+                        tamanhoValor = sizeValueFrom(product),
+                        tamanhoUnidade = product.tamanhoUnidade?.trim().orEmpty(),
+                        estadoProduto = ProductStatus.normalizeFirestoreValue(product.estadoProduto)
+                            ?: current.form.estadoProduto
+                    )
                 )
             },
             onError = { e ->
@@ -201,36 +252,38 @@ class ProductFormViewModel(
         )
     }
 
-    fun save(onSuccess: (String) -> Unit) {
+    private fun save() {
         val current = _uiState.value
         if (current.isSaving || current.isDeleting) return
 
-        val nomeProduto = current.nomeProduto.trim()
-        val subCategoria = current.subCategoria.trim()
+        val form = current.form
+        val nomeProduto = form.nomeProduto.trim()
+        val subCategoria = form.subCategoria.trim()
 
         if (nomeProduto.isBlank() || subCategoria.isBlank()) {
             _uiState.value = current.copy(error = "Preenche pelo menos Nome e Subcategoria.")
             return
         }
 
-        val alertaValidade7dEm = alertDateFrom(current.validade)
+        val alertaValidade7dEm = alertDateFrom(form.validade)
 
 
         val upsert = ProductUpsert(
             nomeProduto = nomeProduto,
-            categoria = current.categoria.trim(),
+            categoria = form.categoria.trim(),
             subCategoria = subCategoria,
-            marca = current.marca.trim(),
-            campanha = current.campanha.trim(), // Agora envia "" se estiver vazio
-            doado = current.doado.trim(),
-            codBarras = current.codBarras.trim(),
-            validade = current.validade,
+            marca = form.marca.trim(),
+            campanha = form.campanha.trim(), // Agora envia "" se estiver vazio
+            doado = form.doado.trim(),
+            codBarras = form.codBarras.trim(),
+            validade = form.validade,
             alertaValidade7d = false,
             alertaValidade7dEm = alertaValidade7dEm,
-            tamanhoValor = current.tamanhoValor.trim().toDoubleOrNull(),
-            tamanhoUnidade = current.tamanhoUnidade.trim().takeIf { it.isNotBlank() },
-            descProduto = current.descProduto.trim(),
-            estadoProduto = current.estadoProduto.trim().ifBlank { "Disponivel" },
+            tamanhoValor = form.tamanhoValor.trim().toDoubleOrNull(),
+            tamanhoUnidade = form.tamanhoUnidade.trim().takeIf { it.isNotBlank() },
+            descProduto = form.descProduto.trim(),
+            estadoProduto = ProductStatus.normalizeFirestoreValue(form.estadoProduto)
+                ?: ProductStatus.AVAILABLE.firestoreValue,
             idFunc = FirebaseAuth.getInstance().currentUser?.uid
         )
 
@@ -238,7 +291,7 @@ class ProductFormViewModel(
 
         val handlerSuccess = { _: String ->
             _uiState.value = _uiState.value.copy(isSaving = false)
-            onSuccess(_uiState.value.productId ?: "")
+            _effects.trySend(ProductFormEffect.NavigateBack)
         }
         val handlerError = { e: Exception ->
             _uiState.value = _uiState.value.copy(isSaving = false, error = e.message)
@@ -251,12 +304,12 @@ class ProductFormViewModel(
         }
     }
 
-    fun deleteProduct(onSuccess: (String, Boolean) -> Unit) {
+    private fun deleteProduct() {
         val current = _uiState.value
         val id = current.productId?.trim().orEmpty()
         if (id.isBlank() || current.isDeleting || current.isSaving) return
 
-        val nomeProduto = current.nomeProduto.trim()
+        val nomeProduto = current.form.nomeProduto.trim()
         _uiState.value = current.copy(isDeleting = true, error = null)
         repository.deleteProduct(
             productId = id,
@@ -265,14 +318,14 @@ class ProductFormViewModel(
                     nomeProduto = nomeProduto,
                     onSuccess = { hasMore ->
                         _uiState.value = _uiState.value.copy(isDeleting = false)
-                        onSuccess(nomeProduto, hasMore)
+                        _effects.trySend(ProductFormEffect.NavigateAfterDelete(nomeProduto, hasMore))
                     },
                     onError = { e ->
                         _uiState.value = _uiState.value.copy(
                             isDeleting = false,
                             error = e.message ?: "Erro ao confirmar produto."
                         )
-                        onSuccess(nomeProduto, false)
+                        _effects.trySend(ProductFormEffect.NavigateAfterDelete(nomeProduto, false))
                     }
                 )
             },
@@ -285,8 +338,10 @@ class ProductFormViewModel(
         )
     }
 
-    private fun update(block: ProductFormUiState.() -> ProductFormUiState) {
-        _uiState.value = _uiState.value.block()
+    private fun updateForm(block: ProductFormState.() -> ProductFormState) {
+        _uiState.value = _uiState.value.copy(
+            form = _uiState.value.form.block()
+        )
     }
 
     private fun sizeValueFrom(product: Product): String {

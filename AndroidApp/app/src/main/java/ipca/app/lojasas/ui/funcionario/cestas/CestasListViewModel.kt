@@ -17,12 +17,14 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.products.ProductStatus
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.text.Normalizer
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -41,6 +43,7 @@ data class CestaItem(
 
 const val ESTADO_TODOS = "Todos"
 const val ORIGEM_TODOS = "Todas"
+const val YEAR_FILTER_ALL = "Todos"
 
 data class CestasListState(
     val isLoading: Boolean = true,
@@ -50,8 +53,10 @@ data class CestasListState(
     val searchQuery: String = "",
     val selectedEstado: String = ESTADO_TODOS,
     val selectedOrigem: String = ORIGEM_TODOS,
+    val selectedYear: String = YEAR_FILTER_ALL,
     val availableEstados: List<String> = listOf(ESTADO_TODOS),
-    val availableOrigens: List<String> = listOf(ORIGEM_TODOS)
+    val availableOrigens: List<String> = listOf(ORIGEM_TODOS),
+    val availableYears: List<String> = listOf(YEAR_FILTER_ALL)
 )
 
 class CestasListViewModel : ViewModel() {
@@ -116,6 +121,9 @@ class CestasListViewModel : ViewModel() {
                 val origens = list
                     .map { normalizeOrigem(it.origem) }
                     .distinct()
+                val years = list.mapNotNull { extractCestaYear(it) }
+                    .distinct()
+                    .sortedDescending()
                 val sortedEstados = estados.sortedWith(
                     compareBy<String> { estadoPriority[it] ?: 99 }
                         .thenBy { it.lowercase(Locale.getDefault()) }
@@ -123,8 +131,10 @@ class CestasListViewModel : ViewModel() {
                 val sortedOrigens = origens.sortedBy { it.lowercase(Locale.getDefault()) }
                 val availableEstados = listOf(ESTADO_TODOS) + sortedEstados
                 val availableOrigens = listOf(ORIGEM_TODOS) + sortedOrigens
+                val availableYears = listOf(YEAR_FILTER_ALL) + years
                 val currentEstado = uiState.value.selectedEstado
                 val currentOrigem = uiState.value.selectedOrigem
+                val currentYear = uiState.value.selectedYear
                 val resolvedEstado = if (currentEstado != ESTADO_TODOS && !availableEstados.contains(currentEstado)) {
                     ESTADO_TODOS
                 } else {
@@ -135,14 +145,21 @@ class CestasListViewModel : ViewModel() {
                 } else {
                     currentOrigem
                 }
+                val resolvedYear = if (currentYear != YEAR_FILTER_ALL && !years.contains(currentYear)) {
+                    YEAR_FILTER_ALL
+                } else {
+                    currentYear
+                }
                 uiState.value = uiState.value.copy(
                     isLoading = false,
                     error = null,
                     cestas = list,
                     selectedEstado = resolvedEstado,
                     selectedOrigem = resolvedOrigem,
+                    selectedYear = resolvedYear,
                     availableEstados = availableEstados,
-                    availableOrigens = availableOrigens
+                    availableOrigens = availableOrigens,
+                    availableYears = availableYears
                 )
                 applyFilters()
             }
@@ -163,6 +180,11 @@ class CestasListViewModel : ViewModel() {
         applyFilters()
     }
 
+    fun onYearSelected(year: String) {
+        uiState.value = uiState.value.copy(selectedYear = year)
+        applyFilters()
+    }
+
     private fun applyFilters() {
         val state = uiState.value
         val query = state.searchQuery.trim()
@@ -176,6 +198,11 @@ class CestasListViewModel : ViewModel() {
         }
         if (state.selectedOrigem != ORIGEM_TODOS) {
             result = result.filter { normalizeOrigem(it.origem) == state.selectedOrigem }
+        }
+        if (state.selectedYear != YEAR_FILTER_ALL) {
+            result = result.filter { cesta ->
+                extractCestaYear(cesta) == state.selectedYear
+            }
         }
 
         uiState.value = state.copy(
@@ -289,6 +316,7 @@ class CestasListViewModel : ViewModel() {
             y = drawTextLine(canvas, "Data de exportacao: $exportDate", margin, y, mutedPaint, maxWidth, lineHeight)
             y = drawTextLine(canvas, "Estado: ${state.selectedEstado}", margin, y, mutedPaint, maxWidth, lineHeight)
             y = drawTextLine(canvas, "Origem: ${state.selectedOrigem}", margin, y, mutedPaint, maxWidth, lineHeight)
+            y = drawTextLine(canvas, "Ano: ${state.selectedYear}", margin, y, mutedPaint, maxWidth, lineHeight)
             y = drawTextLine(
                 canvas,
                 "Pesquisa: ${state.searchQuery.ifBlank { "-" }}",
@@ -392,13 +420,13 @@ class CestasListViewModel : ViewModel() {
                     val estado = prodSnap.getString("estadoProduto")?.trim().orEmpty()
 
                     val podeLibertar = reservaId.isBlank() || reservaId == cestaId ||
-                            estado.equals("Reservado", ignoreCase = true)
+                            ProductStatus.fromFirestore(estado) == ProductStatus.RESERVED
 
                     if (podeLibertar) {
                         txn.update(
                             prodRef,
                             mapOf(
-                                "estadoProduto" to "Disponivel",
+                                "estadoProduto" to ProductStatus.AVAILABLE.firestoreValue,
                                 "cestaReservaId" to FieldValue.delete(),
                                 "reservadoEm" to FieldValue.delete()
                             )
@@ -437,7 +465,7 @@ class CestasListViewModel : ViewModel() {
                 txn.update(
                     prodRef,
                     mapOf(
-                        "estadoProduto" to "Entregue",
+                        "estadoProduto" to ProductStatus.DELIVERED.firestoreValue,
                         "cestaEntregaId" to cesta.id,
                         "entregueEm" to now,
                         "cestaReservaId" to FieldValue.delete(),
@@ -533,7 +561,7 @@ class CestasListViewModel : ViewModel() {
                 txn.update(
                     prodRef,
                     mapOf(
-                        "estadoProduto" to "Disponivel",
+                        "estadoProduto" to ProductStatus.AVAILABLE.firestoreValue,
                         "cestaReservaId" to FieldValue.delete(),
                         "reservadoEm" to FieldValue.delete()
                     )
@@ -571,6 +599,17 @@ private fun normalizeEstadoKey(value: String): String {
 private fun normalizeOrigem(origem: String?): String {
     val trimmed = origem?.trim().orEmpty()
     return if (trimmed.isBlank()) "Sem origem" else trimmed
+}
+
+private fun extractCestaYear(cesta: CestaItem): String? {
+    val date = cesta.dataAgendada ?: cesta.dataRecolha
+    return date?.let { extractYear(it) }
+}
+
+private fun extractYear(date: Date): String {
+    val calendar = Calendar.getInstance()
+    calendar.time = date
+    return calendar.get(Calendar.YEAR).toString()
 }
 
 private fun formatDate(date: Date?, formatter: SimpleDateFormat): String {

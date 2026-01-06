@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.IntroFontFamily
 import ipca.app.lojasas.ui.login.GreenIPCA
@@ -56,8 +57,8 @@ fun CreateProfileApoiadoView(
             FloatingActionButton(
                 onClick = {
                     viewModel.createProfile {
-                        navController.navigate("apoiadoHome") {
-                            popUpTo("login") { inclusive = true }
+                        navController.navigate(Screen.ApoiadoHome.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
                 },

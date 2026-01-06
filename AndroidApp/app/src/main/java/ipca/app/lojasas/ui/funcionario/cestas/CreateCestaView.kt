@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.Product
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -146,7 +147,7 @@ fun CreateCestaView(
                     produtos = state.produtosSelecionados,
                     onRemove = { viewModel.removeProduto(it) },
                     onVer = { productId ->
-                        navController.navigate("stockProduct/$productId")
+                        navController.navigate(Screen.StockProduct.createRoute(productId))
                     },
                     onAdd = { showProdutosPicker = true }
                 )

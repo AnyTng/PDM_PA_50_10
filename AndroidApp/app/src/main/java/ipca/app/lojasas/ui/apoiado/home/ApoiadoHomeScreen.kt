@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
@@ -136,7 +137,8 @@ fun ApoiadoHomeScreen(
         CompleteDataView(
             docId = state.docId,
             onSuccess = { viewModel.checkStatus() },
-            navController = navController
+            navController = navController,
+            validadeExpiradaEm = if (state.contaExpirada) state.contaExpiradaEm else null
         )
         return
     }
@@ -168,7 +170,7 @@ fun ApoiadoHomeScreen(
             HomeHeader(
                 nome = state.nome,
                 statusUi = statusUi,
-                onVerPerfil = { navController.navigate("profileApoiado") }
+                onVerPerfil = { navController.navigate(Screen.ProfileApoiado.route) }
             )
         }
 
@@ -199,7 +201,7 @@ fun ApoiadoHomeScreen(
         ) {
             item {
                 MissingDocumentsCard(
-                    onEnviar = { navController.navigate("documentSubmission") }
+                    onEnviar = { navController.navigate(Screen.DocumentSubmission.route) }
                 )
             }
         }
@@ -613,7 +615,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
+                /*Surface(
                     color = Color.White,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.weight(1f)
@@ -626,7 +628,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                         fontSize = 12.sp,
                         color = WarningOrange
                     )
-                }
+                }*/
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -861,7 +863,7 @@ fun BlockedAccountScreen(navController: NavController) {
         Button(
             onClick = {
                 FirebaseAuth.getInstance().signOut()
-                navController.navigate("login") { popUpTo(0) }
+                navController.navigate(Screen.Login.route) { popUpTo(0) }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
         ) {

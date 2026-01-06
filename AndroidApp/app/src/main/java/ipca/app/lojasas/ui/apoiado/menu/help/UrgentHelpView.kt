@@ -31,12 +31,7 @@ fun UrgentHelpView(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // 2. Adicionar o AppHeader no topo
-        AppHeader(
-            title = "Ajuda Urgente",
-            showBack = true,
-            onBack = { navController.popBackStack() }
-        )
+
 
         // 3. Column interna com padding para o formulário
         Column(

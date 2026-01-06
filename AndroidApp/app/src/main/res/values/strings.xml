@@ -1,3 +1,29 @@
 <resources>
     <string name="app_name">Loja Social IPCA</string>
+    <string name="cd_back">Voltar</string>
+    <string name="cd_header_logo">Serviços de Ação Social IPCA</string>
+    <string name="footer_calendar">Calendário</string>
+    <string name="footer_bag">Saco</string>
+    <string name="footer_grocery">Mercearia</string>
+    <string name="footer_menu">Menu</string>
+    <string name="footer_home">Início</string>
+    <string name="header_home">Home</string>
+    <string name="header_calendar">Calendário</string>
+    <string name="header_stock">Stock</string>
+    <string name="header_menu">Menu</string>
+    <string name="header_urgent_requests">Pedidos Urgentes</string>
+    <string name="header_cestas">Cestas</string>
+    <string name="header_cesta_details">Detalhes da Cesta</string>
+    <string name="header_create_cesta">Criar Cesta</string>
+    <string name="header_profile_funcionario">Perfil Gestor</string>
+    <string name="header_profile_apoiado">Meu Perfil</string>
+    <string name="header_create_profile">Criar Perfil</string>
+    <string name="header_urgent_help">Pedido Urgente</string>
+    <string name="header_expired_products">Fora de validade</string>
+    <string name="header_product_details">Detalhes</string>
+    <string name="header_edit_product">Editar Produto</string>
+    <string name="header_new_product">Novo Produto</string>
+    <string name="header_campaigns">Campanhas</string>
+    <string name="header_new_campaign">Nova Campanha</string>
+    <string name="header_campaign_results">Resultados</string>
 </resources>

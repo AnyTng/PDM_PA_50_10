@@ -2,7 +2,7 @@ package ipca.app.lojasas.data.donations
 
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import ipca.app.lojasas.data.products.PRODUCT_STATE_DONATED_EXPIRED
+import ipca.app.lojasas.data.products.ProductStatus
 
 class ExpiredDonationsRepository(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
@@ -47,7 +47,11 @@ class ExpiredDonationsRepository(
         val donationRef = donationsCollection.document()
         batch.set(donationRef, donationData)
         ids.forEach { productId ->
-            batch.update(productsCollection.document(productId), "estadoProduto", PRODUCT_STATE_DONATED_EXPIRED)
+            batch.update(
+                productsCollection.document(productId),
+                "estadoProduto",
+                ProductStatus.DONATED_EXPIRED.firestoreValue
+            )
         }
 
         batch.commit()

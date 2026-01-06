@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
@@ -47,7 +48,7 @@ fun ApoiadosListView(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate("createApoiado") },
+                onClick = { navController.navigate(Screen.CreateApoiado.route) },
                 containerColor = GreenSas,
                 contentColor = Color.White,
                 modifier = Modifier.size(64.dp)
@@ -94,7 +95,16 @@ fun ApoiadosListView(
                         expanded = showFilterMenu,
                         onDismissRequest = { showFilterMenu = false }
                     ) {
-                        val filters = listOf("Todos", "Aprovado", "Bloqueado", "Negado", "Apoio Pausado", "Analise", "Por Submeter")
+                        val filters = listOf(
+                            "Todos",
+                            "Aprovado",
+                            "Conta Expirada",
+                            "Bloqueado",
+                            "Negado",
+                            "Apoio Pausado",
+                            "Analise",
+                            "Por Submeter"
+                        )
                         filters.forEach { filter ->
                             DropdownMenuItem(
                                 text = { Text(filter) },
@@ -220,6 +230,7 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
     // Definir a cor do cabeçalho baseada no status
     val statusColor = when(apoiado.displayStatus) {
         "Aprovado" -> GreenSas
+        "Conta Expirada" -> Color(0xFFB65A00) // Laranja Escuro
         "Bloqueado", "Negado" -> Color(0xFFD32F2F) // Vermelho Escuro
         "Apoio Pausado" -> Color(0xFFF57C00) // Laranja
         "Analise" -> Color(0xFF1976D2) // Azul

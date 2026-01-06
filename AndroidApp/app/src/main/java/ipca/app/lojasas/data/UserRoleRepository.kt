@@ -2,6 +2,7 @@ package ipca.app.lojasas.data
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import ipca.app.lojasas.core.navigation.Screen
 
 enum class UserRole {
     FUNCIONARIO,
@@ -72,7 +73,7 @@ object UserRoleRepository {
 
 // Define para onde cada utilizador vai após o login
 fun UserRole.destination(): String = when (this) {
-    UserRole.FUNCIONARIO -> "funcionarioHome"
-    UserRole.ADMIN -> "funcionarioHome" // Admin também vai para a home (calendário), mas terá menu diferente
-    UserRole.APOIADO -> "apoiadoHome"
+    UserRole.FUNCIONARIO -> Screen.FuncionarioHome.route
+    UserRole.ADMIN -> Screen.FuncionarioHome.route // Admin também vai para a home (calendário), mas terá menu diferente
+    UserRole.APOIADO -> Screen.ApoiadoHome.route
 }

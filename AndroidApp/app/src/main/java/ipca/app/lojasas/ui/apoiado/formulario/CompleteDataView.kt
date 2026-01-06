@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,6 +38,8 @@ fun CompleteDataView(
     docId: String,
     onSuccess: () -> Unit,
     navController: NavController,
+    // Se fornecido, mostra um aviso no topo indicando que o formulário está a ser pedido por expiração de validade.
+    validadeExpiradaEm: java.util.Date? = null,
 ) {
     val viewModel: CompleteDataViewModel = viewModel()
     val state by viewModel.uiState
@@ -107,6 +110,39 @@ fun CompleteDataView(
             color = Color(0xFF094E33)
         )
         Text("Verifique os seus dados e corrija o necessário.", color = Color.Gray)
+
+        // ✅ Aviso quando o formulário está a ser solicitado por expiração de validade.
+        if (validadeExpiradaEm != null) {
+            val warnColor = Color(0xFFB65A00) // Laranja escuro
+            val warnBg = Color(0xFFFFF3E0)    // Fundo laranja claro
+            val formattedDate = remember(validadeExpiradaEm) {
+                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(validadeExpiradaEm)
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = warnBg),
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = warnColor
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "A sua conta expirou no dia $formattedDate, volte a submeter o pedido",
+                        color = warnColor,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        }
 
         if (state.isLoading) {
             CircularProgressIndicator(color = Color(0xFF094E33))
