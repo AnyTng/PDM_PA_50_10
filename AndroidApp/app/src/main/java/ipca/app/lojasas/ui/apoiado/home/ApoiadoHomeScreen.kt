@@ -503,6 +503,17 @@ private fun CestaHomeCard(
                 color = textColor
             )
 
+            if (style == CestaCardStyle.PENDENTE) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Caso não possa levantar a cesta, reagende via email, sas@ipc.pt",
+                    fontFamily = IntroFontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = textColor.copy(alpha = 0.95f)
+                )
+            }
+
             if (style == CestaCardStyle.NAO_LEVANTADA) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(

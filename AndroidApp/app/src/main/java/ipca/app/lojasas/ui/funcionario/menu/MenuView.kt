@@ -1,6 +1,8 @@
 package ipca.app.lojasas.ui.funcionario.menu
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -81,7 +83,8 @@ private fun MenuViewContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp),
+                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
@@ -128,7 +131,7 @@ private fun MenuViewContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column {
-                    MenuRow(title = "Apoiados") { onNavigate(Screen.ApoiadosList.route) }
+                    MenuRow(title = "Beneficiario") { onNavigate(Screen.ApoiadosList.route) }
                     MenuDivider()
                     MenuRow(title = "Pedidos Urgentes") { onNavigate(Screen.UrgentRequests.route) }
                     MenuDivider()
@@ -137,7 +140,23 @@ private fun MenuViewContent(
                     MenuRow(title = "Ver Campanhas") { onNavigate(Screen.Campaigns.route) }
                 }
             }
-
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    if (isAdmin) {
+                        MenuRow(title = "Manual de Utilização do Administrador") { onNavigate(Screen.ApoiadosList.route) }
+                        MenuDivider()
+                    }
+                    if (!isAdmin) {
+                        MenuRow(title = "Manual de Utilização do Colaborador") { onNavigate(Screen.ApoiadosList.route) }
+                        MenuDivider()
+                    }
+                }
+            }
             // --- BOTÃO TERMINAR SESSÃO ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
