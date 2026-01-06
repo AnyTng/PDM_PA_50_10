@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -40,6 +41,8 @@ import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import ipca.app.lojasas.ui.funcionario.stock.isReserved
 import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -256,12 +259,23 @@ fun StockProductGroupCard(
     onViewClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val statusLabel = product.displayStatus()
+    val reference = Date()
+    val statusLabel = product.displayStatus(reference)
     val statusColor = when {
-        product.isExpiredVisible() -> StockExpired
+        product.isExpiredVisible(reference) -> StockExpired
         product.isReserved() -> StockReserved
-        product.isAvailableForCount() -> GreenSas
+        product.isAvailableForCount(reference) -> GreenSas
         else -> Color(0xFF9E9E9E)
+    }
+    val barcodeBitmap by produceState<Bitmap?>(initialValue = null, key1 = product.codBarras) {
+        val code = product.codBarras?.takeIf { it.isNotBlank() }
+        value = if (code == null) {
+            null
+        } else {
+            withContext(Dispatchers.Default) {
+                generateBarcodeBitmap(code, width = 400, height = 100)
+            }
+        }
     }
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -339,18 +353,14 @@ fun StockProductGroupCard(
                 verticalAlignment = Alignment.Bottom
             ) {
                 if (!product.codBarras.isNullOrBlank()) {
-                    val barcodeBitmap = remember(product.codBarras) {
-                        generateBarcodeBitmap(product.codBarras!!, width = 400, height = 100)
-                    }
-
                     // CORREÇÃO AQUI: Adicionado horizontalAlignment para centralizar imagem e texto
                     Column(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (barcodeBitmap != null) {
+                        barcodeBitmap?.let {
                             Image(
-                                bitmap = barcodeBitmap.asImageBitmap(),
+                                bitmap = it.asImageBitmap(),
                                 contentDescription = "Código de Barras",
                                 modifier = Modifier
                                     .height(50.dp)

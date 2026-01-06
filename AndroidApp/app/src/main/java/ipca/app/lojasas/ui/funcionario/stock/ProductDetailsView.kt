@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -76,6 +77,7 @@ fun ProductDetailsView(
         onStatusSelected = viewModel::onStatusSelected,
         sortOption = state.sortOption,
         onSortSelected = viewModel::onSortSelected,
+        itemKey = { it.product.id },
         groupRow = { group ->
             StockProductGroupCard(
                 product = group.product,
@@ -111,6 +113,7 @@ private fun <T> ProductDetailsViewContent(
     onStatusSelected: (ProductStatusFilter) -> Unit,
     sortOption: ProductSortOption,
     onSortSelected: (ProductSortOption) -> Unit,
+    itemKey: ((T) -> Any)? = null,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
@@ -326,8 +329,8 @@ private fun <T> ProductDetailsViewContent(
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(groups.size) { index ->
-                            groupRow(groups[index])
+                        items(items = groups, key = itemKey) { group ->
+                            groupRow(group)
                         }
                     }
                 }
@@ -374,6 +377,7 @@ private fun ProductDetailsViewPreview_Normal() {
         onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
+        itemKey = { it.product.id },
         groupRow = { g ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -426,6 +430,7 @@ private fun ProductDetailsViewPreview_Empty() {
         onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
+        itemKey = { it.product.id },
         groupRow = {},
         onFabClick = {}
     )
@@ -452,6 +457,7 @@ private fun ProductDetailsViewPreview_Loading() {
         onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
+        itemKey = { it.product.id },
         groupRow = {},
         onFabClick = {}
     )
@@ -478,6 +484,7 @@ private fun ProductDetailsViewPreview_Error() {
         onStatusSelected = {},
         sortOption = ProductSortOption.EXPIRY_ASC,
         onSortSelected = {},
+        itemKey = { it.product.id },
         groupRow = {},
         onFabClick = {}
     )
