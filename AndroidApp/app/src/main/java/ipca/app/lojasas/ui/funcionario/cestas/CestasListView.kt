@@ -74,6 +74,7 @@ fun CestasListView(
 
     var showEstadoMenu by remember { mutableStateOf(false) }
     var showOrigemMenu by remember { mutableStateOf(false) }
+    var showYearMenu by remember { mutableStateOf(false) }
 
     // Diálogos
     var cestaParaReagendarEntrega by remember { mutableStateOf<CestaItem?>(null) }
@@ -218,6 +219,34 @@ fun CestasListView(
                                                 },
                                                 trailingIcon = {
                                                     if (state.selectedOrigem == origem) {
+                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                Box {
+                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
+                                    TextButton(onClick = { showYearMenu = true }) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("Ano: ${state.selectedYear}", color = yearColor, fontSize = 12.sp)
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = yearColor)
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = showYearMenu,
+                                        onDismissRequest = { showYearMenu = false }
+                                    ) {
+                                        state.availableYears.forEach { year ->
+                                            DropdownMenuItem(
+                                                text = { Text(year) },
+                                                onClick = {
+                                                    viewModel.onYearSelected(year)
+                                                    showYearMenu = false
+                                                },
+                                                trailingIcon = {
+                                                    if (state.selectedYear == year) {
                                                         Icon(Icons.Default.Check, null, tint = GreenSas)
                                                     }
                                                 }
