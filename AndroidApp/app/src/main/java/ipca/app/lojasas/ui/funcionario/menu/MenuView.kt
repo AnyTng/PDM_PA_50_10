@@ -148,11 +148,11 @@ private fun MenuViewContent(
             ) {
                 Column {
                     if (isAdmin) {
-                        MenuRow(title = "Manual de Utilização do Administrador") { onNavigate(Screen.ApoiadosList.route) }
+                        MenuRow(title = "Manual de Utilização do Administrador") { onNavigate(Screen.AdminManual.route) }
                         MenuDivider()
                     }
                     if (!isAdmin) {
-                        MenuRow(title = "Manual de Utilização do Colaborador") { onNavigate(Screen.ApoiadosList.route) }
+                        MenuRow(title = "Manual de Utilização do Colaborador") { onNavigate(Screen.AdminManual.route) }
                         MenuDivider()
                     }
                 }

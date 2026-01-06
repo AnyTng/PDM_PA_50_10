@@ -11,6 +11,7 @@
     <string name="header_calendar">Calendário</string>
     <string name="header_stock">Stock</string>
     <string name="header_menu">Menu</string>
+    <string name="header_manual">Manual de Utilização</string>
     <string name="header_urgent_requests">Pedidos Urgentes</string>
     <string name="header_cestas">Cestas</string>
     <string name="header_cesta_details">Detalhes da Cesta</string>

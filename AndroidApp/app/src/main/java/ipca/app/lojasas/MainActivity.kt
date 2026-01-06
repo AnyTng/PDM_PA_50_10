@@ -25,7 +25,6 @@ import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
-import ipca.app.lojasas.R
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
@@ -78,6 +77,16 @@ class MainActivity : ComponentActivity() {
                     Screen.FuncionarioHome -> HeaderConfig(title = stringResource(R.string.header_calendar))
                     Screen.StockProducts -> HeaderConfig(title = stringResource(R.string.header_stock))
                     Screen.MenuFuncionario -> HeaderConfig(title = stringResource(R.string.header_menu))
+                    Screen.AdminManual -> HeaderConfig(
+                        title = stringResource(R.string.header_manual),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.BeneficiarioManual -> HeaderConfig(
+                        title = stringResource(R.string.header_manual),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     Screen.UrgentRequests -> HeaderConfig(
                         title = stringResource(R.string.header_urgent_requests),
                         showBack = true,

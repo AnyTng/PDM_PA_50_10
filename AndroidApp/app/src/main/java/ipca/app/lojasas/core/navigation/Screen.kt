@@ -7,6 +7,8 @@ sealed class Screen(val route: String) {
     object ApoiadoHome : Screen("apoiadoHome")
     object FuncionarioHome : Screen("funcionarioHome")
     object MenuFuncionario : Screen("menu")
+    object AdminManual : Screen("adminManual")
+    object BeneficiarioManual : Screen("beneficiarioManual")
     object UrgentRequests : Screen("urgentRequests")
     object CestasList : Screen("cestasList")
     object CestaDetails : Screen("cestaDetails/{cestaId}") {
@@ -73,6 +75,8 @@ sealed class Screen(val route: String) {
             ApoiadoHome,
             FuncionarioHome,
             MenuFuncionario,
+            AdminManual,
+            BeneficiarioManual,
             UrgentRequests,
             CestasList,
             CestaDetails,

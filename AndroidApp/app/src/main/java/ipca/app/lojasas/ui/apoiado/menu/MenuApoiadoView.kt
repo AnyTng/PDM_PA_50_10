@@ -89,7 +89,19 @@ fun MenuApoiadoView(
                     MenuApoiadoRow(title = "Documentos Entregues",enabled = !isBlock) { navController.navigate(Screen.SubmittedDocuments.route) }
                 }
             }
-
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    MenuApoiadoRow(title = "Manual de Utilização do Beneficiario") {
+                        navController.navigate(Screen.BeneficiarioManual.route)
+                    }
+                    MenuApoiadoDivider()
+                }
+            }
             // --- BOTÃO TERMINAR SESSÃO ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),

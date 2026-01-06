@@ -13,6 +13,7 @@ import com.google.firebase.auth.auth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
+import ipca.app.lojasas.ui.apoiado.menu.ManualBeneficiarioView
 import ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView
 import ipca.app.lojasas.ui.apoiado.menu.document.DocumentSubmissionView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
@@ -23,6 +24,7 @@ import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
+import ipca.app.lojasas.ui.funcionario.menu.ManualView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
@@ -61,6 +63,8 @@ fun AppNavGraph(
         }
         composable(Screen.FuncionarioHome.route) { CalendarView(navController = navController) }
         composable(Screen.MenuFuncionario.route) { MenuView(navController = navController) }
+        composable(Screen.AdminManual.route) { ManualView() }
+        composable(Screen.BeneficiarioManual.route) { ManualBeneficiarioView() }
         composable(Screen.UrgentRequests.route) { UrgentRequestsView(navController = navController) }
         composable(Screen.CestasList.route) { CestasListView(navController = navController) }
         composable(
