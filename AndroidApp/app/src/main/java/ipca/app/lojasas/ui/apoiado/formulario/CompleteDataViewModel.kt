@@ -177,7 +177,8 @@ class CompleteDataViewModel : ViewModel() {
             "estadoConta" to if (precisaDocumentos) "Falta_Documentos" else "Analise",
             "dadosIncompletos" to false,
             "faltaDocumentos" to precisaDocumentos,
-            "validadeConta" to validadeConta
+            "validadeConta" to validadeConta,
+            "notifContaExpirada" to false
         )
 
         // Campos opcionais (mas validados acima quando aplicável)
