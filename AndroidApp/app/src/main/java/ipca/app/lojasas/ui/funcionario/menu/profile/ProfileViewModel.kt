@@ -6,6 +6,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
@@ -168,6 +169,9 @@ class ProfileViewModel : ViewModel() {
         db.collection(collectionName).document(state.numMecanografico)
             .update(updates)
             .addOnSuccessListener {
+                val entity = if (state.role == UserRole.FUNCIONARIO) "funcionario" else "apoiado"
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Atualizou perfil", entity, state.numMecanografico, details)
                 uiState.value = uiState.value.copy(isLoading = false, success = true)
                 onSuccess()
             }
@@ -195,6 +199,8 @@ class ProfileViewModel : ViewModel() {
             .addOnSuccessListener {
                 user?.delete()?.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
+                        val entity = if (state.role == UserRole.FUNCIONARIO) "funcionario" else "apoiado"
+                        AuditLogger.logAction("Apagou conta", entity, state.numMecanografico)
                         uiState.value = state.copy(isLoading = false)
                         onSuccess()
                     } else {

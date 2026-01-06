@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.app
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.utils.AccountValidity
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
@@ -281,6 +282,21 @@ class CreateApoiadoViewModel : ViewModel() {
                 // Criar registo na coleção 'users'
                 //db.collection("users").document(uid).set(mapOf("role" to "Apoiado", "email" to s.email))
 
+                val nome = s.nome.trim()
+                val details = buildString {
+                    if (nome.isNotBlank()) append("Nome: ").append(nome)
+                    val email = s.email.trim()
+                    if (email.isNotBlank()) {
+                        if (isNotEmpty()) append(" | ")
+                        append("Email: ").append(email)
+                    }
+                }.takeIf { it.isNotBlank() }
+                AuditLogger.logAction(
+                    action = "Criou beneficiario",
+                    entity = "apoiado",
+                    entityId = s.numMecanografico,
+                    details = details
+                )
                 uiState.value = s.copy(isLoading = false, isSuccess = true)
             }
             .addOnFailureListener { e ->

@@ -3,6 +3,7 @@ package ipca.app.lojasas.ui.funcionario.menu.campaigns
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import java.util.Date
@@ -73,7 +74,12 @@ class CampaignsViewModel : ViewModel() {
         FirebaseFirestore.getInstance().collection("campanha")
             .document(campaign.id)
             .delete()
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val nome = campaign.nomeCampanha.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Apagou campanha", "campanha", campaign.id, details)
+                onSuccess()
+            }
             .addOnFailureListener { e -> onError(e.message ?: "Erro ao apagar") }
     }
 }

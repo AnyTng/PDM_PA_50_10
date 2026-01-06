@@ -2,6 +2,7 @@ package ipca.app.lojasas.data.donations
 
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.products.ProductStatus
 
 class ExpiredDonationsRepository(
@@ -55,7 +56,16 @@ class ExpiredDonationsRepository(
         }
 
         batch.commit()
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val details = "Associacao: $nome | Produtos: ${ids.size}"
+                AuditLogger.logAction(
+                    action = "Registou doacao de produtos expirados",
+                    entity = "doacao_fora_validade",
+                    entityId = donationRef.id,
+                    details = details
+                )
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 }

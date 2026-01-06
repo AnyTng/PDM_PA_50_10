@@ -6,6 +6,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.utils.AccountValidity
 import java.util.Date
 
@@ -188,7 +189,12 @@ class ValidateAccountsViewModel : ViewModel() {
                         updates["validadeConta"] = AccountValidity.nextSeptembem30()
                     }
 
-                    updateApoiadoStatus(apoiadoId, updates, onSuccess)
+                    updateApoiadoStatus(
+                        apoiadoId,
+                        updates,
+                        actionLabel = "Aprovou beneficiario",
+                        onSuccess = onSuccess
+                    )
                 }
                 .addOnFailureListener {
                     // Se falhar a leitura, aprovamos na mesma sem mexer na validade.
@@ -197,7 +203,12 @@ class ValidateAccountsViewModel : ViewModel() {
                         "validadoPor" to funcionarioId,
                         "dataValidacao" to Date()
                     )
-                    updateApoiadoStatus(apoiadoId, updates, onSuccess)
+                    updateApoiadoStatus(
+                        apoiadoId,
+                        updates,
+                        actionLabel = "Aprovou beneficiario",
+                        onSuccess = onSuccess
+                    )
                 }
         }
     }
@@ -218,7 +229,13 @@ class ValidateAccountsViewModel : ViewModel() {
                         "estadoConta" to "Negado",
                         "negadoPor" to funcionarioId
                     )
-                    updateApoiadoStatus(apoiadoId, updates, onSuccess)
+                    updateApoiadoStatus(
+                        apoiadoId,
+                        updates,
+                        actionLabel = "Negou beneficiario",
+                        details = "Motivo: $reason",
+                        onSuccess = onSuccess
+                    )
                 }
         }
     }
@@ -229,16 +246,28 @@ class ValidateAccountsViewModel : ViewModel() {
                 "estadoConta" to "Bloqueado",
                 "bloqueadoPor" to funcionarioId
             )
-            updateApoiadoStatus(apoiadoId, updates, onSuccess)
+            updateApoiadoStatus(
+                apoiadoId,
+                updates,
+                actionLabel = "Bloqueou beneficiario",
+                onSuccess = onSuccess
+            )
         }
     }
 
-    private fun updateApoiadoStatus(id: String, updates: Map<String, Any>, onSuccess: () -> Unit) {
+    private fun updateApoiadoStatus(
+        id: String,
+        updates: Map<String, Any>,
+        actionLabel: String,
+        details: String? = null,
+        onSuccess: () -> Unit
+    ) {
         uiState.value = uiState.value.copy(isLoading = true)
         db.collection("apoiados").document(id).update(updates)
             .addOnSuccessListener {
                 loadPendingAccounts()
                 uiState.value = uiState.value.copy(selectedApoiadoDetails = null)
+                AuditLogger.logAction(actionLabel, "apoiado", id, details)
                 onSuccess()
             }
             .addOnFailureListener {

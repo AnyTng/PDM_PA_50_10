@@ -7,6 +7,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.toProductOrNull
@@ -432,6 +433,9 @@ class CreateCestaViewModel : ViewModel() {
             null
         }
             .addOnSuccessListener {
+                val origem = if (s.fromUrgent) "Urgente" else "Manual"
+                val details = "Apoiado: ${apoiado.id} | Origem: $origem"
+                AuditLogger.logAction("Criou cesta", "cesta", cestaId, details)
                 uiState.value = uiState.value.copy(isSubmitting = false)
                 onSuccess()
             }

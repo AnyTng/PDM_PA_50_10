@@ -16,6 +16,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.utils.AccountValidity
 import java.io.File
 import java.io.FileOutputStream
@@ -200,17 +201,39 @@ class ApoiadosListViewModel : ViewModel() {
 
     // --- AÇÕES DE ESTADO ---
 
-    fun unblockApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Correcao_Dados", "dadosIncompletos" to true, "bloqueadoPor" to null)) }
+    fun unblockApoiado(id: String) {
+        updateStatus(
+            id,
+            mapOf(
+                "estadoConta" to "Correcao_Dados",
+                "dadosIncompletos" to true,
+                "bloqueadoPor" to null
+            ),
+            "Desbloqueou beneficiario"
+        )
+    }
 
-    fun blockApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Bloqueado")) }
+    fun blockApoiado(id: String) {
+        updateStatus(id, mapOf("estadoConta" to "Bloqueado"), "Bloqueou beneficiario")
+    }
 
     // Mantém na BD como "Suspenso", mas na UI mostra "Apoio Pausado"
-    fun suspendApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Suspenso")) }
+    fun suspendApoiado(id: String) {
+        updateStatus(id, mapOf("estadoConta" to "Suspenso"), "Suspendeu beneficiario")
+    }
 
-    fun reactivateApoiado(id: String) { updateStatus(id, mapOf("estadoConta" to "Aprovado")) }
+    fun reactivateApoiado(id: String) {
+        updateStatus(id, mapOf("estadoConta" to "Aprovado"), "Reativou beneficiario")
+    }
 
-    private fun updateStatus(id: String, updates: Map<String, Any?>) {
+    private fun updateStatus(id: String, updates: Map<String, Any?>, action: String) {
         db.collection("apoiados").document(id).update(updates)
+            .addOnSuccessListener {
+                AuditLogger.logAction(action, "apoiado", id)
+            }
+            .addOnFailureListener { e ->
+                uiState.value = uiState.value.copy(error = e.message)
+            }
     }
 
     fun exportToCSV(context: Context) {

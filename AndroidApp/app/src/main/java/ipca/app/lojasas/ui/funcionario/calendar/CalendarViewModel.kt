@@ -9,6 +9,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.data.AuditLogger
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -230,6 +231,7 @@ class CalendarViewModel : ViewModel() {
             user.updatePassword(newPass).addOnSuccessListener {
                 db.collection("funcionarios").document(state.docId).update("mudarPass", false)
                     .addOnSuccessListener {
+                        AuditLogger.logAction("Alterou palavra-passe", "funcionario", state.docId)
                         uiState.value = state.copy(isLoading = false, showMandatoryPasswordChange = false)
                         onSuccess()
                     }

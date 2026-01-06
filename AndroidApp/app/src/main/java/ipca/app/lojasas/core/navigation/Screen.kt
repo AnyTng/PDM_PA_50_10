@@ -9,6 +9,7 @@ sealed class Screen(val route: String) {
     object MenuFuncionario : Screen("menu")
     object AdminManual : Screen("adminManual")
     object BeneficiarioManual : Screen("beneficiarioManual")
+    object Historico : Screen("historico")
     object UrgentRequests : Screen("urgentRequests")
     object CestasList : Screen("cestasList")
     object CestaDetails : Screen("cestaDetails/{cestaId}") {
@@ -77,6 +78,7 @@ sealed class Screen(val route: String) {
             MenuFuncionario,
             AdminManual,
             BeneficiarioManual,
+            Historico,
             UrgentRequests,
             CestasList,
             CestaDetails,

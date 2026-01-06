@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import ipca.app.lojasas.data.AuditLogger
 
 data class CollaboratorItem(
     val id: String, // ID do documento (ex: numMecanografico)
@@ -95,6 +96,19 @@ class CollaboratorsListViewModel : ViewModel() {
                         Log.w("CollaboratorsList", "Erro ao apagar user auth doc: ${e.message}")
                     }
                 }
+                val details = buildString {
+                    if (item.nome.isNotBlank()) append("Nome: ").append(item.nome)
+                    if (item.email.isNotBlank()) {
+                        if (isNotEmpty()) append(" | ")
+                        append("Email: ").append(item.email)
+                    }
+                }.takeIf { it.isNotBlank() }
+                AuditLogger.logAction(
+                    action = "Removeu colaborador",
+                    entity = "funcionario",
+                    entityId = item.id,
+                    details = details
+                )
                 onSuccess()
             }
             .addOnFailureListener { e ->
@@ -105,6 +119,15 @@ class CollaboratorsListViewModel : ViewModel() {
     fun promoteToAdmin(item: CollaboratorItem) {
         db.collection("funcionarios").document(item.id)
             .update("role", "Admin")
+            .addOnSuccessListener {
+                val details = if (item.nome.isNotBlank()) "Nome: ${item.nome}" else null
+                AuditLogger.logAction(
+                    action = "Promoveu colaborador a Admin",
+                    entity = "funcionario",
+                    entityId = item.id,
+                    details = details
+                )
+            }
             .addOnFailureListener { e ->
                 uiState.value = uiState.value.copy(error = "Erro ao promover: ${e.message}")
             }
@@ -119,6 +142,15 @@ class CollaboratorsListViewModel : ViewModel() {
 
         db.collection("funcionarios").document(item.id)
             .update("role", "Funcionario")
+            .addOnSuccessListener {
+                val details = if (item.nome.isNotBlank()) "Nome: ${item.nome}" else null
+                AuditLogger.logAction(
+                    action = "Despromoveu colaborador",
+                    entity = "funcionario",
+                    entityId = item.id,
+                    details = details
+                )
+            }
             .addOnFailureListener { e ->
                 uiState.value = uiState.value.copy(error = "Erro ao despromover: ${e.message}")
             }

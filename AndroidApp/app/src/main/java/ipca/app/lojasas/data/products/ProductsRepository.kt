@@ -3,6 +3,7 @@ package ipca.app.lojasas.data.products
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
+import ipca.app.lojasas.data.AuditLogger
 import kotlin.text.get
 
 class ProductsRepository(
@@ -130,7 +131,12 @@ class ProductsRepository(
         onError: (Exception) -> Unit
     ) {
         collection.add(product.toFirestoreMap())
-            .addOnSuccessListener { onSuccess(it.id) }
+            .addOnSuccessListener { doc ->
+                val nome = product.nomeProduto.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Criou produto", "produto", doc.id, details)
+                onSuccess(doc.id)
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -142,7 +148,12 @@ class ProductsRepository(
     ) {
         collection.document(productId)
             .set(product.toFirestoreMap(), SetOptions.merge())
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val nome = product.nomeProduto.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Editou produto", "produto", productId, details)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -154,7 +165,12 @@ class ProductsRepository(
     ) {
         collection.document(productId)
             .set(mapOf("codBarras" to codBarras.trim()), SetOptions.merge())
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val normalized = codBarras.trim()
+                val details = if (normalized.isNotBlank()) "Codigo: $normalized" else null
+                AuditLogger.logAction("Atualizou codigo de barras", "produto", productId, details)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -178,7 +194,10 @@ class ProductsRepository(
     ) {
         collection.document(productId)
             .delete()
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                AuditLogger.logAction("Apagou produto", "produto", productId)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 }

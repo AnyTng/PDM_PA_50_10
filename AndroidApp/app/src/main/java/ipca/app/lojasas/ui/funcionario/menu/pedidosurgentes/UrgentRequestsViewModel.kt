@@ -17,6 +17,7 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.AuditLogger
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -194,7 +195,10 @@ class UrgentRequestsViewModel : ViewModel() {
 
         db.collection("pedidos_ajuda").document(pedidoId)
             .update(updates)
-            .addOnSuccessListener { onDone(true) }
+            .addOnSuccessListener {
+                AuditLogger.logAction("Negou pedido urgente", "pedido_ajuda", pedidoId)
+                onDone(true)
+            }
             .addOnFailureListener { e ->
                 uiState.value = uiState.value.copy(error = e.message)
                 onDone(false)
@@ -211,7 +215,10 @@ class UrgentRequestsViewModel : ViewModel() {
 
         db.collection("pedidos_ajuda").document(pedidoId)
             .update(updates)
-            .addOnSuccessListener { onDone(true) }
+            .addOnSuccessListener {
+                AuditLogger.logAction("Aprovou pedido urgente", "pedido_ajuda", pedidoId)
+                onDone(true)
+            }
             .addOnFailureListener { e ->
                 uiState.value = uiState.value.copy(error = e.message)
                 onDone(false)

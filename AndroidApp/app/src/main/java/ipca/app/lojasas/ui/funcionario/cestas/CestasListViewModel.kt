@@ -17,6 +17,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.products.ProductStatus
 import java.io.File
 import java.io.FileOutputStream
@@ -444,9 +445,13 @@ class CestasListViewModel : ViewModel() {
             )
 
             null
-        }.addOnFailureListener { e ->
-            uiState.value = uiState.value.copy(error = e.message)
         }
+            .addOnSuccessListener {
+                AuditLogger.logAction("Cancelou cesta", "cesta", cestaId)
+            }
+            .addOnFailureListener { e ->
+                uiState.value = uiState.value.copy(error = e.message)
+            }
     }
 
     fun marcarEntregue(cesta: CestaItem) {
@@ -489,9 +494,14 @@ class CestasListViewModel : ViewModel() {
             }
 
             null
-        }.addOnFailureListener { e ->
-            uiState.value = uiState.value.copy(error = e.message)
         }
+            .addOnSuccessListener {
+                val details = if (cesta.apoiadoId.isNotBlank()) "Apoiado: ${cesta.apoiadoId}" else null
+                AuditLogger.logAction("Marcou cesta como entregue", "cesta", cesta.id, details)
+            }
+            .addOnFailureListener { e ->
+                uiState.value = uiState.value.copy(error = e.message)
+            }
     }
 
     /**
@@ -506,6 +516,10 @@ class CestasListViewModel : ViewModel() {
                     "dataReagendada" to Date()
                 )
             )
+            .addOnSuccessListener {
+                val details = "Nova data: $novaData"
+                AuditLogger.logAction("Reagendou cesta", "cesta", cesta.id, details)
+            }
             .addOnFailureListener { e ->
                 uiState.value = uiState.value.copy(error = e.message)
             }
@@ -526,6 +540,10 @@ class CestasListViewModel : ViewModel() {
 
         db.collection("cestas").document(cesta.id)
             .update(updates)
+            .addOnSuccessListener {
+                val details = "Faltas: $novasFaltas | Nova data: $novaData"
+                AuditLogger.logAction("Registou falta e reagendou cesta", "cesta", cesta.id, details)
+            }
             .addOnFailureListener { e ->
                 uiState.value = uiState.value.copy(error = e.message)
             }
@@ -569,9 +587,13 @@ class CestasListViewModel : ViewModel() {
             }
 
             null
-        }.addOnFailureListener { e ->
-            uiState.value = uiState.value.copy(error = e.message)
         }
+            .addOnSuccessListener {
+                AuditLogger.logAction("Registou terceira falta", "cesta", cesta.id)
+            }
+            .addOnFailureListener { e ->
+                uiState.value = uiState.value.copy(error = e.message)
+            }
     }
 }
 

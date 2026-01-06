@@ -82,6 +82,11 @@ class MainActivity : ComponentActivity() {
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
+                    Screen.Historico -> HeaderConfig(
+                        title = stringResource(R.string.header_historico),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     Screen.BeneficiarioManual -> HeaderConfig(
                         title = stringResource(R.string.header_manual),
                         showBack = true,

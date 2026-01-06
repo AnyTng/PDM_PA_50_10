@@ -24,6 +24,7 @@ import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
+import ipca.app.lojasas.ui.funcionario.menu.history.HistoryView
 import ipca.app.lojasas.ui.funcionario.menu.ManualView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView
@@ -65,6 +66,7 @@ fun AppNavGraph(
         composable(Screen.MenuFuncionario.route) { MenuView(navController = navController) }
         composable(Screen.AdminManual.route) { ManualView() }
         composable(Screen.BeneficiarioManual.route) { ManualBeneficiarioView() }
+        composable(Screen.Historico.route) { HistoryView() }
         composable(Screen.UrgentRequests.route) { UrgentRequestsView(navController = navController) }
         composable(Screen.CestasList.route) { CestasListView(navController = navController) }
         composable(

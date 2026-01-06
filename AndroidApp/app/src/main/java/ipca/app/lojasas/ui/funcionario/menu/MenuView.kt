@@ -117,7 +117,7 @@ private fun MenuViewContent(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        MenuRow(title = "Historico") { /* onNavigate("...") */ }
+                        MenuRow(title = "Historico") { onNavigate(Screen.Historico.route) }
                         MenuDivider()
                     }
                 }

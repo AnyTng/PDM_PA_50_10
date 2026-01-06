@@ -2,6 +2,7 @@ package ipca.app.lojasas.data.campaigns
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.toProductOrNull
 import java.util.Calendar
@@ -45,7 +46,12 @@ class CampaignRepository {
             "tipo" to campaign.tipo
         )
         db.collection("campanha").add(data)
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener { doc ->
+                val nome = campaign.nomeCampanha.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Criou campanha", "campanha", doc.id, details)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it.message ?: "Erro ao criar") }
     }
 
@@ -58,7 +64,12 @@ class CampaignRepository {
             "dataFim" to campaign.dataFim
         )
         db.collection("campanha").document(campaign.id).update(data as Map<String, Any>)
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val nome = campaign.nomeCampanha.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Editou campanha", "campanha", campaign.id, details)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it.message ?: "Erro ao atualizar") }
     }
 

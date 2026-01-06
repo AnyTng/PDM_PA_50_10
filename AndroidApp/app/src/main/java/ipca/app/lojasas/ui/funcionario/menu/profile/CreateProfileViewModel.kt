@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.app
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.utils.Validators
 
 data class CreateProfileState(
@@ -174,6 +175,21 @@ class CreateProfileViewModel : ViewModel() {
             .addOnSuccessListener {
                 // Removida a escrita na coleção "users".
                 // Chamamos o sucesso diretamente.
+                val nome = state.nome.trim()
+                val details = buildString {
+                    if (nome.isNotBlank()) append("Nome: ").append(nome)
+                    val email = state.email.trim()
+                    if (email.isNotBlank()) {
+                        if (isNotEmpty()) append(" | ")
+                        append("Email: ").append(email)
+                    }
+                }.takeIf { it.isNotBlank() }
+                AuditLogger.logAction(
+                    action = "Criou colaborador",
+                    entity = "funcionario",
+                    entityId = state.numMecanografico,
+                    details = details
+                )
                 uiState.value = state.copy(isLoading = false, success = true)
                 onSuccess()
             }
