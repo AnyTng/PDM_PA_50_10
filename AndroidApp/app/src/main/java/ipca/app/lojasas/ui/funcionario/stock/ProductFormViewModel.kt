@@ -37,6 +37,7 @@ data class ProductFormUiState(
     val isDeleting: Boolean = false,
     val error: String? = null,
     val productId: String? = null,
+    val isBarcodeMatchLocked: Boolean = false,
 
     val availableCategories: List<String> = emptyList(),
     val availableCampaigns: List<Campaign> = emptyList(),
@@ -84,6 +85,7 @@ class ProductFormViewModel(
     val effects = _effects.receiveAsFlow()
 
     private var initializedKey: String? = null
+    private var lastBarcodeLookup: String? = null
 
     init {
         loadCategories()
@@ -124,6 +126,8 @@ class ProductFormViewModel(
         val key = (productId ?: "NEW") + "|" + (prefillNomeProduto ?: "")
         if (initializedKey == key) return
         initializedKey = key
+        lastBarcodeLookup = null
+        _uiState.value = _uiState.value.copy(isBarcodeMatchLocked = false)
 
         if (productId.isNullOrBlank()) {
             _uiState.value = _uiState.value.copy(
@@ -192,46 +196,75 @@ class ProductFormViewModel(
     }
 
     fun onEvent(event: ProductFormEvent) {
+        val isLocked = _uiState.value.isBarcodeMatchLocked
         when (event) {
-            is ProductFormEvent.NomeProdutoChanged -> updateForm { copy(nomeProduto = event.value) }
-            is ProductFormEvent.CategoriaChanged -> updateForm { copy(categoria = event.value) }
-            is ProductFormEvent.SubCategoriaChanged -> updateForm { copy(subCategoria = event.value) }
-            is ProductFormEvent.MarcaChanged -> updateForm { copy(marca = event.value) }
+            is ProductFormEvent.NomeProdutoChanged -> {
+                if (!isLocked) updateForm { copy(nomeProduto = event.value) }
+            }
+            is ProductFormEvent.CategoriaChanged -> {
+                if (!isLocked) updateForm { copy(categoria = event.value) }
+            }
+            is ProductFormEvent.SubCategoriaChanged -> {
+                if (!isLocked) updateForm { copy(subCategoria = event.value) }
+            }
+            is ProductFormEvent.MarcaChanged -> {
+                if (!isLocked) updateForm { copy(marca = event.value) }
+            }
             is ProductFormEvent.CampanhaChanged -> updateForm { copy(campanha = event.value) }
             is ProductFormEvent.DoadoChanged -> updateForm { copy(doado = event.value) }
-            is ProductFormEvent.CodBarrasChanged -> updateForm { copy(codBarras = event.value) }
+            is ProductFormEvent.CodBarrasChanged -> onBarcodeInput(event.value)
             is ProductFormEvent.DescProdutoChanged -> updateForm { copy(descProduto = event.value) }
             is ProductFormEvent.EstadoProdutoChanged -> updateForm { copy(estadoProduto = event.value) }
             is ProductFormEvent.ValidadeChanged -> updateForm { copy(validade = event.value) }
-            is ProductFormEvent.TamanhoValorChanged -> updateForm { copy(tamanhoValor = event.value) }
-            is ProductFormEvent.TamanhoUnidadeChanged -> updateForm { copy(tamanhoUnidade = event.value) }
-            is ProductFormEvent.BarcodeScanned -> onBarcodeScanned(event.value)
+            is ProductFormEvent.TamanhoValorChanged -> {
+                if (!isLocked) updateForm { copy(tamanhoValor = event.value) }
+            }
+            is ProductFormEvent.TamanhoUnidadeChanged -> {
+                if (!isLocked) updateForm { copy(tamanhoUnidade = event.value) }
+            }
+            is ProductFormEvent.BarcodeScanned -> onBarcodeInput(event.value)
             ProductFormEvent.SaveClicked -> save()
             ProductFormEvent.DeleteConfirmed -> deleteProduct()
         }
     }
 
-    private fun onBarcodeScanned(value: String) {
+    private fun onBarcodeInput(value: String) {
         val normalized = value.trim()
-        if (normalized.isBlank()) return
+        val current = _uiState.value
 
-        _uiState.value = _uiState.value.copy(
-            form = _uiState.value.form.copy(codBarras = normalized),
-            error = null
+        _uiState.value = current.copy(
+            form = current.form.copy(codBarras = normalized),
+            error = null,
+            isBarcodeMatchLocked = if (normalized.isBlank()) false else current.isBarcodeMatchLocked
         )
+
+        if (normalized.isBlank()) {
+            lastBarcodeLookup = null
+            return
+        }
+
+        if (lastBarcodeLookup == normalized) return
+        lastBarcodeLookup = normalized
 
         repository.fetchProductByBarcode(
             codBarras = normalized,
             onSuccess = { product ->
-                if (product == null) return@fetchProductByBarcode
+                val latest = _uiState.value
+                if (latest.form.codBarras.trim() != normalized) return@fetchProductByBarcode
 
-                val current = _uiState.value
-                if (!current.productId.isNullOrBlank() && current.productId == product.id) {
+                if (product == null) {
+                    _uiState.value = latest.copy(isBarcodeMatchLocked = false)
                     return@fetchProductByBarcode
                 }
 
-                _uiState.value = current.copy(
-                    form = current.form.copy(
+                if (!latest.productId.isNullOrBlank() && latest.productId == product.id) {
+                    _uiState.value = latest.copy(isBarcodeMatchLocked = false)
+                    return@fetchProductByBarcode
+                }
+
+                _uiState.value = latest.copy(
+                    isBarcodeMatchLocked = true,
+                    form = latest.form.copy(
                         nomeProduto = product.nomeProduto,
                         categoria = product.categoria.orEmpty(),
                         subCategoria = product.subCategoria,
@@ -240,11 +273,12 @@ class ProductFormViewModel(
                         tamanhoValor = sizeValueFrom(product),
                         tamanhoUnidade = product.tamanhoUnidade?.trim().orEmpty(),
                         estadoProduto = ProductStatus.normalizeFirestoreValue(product.estadoProduto)
-                            ?: current.form.estadoProduto
+                            ?: latest.form.estadoProduto
                     )
                 )
             },
             onError = { e ->
+                lastBarcodeLookup = null
                 _uiState.value = _uiState.value.copy(
                     error = e.message ?: "Erro ao procurar código de barras."
                 )
