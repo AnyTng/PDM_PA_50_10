@@ -34,7 +34,7 @@ import ipca.app.lojasas.ui.funcionario.menu.profile.CollaboratorsListView
 import ipca.app.lojasas.ui.funcionario.menu.profile.CreateProfileView
 import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileView
 import ipca.app.lojasas.ui.funcionario.menu.validate.ValidateAccountsView
-import ipca.app.lojasas.ui.funcionario.stock.ExpiredProductsView
+import ipca.app.lojasas.ui.funcionario.stock.expired.ExpiredProductsView
 import ipca.app.lojasas.ui.funcionario.stock.ProductDetailsView
 import ipca.app.lojasas.ui.funcionario.stock.ProductFormView
 import ipca.app.lojasas.ui.funcionario.stock.ProductView

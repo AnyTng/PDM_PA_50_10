@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.stock
+package ipca.app.lojasas.ui.funcionario.stock.expired
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +8,10 @@ import com.google.firebase.firestore.ListenerRegistration
 import ipca.app.lojasas.data.donations.ExpiredDonationsRepository
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
+import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
+import ipca.app.lojasas.ui.funcionario.stock.ProductSortOption
+import ipca.app.lojasas.ui.funcionario.stock.identity
+import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import java.util.Date
 import java.util.Locale
 

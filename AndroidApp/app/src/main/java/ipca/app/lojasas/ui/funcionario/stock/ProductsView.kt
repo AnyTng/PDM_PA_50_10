@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -59,6 +60,7 @@ fun ProductsView(
         onSortSelected = viewModel::onSortSelected,
         onExportClick = { viewModel.exportToCSV(context) },
         onExpiredClick = { navController.navigate(Screen.StockExpiredProducts.route) },
+        itemKey = { it.name },
         groupRow = { group ->
             StockGroupCard(
                 group = group,
@@ -89,6 +91,7 @@ private fun <T> ProductsViewContent(
     onSortSelected: (StockSortOption) -> Unit,
     onExportClick: () -> Unit,
     onExpiredClick: () -> Unit,
+    itemKey: ((T) -> Any)? = null,
     groupRow: @Composable (T) -> Unit,
     onFabClick: () -> Unit
 ) {
@@ -196,8 +199,8 @@ private fun <T> ProductsViewContent(
                                 onClick = onExpiredClick
                             )
                         }
-                        items(groups.size) { index ->
-                            groupRow(groups[index])
+                        items(items = groups, key = itemKey) { group ->
+                            groupRow(group)
                         }
                     }
                 }
