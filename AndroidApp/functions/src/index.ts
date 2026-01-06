@@ -9,7 +9,7 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 initializeApp();
 
 export const notifyExpiringProducts7d = onSchedule(
-  { schedule: "* * * * *", timeZone: "Europe/Lisbon" }, // ✅ teste: a cada 1 min
+  { schedule: "0 9 * * *", timeZone: "Europe/Lisbon" }, //como esta é tds os dias as 9 ("0 9 * * *") |para testar a cada minuto usar: "* * * * *"|
   async () => {
     const db = getFirestore();
 
@@ -219,7 +219,7 @@ export const notifyApoiadoPedidoDecision = onDocumentUpdated(
 
 
 export const notifyCestaAgendadaReminders = onSchedule(
-  { schedule: "* * * * *", timeZone: "Europe/Lisbon" }, // produção: "0 9 * * *"
+  { schedule: "0 9 * * *", timeZone: "Europe/Lisbon" }, //como esta é tds os dias as 9 ("0 9 * * *") |para testar a cada minuto usar: "* * * * *"|
   async () => {
     const db = getFirestore();
     const messaging = getMessaging();
@@ -469,4 +469,74 @@ export const notifyApoiadoCestaAgendadaOnCreate = onDocumentCreated(
   }
 );
 
+export const notifyApoiadoContaExpirada = onSchedule(
+  { schedule: "0 0 * * *", timeZone: "Europe/Lisbon" }, //como esta é tds os dias as 9 ("0 9 * * *") |para testar a cada minuto usar: "* * * * *"|
+  async () => {
+    const db = getFirestore();
+    const messaging = getMessaging();
+
+    const now = Timestamp.now();
+
+    // procura apoiados cuja validade já passou
+    const snap = await db
+      .collection("apoiados")
+      .where("validadeConta", "<", now)
+      .get();
+
+    if (snap.empty) return;
+
+    const toNotify = snap.docs.filter(d => d.get("notifContaExpirada") !== true);
+
+    for (const doc of toNotify) {
+      const apoiadoId = doc.id;
+
+      // tokens do apoiado
+      const tokensSnap = await db
+        .collection("apoiados")
+        .doc(apoiadoId)
+        .collection("fcmTokens")
+        .get();
+
+      const tokens = tokensSnap.docs.map(t => t.id).filter(Boolean);
+      if (tokens.length === 0) {
+        // marca na mesma para não tentar para sempre (opcional)
+        await doc.ref.update({ notifContaExpirada: true, notifContaExpiradaEm: Timestamp.now() });
+        continue;
+      }
+
+      const res = await messaging.sendEachForMulticast({
+        tokens,
+        notification: {
+          title: "⚠️ A sua conta expirou",
+          body: "Entre na app renovar a sua conta.",
+        },
+        data: {
+          type: "ACCOUNT_EXPIRED",
+          apoiadoId,
+        },
+      });
+
+      // limpar tokens inválidos (boa prática)
+      const batch = db.batch();
+      res.responses.forEach((r, idx) => {
+        if (!r.success) {
+          const code = (r.error as any)?.code ?? "";
+          if (code.includes("registration-token-not-registered") || code.includes("invalid-argument")) {
+            batch.delete(tokensSnap.docs[idx].ref);
+          }
+        }
+      });
+
+      // marcar como “já notificado”
+      batch.update(doc.ref, {
+        notifContaExpirada: true,
+        notifContaExpiradaEm: Timestamp.now(),
+        // opcional: estadoConta: "Expirada"
+        // estadoConta: "Expirada",
+      });
+
+      await batch.commit();
+    }
+  }
+);
 
