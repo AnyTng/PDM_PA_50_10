@@ -181,6 +181,40 @@ fun CestasListView(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box {
+                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
+                                    TextButton(onClick = { showYearMenu = true }) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                "Ano: ${state.selectedYear}",
+                                                color = yearColor,
+                                                fontSize = 12.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = yearColor)
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = showYearMenu,
+                                        onDismissRequest = { showYearMenu = false }
+                                    ) {
+                                        state.availableYears.forEach { year ->
+                                            DropdownMenuItem(
+                                                text = { Text(year) },
+                                                onClick = {
+                                                    viewModel.onYearSelected(year)
+                                                    showYearMenu = false
+                                                },
+                                                trailingIcon = {
+                                                    if (state.selectedYear == year) {
+                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                Box {
                                     val estadoColor = if (state.selectedEstado != ESTADO_TODOS) GreenSas else Color.Gray
                                     TextButton(onClick = { showEstadoMenu = true }) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -249,40 +283,7 @@ fun CestasListView(
                                         }
                                     }
                                 }
-                                Box {
-                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
-                                    TextButton(onClick = { showYearMenu = true }) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                "Ano: ${state.selectedYear}",
-                                                color = yearColor,
-                                                fontSize = 12.sp,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = yearColor)
-                                        }
-                                    }
-                                    DropdownMenu(
-                                        expanded = showYearMenu,
-                                        onDismissRequest = { showYearMenu = false }
-                                    ) {
-                                        state.availableYears.forEach { year ->
-                                            DropdownMenuItem(
-                                                text = { Text(year) },
-                                                onClick = {
-                                                    viewModel.onYearSelected(year)
-                                                    showYearMenu = false
-                                                },
-                                                trailingIcon = {
-                                                    if (state.selectedYear == year) {
-                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
+
                             }
 
                             IconButton(onClick = { viewModel.exportToCSV(context) }) {
