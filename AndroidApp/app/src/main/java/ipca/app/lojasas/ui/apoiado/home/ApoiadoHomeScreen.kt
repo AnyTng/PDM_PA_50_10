@@ -137,7 +137,8 @@ fun ApoiadoHomeScreen(
         CompleteDataView(
             docId = state.docId,
             onSuccess = { viewModel.checkStatus() },
-            navController = navController
+            navController = navController,
+            validadeExpiradaEm = if (state.contaExpirada) state.contaExpiradaEm else null
         )
         return
     }

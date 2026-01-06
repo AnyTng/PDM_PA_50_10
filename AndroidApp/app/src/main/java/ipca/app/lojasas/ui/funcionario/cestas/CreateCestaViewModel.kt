@@ -4,11 +4,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.toProductOrNull
+import ipca.app.lojasas.utils.AccountValidity
 import java.util.Calendar
 import java.util.Date
 
@@ -26,6 +28,16 @@ private fun mapApoiadoDisplayStatus(rawStatus: String): String {
         "Suspenso" -> "Apoio Pausado"
         else -> rawStatus
     }
+}
+
+private fun apoiadoValidUntil(doc: DocumentSnapshot): Date? {
+    // Preferimos o campo "validadeConta" (novo). Mantemos fallback para "validade" (legado).
+    val ts = doc.getTimestamp("validadeConta") ?: doc.getTimestamp("validade")
+    if (ts != null) return ts.toDate()
+
+    // Alguns projetos podem gravar como Date diretamente.
+    val any = doc.get("validadeConta") ?: doc.get("validade")
+    return any as? Date
 }
 
 data class CreateCestaState(
@@ -177,6 +189,12 @@ class CreateCestaViewModel : ViewModel() {
                     .filterNot { doc ->
                         val estado = doc.getString("estadoConta")?.trim().orEmpty()
                         estado.equals("Bloqueado", ignoreCase = true)
+                    }
+                    // ✅ Regra: não mostrar apoiados com conta fora de validade
+                    .filter { doc ->
+                        val validUntil = apoiadoValidUntil(doc)
+                        // Se não tivermos validade gravada, assumimos que não está válida (não elegível)
+                        validUntil != null && !AccountValidity.isExpired(validUntil)
                     }
                     .map { doc ->
                         val rawStatus = doc.getString("estadoConta")?.trim().orEmpty()
@@ -343,6 +361,23 @@ class CreateCestaViewModel : ViewModel() {
             }
             val produtoSnaps = produtoRefs.map { (pid, ref) ->
                 pid to txn.get(ref)
+            }
+
+            // ✅ Regra: não permitir criar cesta para apoiados com conta fora de validade
+            // (e também garante consistência caso a seleção tenha sido pré-carregada, ex: pedido urgente).
+            val apoiadoRef = db.collection("apoiados").document(apoiado.id)
+            val apoiadoSnap = txn.get(apoiadoRef)
+            val estadoConta = apoiadoSnap.getString("estadoConta")?.trim().orEmpty()
+            if (estadoConta.equals("Bloqueado", ignoreCase = true)) {
+                throw IllegalStateException("Conta do apoiado bloqueada.")
+            }
+            val validUntil = (apoiadoSnap.getTimestamp("validadeConta")
+                ?: apoiadoSnap.getTimestamp("validade"))?.toDate()
+                ?: (apoiadoSnap.get("validadeConta") as? Date
+                    ?: apoiadoSnap.get("validade") as? Date)
+
+            if (validUntil == null || AccountValidity.isExpired(validUntil, now)) {
+                throw IllegalStateException("A conta do apoiado está expirada. O apoiado deve voltar a submeter o formulário.")
             }
 
             // 1) Verifica produtos e disponibilidade

@@ -16,6 +16,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.firestore
 import ipca.app.lojasas.R
+import ipca.app.lojasas.utils.AccountValidity
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -105,11 +106,25 @@ class ApoiadosListViewModel : ViewModel() {
                 val list = value?.documents?.map { doc ->
                     val rawStatus = doc.getString("estadoConta") ?: ""
 
+                    // --- VALIDADE DA CONTA ---
+                    // Se a validade já passou (e não estiver Bloqueado/Negado), deve aparecer como "Conta Expirada".
+                    val validadeTs = doc.getTimestamp("validadeConta") ?: doc.getTimestamp("validade")
+                    val validadeDate = validadeTs?.toDate() ?: (doc.get("validadeConta") as? Date ?: doc.get("validade") as? Date)
+                    val isExpired = validadeDate?.let { AccountValidity.isExpired(it) } ?: false
+
                     // --- MAPEAMENTO DE ESTADOS ---
-                    val displayStatus = when (rawStatus) {
-                        "Falta_Documentos", "Correcao_Dados", "" -> "Por Submeter"
-                        "Suspenso" -> "Apoio Pausado" // Alterado aqui
-                        else -> rawStatus
+                    val displayStatus = if (isExpired &&
+                        !rawStatus.equals("Bloqueado", ignoreCase = true) &&
+                        !rawStatus.equals("Negado", ignoreCase = true)
+                    ) {
+                        "Conta Expirada"
+                    } else {
+                        // --- MAPEAMENTO DE ESTADOS ---
+                        when (rawStatus) {
+                            "Falta_Documentos", "Correcao_Dados", "" -> "Por Submeter"
+                            "Suspenso" -> "Apoio Pausado"
+                            else -> rawStatus
+                        }
                     }
 
                     ApoiadoItem(

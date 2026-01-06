@@ -51,6 +51,9 @@ data class ApoiadoState(
     val nome: String = "",
     val validadeConta: String? = null,
     val validade: Date? = null,
+    // True quando o formulário está a ser exigido por expiração de validade (e não por primeira submissão, etc.)
+    val contaExpirada: Boolean = false,
+    val contaExpiradaEm: Date? = null,
     val numeroMecanografico: String = "",
     val urgentRequests: List<UrgentRequest> = emptyList(), // Usado para o cartão Azul
 
@@ -98,7 +101,7 @@ class ApoiadoViewModel : ViewModel() {
                         val numMec = doc.getString("numMecanografico") ?: doc.getString("numeroMecanografico") ?: ""
 
                         val validadeTimestamp = doc.getTimestamp("validadeConta") ?: doc.getTimestamp("validade")
-                        val validadeDate = validadeTimestamp?.toDate()
+                        val validadeDate = validadeTimestamp?.toDate() ?: (doc.get("validadeConta") as? Date ?: doc.get("validade") as? Date)
                         val validadeString = validadeDate?.let {
                             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it)
                         }
@@ -138,6 +141,8 @@ class ApoiadoViewModel : ViewModel() {
                                 dadosIncompletos = true,
                                 faltaDocumentos = false,
                                 estadoConta = "Correcao_Dados",
+                                contaExpirada = true,
+                                contaExpiradaEm = validadeDate,
                                 showMandatoryPasswordChange = mudarPass,
                                 docId = doc.id,
                                 nome = nomeUser,
@@ -153,6 +158,8 @@ class ApoiadoViewModel : ViewModel() {
                             dadosIncompletos = isIncomplete,
                             faltaDocumentos = faltaDocs,
                             estadoConta = estado,
+                            contaExpirada = false,
+                            contaExpiradaEm = null,
                             showMandatoryPasswordChange = mudarPass,
                             docId = doc.id,
                             nome = nomeUser,

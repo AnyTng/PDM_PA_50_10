@@ -11,20 +11,36 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,37 +63,104 @@ fun UrgentRequestsView(
 ) {
     val state by viewModel.uiState
     val dateFmt = rememberDateFormatter()
+    val context = LocalContext.current
+    var showYearMenu by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(GreyBg)
     ) {
-        when {
-            state.isLoading -> {
-                CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
-            }
-
-            state.pedidos.isEmpty() -> {
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
+        if (state.isLoading) {
+            CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
+        } else {
+            Column(Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Sem pedidos urgentes.", color = Color.Gray)
-                    state.error?.let {
-                        Spacer(Modifier.height(6.dp))
-                        Text(it, color = Color.Red, fontSize = 12.sp)
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    BasicTextField(
+                        value = state.searchQuery,
+                        onValueChange = { viewModel.onSearchQueryChange(it) },
+                        modifier = Modifier.weight(1f),
+                        textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                        singleLine = true,
+                        decorationBox = { innerTextField ->
+                            if (state.searchQuery.isEmpty()) {
+                                Text("Numero mecanografico...", color = Color.Gray)
+                            }
+                            innerTextField()
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Box {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Ano: ${state.selectedYear}", fontSize = 12.sp, color = Color.Gray)
+                            IconButton(onClick = { showYearMenu = true }) {
+                                Icon(
+                                    Icons.Default.DateRange,
+                                    contentDescription = "Filtrar por ano",
+                                    tint = if (state.selectedYear != "Todos") GreenSas else Color.Black
+                                )
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = showYearMenu,
+                            onDismissRequest = { showYearMenu = false }
+                        ) {
+                            state.availableYears.forEach { year ->
+                                DropdownMenuItem(
+                                    text = { Text(year) },
+                                    onClick = {
+                                        viewModel.onYearSelected(year)
+                                        showYearMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    IconButton(onClick = { viewModel.exportToPDF(context) }) {
+                        Icon(
+                            Icons.Default.PictureAsPdf,
+                            contentDescription = "Exportar PDF",
+                            tint = Color.Black
+                        )
                     }
                 }
-            }
 
-            else -> {
-                Column(Modifier.fillMaxSize()) {
-                    state.error?.let {
-                        Text(it, color = Color.Red, fontSize = 12.sp)
-                        Spacer(Modifier.height(10.dp))
+                state.error?.let {
+                    Text(
+                        it,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
+                if (state.filteredPedidos.isEmpty()) {
+                    val emptyText = if (state.pedidos.isEmpty()) {
+                        "Sem pedidos urgentes."
+                    } else {
+                        "Sem resultados para os filtros."
                     }
-
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 40.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(emptyText, color = Color.Gray)
+                    }
+                } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
@@ -88,7 +171,7 @@ fun UrgentRequestsView(
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(state.pedidos, key = { it.id }) { pedido ->
+                        items(state.filteredPedidos, key = { it.id }) { pedido ->
                             PedidoUrgenteCard(
                                 pedido = pedido,
                                 dateFmt = dateFmt,
@@ -107,10 +190,13 @@ fun UrgentRequestsView(
                                     }
                                 },
                                 onCriarCesta = {
-                                    // Botão de recuperação: Vai direto para a criação de cesta
+                                    // Botao de recuperacao: Vai direto para a criacao de cesta
                                     navController.navigate(
                                         Screen.CreateCestaUrgente.createRoute(pedido.id, pedido.numeroMecanografico)
                                     )
+                                },
+                                onExportPdf = {
+                                    viewModel.exportPedidoPdf(context, pedido)
                                 }
                             )
                         }
@@ -121,13 +207,15 @@ fun UrgentRequestsView(
     }
 }
 
+
 @Composable
 private fun PedidoUrgenteCard(
     pedido: PedidoUrgenteItem,
     dateFmt: SimpleDateFormat,
     onNegar: () -> Unit,
     onAprovar: () -> Unit,
-    onCriarCesta: () -> Unit
+    onCriarCesta: () -> Unit,
+    onExportPdf: () -> Unit
 ) {
     val estadoNorm = pedido.estado.trim().lowercase(Locale.getDefault())
 
@@ -225,6 +313,19 @@ private fun PedidoUrgenteCard(
                     colors = ButtonDefaults.buttonColors(containerColor = OrangeWarning)
                 ) {
                     Text("⚠️ Finalizar: Criar Cesta", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onExportPdf) {
+                    Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = GreenSas)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Exportar PDF", color = GreenSas, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
