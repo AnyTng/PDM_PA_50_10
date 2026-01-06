@@ -165,7 +165,7 @@ class CompleteDataViewModel : ViewModel() {
         val precisaDocumentos = !state.apoioEmergencia
 
         // ✅ A validade da conta passa a ser atribuída no momento da submissão do formulário.
-        val validadeConta = AccountValidity.nextAugust31()
+        val validadeConta = AccountValidity.nextSeptembem30()
 
         val updateMap = hashMapOf<String, Any>(
             "relacaoIPCA" to state.relacaoIPCA,

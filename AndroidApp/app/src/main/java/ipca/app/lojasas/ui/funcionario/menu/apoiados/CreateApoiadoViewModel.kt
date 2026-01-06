@@ -271,7 +271,7 @@ class CreateApoiadoViewModel : ViewModel() {
             "role" to "Apoiado",
 
             // ✅ Validade atribuída na criação (conta criada diretamente por funcionário)
-            "validadeConta" to AccountValidity.nextAugust31()
+            "validadeConta" to AccountValidity.nextSeptembem30()
         )
 
         // Guardar na coleção 'apoiados'

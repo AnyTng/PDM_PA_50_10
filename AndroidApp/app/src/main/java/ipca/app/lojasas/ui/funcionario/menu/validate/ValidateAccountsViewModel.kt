@@ -185,7 +185,7 @@ class ValidateAccountsViewModel : ViewModel() {
 
                     val hasValidity = (doc.getTimestamp("validadeConta") != null) || (doc.get("validadeConta") != null)
                     if (!hasValidity) {
-                        updates["validadeConta"] = AccountValidity.nextAugust31()
+                        updates["validadeConta"] = AccountValidity.nextSeptembem30()
                     }
 
                     updateApoiadoStatus(apoiadoId, updates, onSuccess)
