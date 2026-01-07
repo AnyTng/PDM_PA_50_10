@@ -1,9 +1,10 @@
 package ipca.app.lojasas.data.products
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import ipca.app.lojasas.data.AuditLogger
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.common.asListenerHandle
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.text.get
@@ -18,8 +19,8 @@ class ProductsRepository @Inject constructor(
     fun listenAllProducts(
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection.addSnapshotListener { snapshot, error ->
+    ): ListenerHandle {
+        val registration = collection.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 onError(error)
                 return@addSnapshotListener
@@ -27,14 +28,15 @@ class ProductsRepository @Inject constructor(
             val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
             onSuccess(products)
         }
+        return registration.asListenerHandle()
     }
 
     fun listenProductsBySubCategoria(
         subCategoria: String,
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection
+    ): ListenerHandle {
+        val registration = collection
             .whereEqualTo("subCategoria", subCategoria)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -44,14 +46,15 @@ class ProductsRepository @Inject constructor(
                 val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
                 onSuccess(products)
             }
+        return registration.asListenerHandle()
     }
 
     fun listenProductsByNomeProduto(
         nomeProduto: String,
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection
+    ): ListenerHandle {
+        val registration = collection
             .whereEqualTo("nomeProduto", nomeProduto)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -61,20 +64,22 @@ class ProductsRepository @Inject constructor(
                 val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
                 onSuccess(products)
             }
+        return registration.asListenerHandle()
     }
 
     fun listenProduct(
         productId: String,
         onSuccess: (Product?) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection.document(productId).addSnapshotListener { snapshot, error ->
+    ): ListenerHandle {
+        val registration = collection.document(productId).addSnapshotListener { snapshot, error ->
             if (error != null) {
                 onError(error)
                 return@addSnapshotListener
             }
             onSuccess(snapshot?.toProductOrNull())
         }
+        return registration.asListenerHandle()
     }
 
     fun fetchProduct(

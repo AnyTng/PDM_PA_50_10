@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.auth.AuthRepository
-import com.google.firebase.firestore.ListenerRegistration
+import ipca.app.lojasas.data.common.ListenerHandle
 import ipca.app.lojasas.data.donations.ExpiredDonationsRepository
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
@@ -38,7 +38,7 @@ class ExpiredProductsViewModel @Inject constructor(
     private val _uiState = mutableStateOf(ExpiredProductsUiState())
     val uiState: State<ExpiredProductsUiState> = _uiState
 
-    private var listener: ListenerRegistration? = null
+    private var listener: ListenerHandle? = null
     private var allGroups: List<ProductGroupUi> = emptyList()
 
     init {

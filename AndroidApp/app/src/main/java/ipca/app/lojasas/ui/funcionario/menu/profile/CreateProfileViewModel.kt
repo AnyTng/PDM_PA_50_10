@@ -2,13 +2,13 @@ package ipca.app.lojasas.ui.funcionario.menu.profile
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.FirebaseApp
-import com.google.firebase.app
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.AuditLogger
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.funcionario.FuncionarioProfileInput
+import ipca.app.lojasas.data.funcionario.FuncionarioRepository
 import ipca.app.lojasas.utils.Validators
+import javax.inject.Inject
 
 data class CreateProfileState(
     var numMecanografico: String = "",
@@ -26,12 +26,16 @@ data class CreateProfileState(
     var selectedRole: String = "Funcionario"
 )
 
-class CreateProfileViewModel : ViewModel() {
+@HiltViewModel
+class CreateProfileViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val funcionarioRepository: FuncionarioRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(CreateProfileState())
         private set
 
-    // Funções de update
+    // Funcoes de update
     fun onNumMecanograficoChange(newValue: String) { uiState.value = uiState.value.copy(numMecanografico = newValue) }
     fun onNomeChange(newValue: String) { uiState.value = uiState.value.copy(nome = newValue) }
     fun onContactoChange(newValue: String) { uiState.value = uiState.value.copy(contacto = newValue) }
@@ -46,7 +50,7 @@ class CreateProfileViewModel : ViewModel() {
     fun createProfile(onSuccess: () -> Unit) {
         val s = uiState.value
 
-        // --- Validações (campos obrigatórios + formatos) ---
+        // --- Validacoes (campos obrigatorios + formatos) ---
         val email = s.email.trim()
         val nome = s.nome.trim()
         val numMec = s.numMecanografico.trim()
@@ -122,79 +126,53 @@ class CreateProfileViewModel : ViewModel() {
 
         uiState.value = normalizedState.copy(isLoading = true, error = null)
 
-        // 1. Configurar uma App Firebase Secundária para não afetar a sessão atual
-        val tempAppName = "SecondaryApp"
-        val currentApp = Firebase.app
-
-        val tempApp = try {
-            FirebaseApp.getInstance(tempAppName)
-        } catch (e: Exception) {
-            FirebaseApp.initializeApp(currentApp.applicationContext, currentApp.options, tempAppName)
-        }
-
-        // 2. Usar o Auth dessa app secundária
-        val tempAuth = Firebase.auth(tempApp)
-
-        tempAuth.createUserWithEmailAndPassword(normalizedState.email, normalizedState.password)
-            .addOnSuccessListener { result ->
-                val userId = result.user?.uid
-                if (userId != null) {
-                    // Importante: Fazer logout da app secundária imediatamente
-                    tempAuth.signOut()
-
-                    // 3. Guardar no Firestore (usando a instância principal que ainda tem o Admin logado)
-                    saveToFirestore(authUid = userId, onSuccess)
-                }
-            }
-            .addOnFailureListener { e ->
-                uiState.value = uiState.value.copy(isLoading = false, error = e.message ?: "Erro ao criar conta.")
-            }
-    }
-
-    private fun saveToFirestore(authUid: String, onSuccess: () -> Unit) {
-        val state = uiState.value
-        val db = Firebase.firestore // Usa a instância DEFAULT (Admin logado)
-
-        val userMap = hashMapOf(
-            "uid" to authUid, // O UID de autenticação fica guardado aqui para referência
-            "numMecanografico" to state.numMecanografico,
-            "nome" to state.nome,
-            "contacto" to state.contacto,
-            "documentNumber" to state.documentNumber,
-            "documentType" to state.documentType,
-            "morada" to state.morada,
-            "codPostal" to state.codPostal,
-            "email" to state.email,
-            "role" to state.selectedRole,
-            "mudarPass" to true
-        )
-
-        // Grava APENAS na coleção "funcionarios"
-        db.collection("funcionarios").document(state.numMecanografico)
-            .set(userMap)
-            .addOnSuccessListener {
-                // Removida a escrita na coleção "users".
-                // Chamamos o sucesso diretamente.
-                val nome = state.nome.trim()
-                val details = buildString {
-                    if (nome.isNotBlank()) append("Nome: ").append(nome)
-                    val email = state.email.trim()
-                    if (email.isNotBlank()) {
-                        if (isNotEmpty()) append(" | ")
-                        append("Email: ").append(email)
-                    }
-                }.takeIf { it.isNotBlank() }
-                AuditLogger.logAction(
-                    action = "Criou colaborador",
-                    entity = "funcionario",
-                    entityId = state.numMecanografico,
-                    details = details
+        authRepository.createUserInSecondaryApp(
+            email = normalizedState.email,
+            password = normalizedState.password,
+            onSuccess = { uid ->
+                val input = FuncionarioProfileInput(
+                    uid = uid,
+                    numMecanografico = normalizedState.numMecanografico,
+                    nome = normalizedState.nome,
+                    contacto = normalizedState.contacto,
+                    documentNumber = normalizedState.documentNumber,
+                    documentType = normalizedState.documentType,
+                    morada = normalizedState.morada,
+                    codPostal = normalizedState.codPostal,
+                    email = normalizedState.email,
+                    role = normalizedState.selectedRole,
+                    mudarPass = true
                 )
-                uiState.value = state.copy(isLoading = false, success = true)
-                onSuccess()
+
+                funcionarioRepository.createFuncionarioProfile(
+                    input = input,
+                    onSuccess = {
+                        val nomeTrim = normalizedState.nome.trim()
+                        val details = buildString {
+                            if (nomeTrim.isNotBlank()) append("Nome: ").append(nomeTrim)
+                            val emailTrim = normalizedState.email.trim()
+                            if (emailTrim.isNotBlank()) {
+                                if (isNotEmpty()) append(" | ")
+                                append("Email: ").append(emailTrim)
+                            }
+                        }.takeIf { it.isNotBlank() }
+                        AuditLogger.logAction(
+                            action = "Criou colaborador",
+                            entity = "funcionario",
+                            entityId = normalizedState.numMecanografico,
+                            details = details
+                        )
+                        uiState.value = normalizedState.copy(isLoading = false, success = true, error = null)
+                        onSuccess()
+                    },
+                    onError = { e ->
+                        uiState.value = normalizedState.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")
+                    }
+                )
+            },
+            onError = { e ->
+                uiState.value = normalizedState.copy(isLoading = false, error = e?.message ?: "Erro ao criar conta.")
             }
-            .addOnFailureListener { e ->
-                uiState.value = state.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")
-            }
+        )
     }
 }

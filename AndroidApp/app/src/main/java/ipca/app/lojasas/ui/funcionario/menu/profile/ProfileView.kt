@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
@@ -37,7 +37,7 @@ fun ProfileView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: ProfileViewModel = viewModel()
+    val viewModel: ProfileViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current

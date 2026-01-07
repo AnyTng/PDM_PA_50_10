@@ -12,28 +12,19 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.history.HistoryEntry
+import ipca.app.lojasas.data.history.HistoryRepository
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 import kotlin.math.roundToInt
-
-data class HistoryEntry(
-    val id: String,
-    val action: String,
-    val entity: String,
-    val entityId: String,
-    val details: String?,
-    val funcionarioNome: String,
-    val funcionarioId: String,
-    val timestamp: Date?
-)
 
 data class FuncionarioOption(
     val id: String,
@@ -53,12 +44,14 @@ data class HistoryState(
     val error: String? = null
 )
 
-class HistoryViewModel : ViewModel() {
+@HiltViewModel
+class HistoryViewModel @Inject constructor(
+    private val repository: HistoryRepository
+) : ViewModel() {
     var uiState = mutableStateOf(HistoryState())
         private set
 
-    private val db = Firebase.firestore
-    private var listener: ListenerRegistration? = null
+    private var listener: ListenerHandle? = null
 
     init {
         listenHistory()
@@ -95,31 +88,17 @@ class HistoryViewModel : ViewModel() {
     private fun listenHistory() {
         uiState.value = uiState.value.copy(isLoading = true, error = null)
         listener?.remove()
-        listener = db.collectionGroup("historico")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(
-                        isLoading = false,
-                        error = error.message
-                    )
-                    return@addSnapshotListener
-                }
-
-                val entries = snapshot?.documents.orEmpty().map { doc ->
-                    HistoryEntry(
-                        id = doc.id,
-                        action = doc.getString("action") ?: "",
-                        entity = doc.getString("entity") ?: "",
-                        entityId = doc.getString("entityId") ?: "",
-                        details = doc.getString("details"),
-                        funcionarioNome = doc.getString("funcionarioNome") ?: "",
-                        funcionarioId = doc.getString("funcionarioId") ?: "",
-                        timestamp = doc.getTimestamp("timestamp")?.toDate()
-                    )
-                }.sortedByDescending { it.timestamp ?: Date(0) }
-
-                updateEntries(entries)
+        listener = repository.listenHistory(
+            onSuccess = { entries ->
+                updateEntries(entries.sortedByDescending { it.timestamp ?: Date(0) })
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = error.message
+                )
             }
+        )
     }
 
     private fun updateEntries(entries: List<HistoryEntry>) {

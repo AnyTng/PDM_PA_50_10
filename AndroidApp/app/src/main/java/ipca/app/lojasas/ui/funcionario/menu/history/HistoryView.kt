@@ -41,7 +41,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import ipca.app.lojasas.data.history.HistoryEntry
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -53,7 +54,7 @@ private data class FilterOption(
 
 @Composable
 fun HistoryView(
-    viewModel: HistoryViewModel = viewModel()
+    viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val backgroundColor = Color(0xFFF2F2F2)

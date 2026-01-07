@@ -3,8 +3,8 @@ package ipca.app.lojasas.ui.funcionario.stock
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.common.ListenerHandle
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
 import javax.inject.Inject
@@ -26,8 +26,8 @@ class ProductViewModel @Inject constructor(
     private val _uiState = mutableStateOf(ProductViewUiState())
     val uiState: State<ProductViewUiState> = _uiState
 
-    private var listener: ListenerRegistration? = null
-    private var subCategoryListener: ListenerRegistration? = null
+    private var listener: ListenerHandle? = null
+    private var subCategoryListener: ListenerHandle? = null
     private var currentProductId: String? = null
     private var currentIdentity: ProductIdentity? = null
     private var currentSubCategoria: String? = null

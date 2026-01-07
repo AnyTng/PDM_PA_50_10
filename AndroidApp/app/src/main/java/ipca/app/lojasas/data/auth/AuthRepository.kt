@@ -1,6 +1,7 @@
 package ipca.app.lojasas.data.auth
 
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -87,6 +88,48 @@ class AuthRepository @Inject constructor(
                     onError(IllegalStateException("Missing user id"))
                 }
             }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun changePassword(
+        oldPassword: String,
+        newPassword: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val user = auth.currentUser
+        val email = user?.email?.trim().orEmpty()
+        if (user == null || email.isBlank()) {
+            onError("Utilizador nao autenticado.")
+            return
+        }
+
+        val credential = EmailAuthProvider.getCredential(email, oldPassword)
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+                user.updatePassword(newPassword)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e ->
+                        onError(e.message ?: "Erro ao atualizar palavra-passe.")
+                    }
+            }
+            .addOnFailureListener {
+                onError("Senha antiga incorreta.")
+            }
+    }
+
+    fun deleteCurrentUser(
+        onSuccess: () -> Unit,
+        onError: (Exception?) -> Unit
+    ) {
+        val user = auth.currentUser
+        if (user == null) {
+            onError(IllegalStateException("Missing user"))
+            return
+        }
+
+        user.delete()
+            .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }
     }
 

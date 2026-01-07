@@ -20,22 +20,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
+import ipca.app.lojasas.data.funcionario.CollaboratorItem
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
 
 @Composable
 fun CollaboratorsListView(
     navController: NavController,
-    viewModel: CollaboratorsListViewModel = viewModel()
+    viewModel: CollaboratorsListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val context = LocalContext.current
-
-    // Obter o ID do utilizador atual para saber qual card é o "meu"
-    val currentUserId = remember { FirebaseAuth.getInstance().currentUser?.uid ?: "" }
 
     // Estados para controlar qual item está a ser modificado (para abrir os pop-ups)
     var itemToDelete by remember { mutableStateOf<CollaboratorItem?>(null) }
@@ -88,7 +85,7 @@ fun CollaboratorsListView(
                     items(state.filteredList, key = { it.id }) { item ->
                         CollaboratorCard(
                             item = item,
-                            currentUserId = currentUserId, // Passamos o ID atual
+                            currentUserId = state.currentUserId,
                             onDelete = { itemToDelete = item },
                             onPromote = { itemToPromote = item },
                             onDemote = { itemToDemote = item }

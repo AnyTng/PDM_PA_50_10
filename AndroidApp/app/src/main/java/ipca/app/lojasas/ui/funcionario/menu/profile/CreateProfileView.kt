@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
@@ -39,7 +39,7 @@ fun CreateProfileView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: CreateProfileViewModel = viewModel()
+    val viewModel: CreateProfileViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
