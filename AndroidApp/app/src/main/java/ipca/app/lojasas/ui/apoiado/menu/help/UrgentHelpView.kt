@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader // Importar o Header
 
@@ -19,7 +19,7 @@ fun UrgentHelpView(
     navController: NavController,
     numeroMecanografico: String
 ) {
-    val viewModel: UrgentHelpViewModel = viewModel()
+    val viewModel: UrgentHelpViewModel = hiltViewModel()
     var descricao by remember { mutableStateOf("") }
 
     val isLoading by viewModel.isLoading

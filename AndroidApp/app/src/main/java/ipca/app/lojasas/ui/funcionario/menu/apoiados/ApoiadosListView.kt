@@ -19,11 +19,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
+import ipca.app.lojasas.data.apoiado.ApoiadoItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,7 +35,7 @@ import java.util.Date
 @Composable
 fun ApoiadosListView(
     navController: NavController,
-    viewModel: ApoiadosListViewModel = viewModel()
+    viewModel: ApoiadosListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val context = LocalContext.current

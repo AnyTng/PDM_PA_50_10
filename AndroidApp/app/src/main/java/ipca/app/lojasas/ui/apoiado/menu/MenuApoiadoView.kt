@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
@@ -26,7 +26,7 @@ fun MenuApoiadoView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: MenuApoiadoViewModel = viewModel()
+    val viewModel: MenuApoiadoViewModel = hiltViewModel()
     val isApproved by viewModel.isApproved
     val isBlock by viewModel.isBlock
 

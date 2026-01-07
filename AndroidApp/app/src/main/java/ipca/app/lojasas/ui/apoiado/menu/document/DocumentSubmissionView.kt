@@ -29,9 +29,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.apoiado.UploadedFile
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -43,7 +44,7 @@ fun DocumentSubmissionView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: DocumentSubmissionViewModel = viewModel()
+    val viewModel: DocumentSubmissionViewModel = hiltViewModel()
     val state by viewModel.uiState
     val context = LocalContext.current
 

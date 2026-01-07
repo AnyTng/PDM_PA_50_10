@@ -2,15 +2,14 @@ package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.FirebaseApp
-import com.google.firebase.app
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.AuditLogger
-import ipca.app.lojasas.utils.AccountValidity
+import ipca.app.lojasas.data.apoiado.ApoiadoCreationInput
+import ipca.app.lojasas.data.apoiado.ApoiadoRepository
+import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
+import javax.inject.Inject
 
 data class CreateApoiadoState(
     // Dados de Conta
@@ -43,13 +42,14 @@ data class CreateApoiadoState(
     var error: String? = null
 )
 
-class CreateApoiadoViewModel : ViewModel() {
+@HiltViewModel
+class CreateApoiadoViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val apoiadoRepository: ApoiadoRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(CreateApoiadoState())
         private set
-
-    // DB usa a instância padrão (o Funcionário autenticado) para ter permissão de escrita
-    private val db = Firebase.firestore
 
     // --- Setters para a View ---
     // Nota UX: limpamos o erro ao editar para evitar “não acontece nada” em tentativas repetidas.
@@ -201,106 +201,59 @@ class CreateApoiadoViewModel : ViewModel() {
 
         uiState.value = normalizedState.copy(isLoading = true, error = null)
 
-        // 1. Configurar uma App secundária para criar o user sem fazer login automático na App principal
-        val secondaryAppName = "TempCreateUserApp"
-        val secondaryApp = try {
-            FirebaseApp.getInstance(secondaryAppName)
-        } catch (e: IllegalStateException) {
-            // Se não existir, inicializamos com as mesmas opções da app principal
-            val currentApp = Firebase.app
-            FirebaseApp.initializeApp(
-                currentApp.applicationContext,
-                currentApp.options,
-                secondaryAppName
-            )
-        }
-
-        // 2. Usar o Auth dessa app secundária
-        val secondaryAuth = FirebaseAuth.getInstance(secondaryApp)
-
-        secondaryAuth.createUserWithEmailAndPassword(normalizedState.email, normalizedState.password)
-            .addOnSuccessListener { result ->
-                val uid = result.user?.uid ?: ""
-
-                // Opcional: Fazer logout da app secundária para limpar
-                secondaryAuth.signOut()
-
-                // 3. Guardar dados no Firestore usando a instância PRINCIPAL (db)
-                //    que ainda tem o Funcionário logado.
-                saveFirestoreData(uid)
-            }
-            .addOnFailureListener { e ->
-                uiState.value = uiState.value.copy(isLoading = false, error = "Erro Auth: ${e.message}")
-            }
-    }
-
-    private fun saveFirestoreData(uid: String) {
-        val s = uiState.value
-
-        // Preparar mapa de dados completo
-        val apoiadoMap = hashMapOf(
-            "uid" to uid,
-            "role" to "Apoiado",
-            "email" to s.email,
-            "emailApoiado" to s.email,
-            "nome" to s.nome,
-            "numMecanografico" to s.numMecanografico,
-
-            // Contactos e Identidade
-            "contacto" to s.contacto,
-            "documentNumber" to s.documentNumber,
-            "documentType" to s.documentType,
-            "nacionalidade" to s.nacionalidade,
-            "dataNascimento" to Date(s.dataNascimento!!),
-            "morada" to s.morada,
-            "codPostal" to s.codPostal,
-
-            // Dados Sócio-Económicos
-            "relacaoIPCA" to s.relacaoIPCA,
-            "curso" to if(s.relacaoIPCA == "Estudante") s.curso else "",
-            "graoEnsino" to if(s.relacaoIPCA == "Estudante") s.graoEnsino else "",
-            "apoioEmergenciaSocial" to s.apoioEmergencia,
-            "bolsaEstudos" to s.bolsaEstudos,
-            "valorBolsa" to if(s.bolsaEstudos) s.valorBolsa else "",
-            "necessidade" to s.necessidades,
-
-            // Estados da Conta
-            "estadoConta" to "Aprovado",
-            "faltaDocumentos" to false,
-            "dadosIncompletos" to false,
-            "mudarPass" to true,
-            "role" to "Apoiado",
-
-            // ✅ Validade atribuída na criação (conta criada diretamente por funcionário)
-            "validadeConta" to AccountValidity.nextSeptembem30()
-        )
-
-        // Guardar na coleção 'apoiados'
-        db.collection("apoiados").document(s.numMecanografico)
-            .set(apoiadoMap)
-            .addOnSuccessListener {
-                // Criar registo na coleção 'users'
-                //db.collection("users").document(uid).set(mapOf("role" to "Apoiado", "email" to s.email))
-
-                val nome = s.nome.trim()
-                val details = buildString {
-                    if (nome.isNotBlank()) append("Nome: ").append(nome)
-                    val email = s.email.trim()
-                    if (email.isNotBlank()) {
-                        if (isNotEmpty()) append(" | ")
-                        append("Email: ").append(email)
-                    }
-                }.takeIf { it.isNotBlank() }
-                AuditLogger.logAction(
-                    action = "Criou beneficiario",
-                    entity = "apoiado",
-                    entityId = s.numMecanografico,
-                    details = details
+        authRepository.createUserInSecondaryApp(
+            email = normalizedState.email,
+            password = normalizedState.password,
+            onSuccess = { uid ->
+                val input = ApoiadoCreationInput(
+                    uid = uid,
+                    numMecanografico = normalizedState.numMecanografico,
+                    nome = normalizedState.nome,
+                    email = normalizedState.email,
+                    contacto = normalizedState.contacto,
+                    documentNumber = normalizedState.documentNumber,
+                    documentType = normalizedState.documentType,
+                    nacionalidade = normalizedState.nacionalidade,
+                    dataNascimento = Date(normalizedState.dataNascimento!!),
+                    morada = normalizedState.morada,
+                    codPostal = normalizedState.codPostal,
+                    relacaoIPCA = normalizedState.relacaoIPCA,
+                    curso = normalizedState.curso,
+                    graoEnsino = normalizedState.graoEnsino,
+                    apoioEmergencia = normalizedState.apoioEmergencia,
+                    bolsaEstudos = normalizedState.bolsaEstudos,
+                    valorBolsa = normalizedState.valorBolsa,
+                    necessidades = normalizedState.necessidades
                 )
-                uiState.value = s.copy(isLoading = false, isSuccess = true)
+
+                apoiadoRepository.createApoiadoProfile(
+                    input = input,
+                    onSuccess = {
+                        val nome = normalizedState.nome.trim()
+                        val details = buildString {
+                            if (nome.isNotBlank()) append("Nome: ").append(nome)
+                            val email = normalizedState.email.trim()
+                            if (email.isNotBlank()) {
+                                if (isNotEmpty()) append(" | ")
+                                append("Email: ").append(email)
+                            }
+                        }.takeIf { it.isNotBlank() }
+                        AuditLogger.logAction(
+                            action = "Criou beneficiario",
+                            entity = "apoiado",
+                            entityId = normalizedState.numMecanografico,
+                            details = details
+                        )
+                        uiState.value = normalizedState.copy(isLoading = false, isSuccess = true, error = null)
+                    },
+                    onError = { e ->
+                        uiState.value = normalizedState.copy(isLoading = false, error = "Erro BD: ${e.message}")
+                    }
+                )
+            },
+            onError = { e ->
+                uiState.value = normalizedState.copy(isLoading = false, error = "Erro Auth: ${e?.message}")
             }
-            .addOnFailureListener { e ->
-                uiState.value = s.copy(isLoading = false, error = "Erro BD: ${e.message}")
-            }
+        )
     }
 }

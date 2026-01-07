@@ -45,10 +45,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import com.google.firebase.auth.FirebaseAuth
+import ipca.app.lojasas.data.cestas.ApoiadoCesta
+import ipca.app.lojasas.data.requests.UrgentRequest
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
 import ipca.app.lojasas.ui.theme.IntroFontFamily
@@ -96,7 +98,7 @@ fun ApoiadoHomeScreen(
     navController: NavController,
     userId: String
 ) {
-    val viewModel: ApoiadoViewModel = viewModel()
+    val viewModel: ApoiadoViewModel = hiltViewModel()
     val state by viewModel.uiState
 
     // Garante refresh quando a navegação chega aqui
@@ -419,7 +421,7 @@ private fun CardActionButton(
 
 @Composable
 private fun CestaHomeCard(
-    cesta: Cesta,
+    cesta: ApoiadoCesta,
     style: CestaCardStyle
 ) {
     val (title, background, textColor, accentColor) = when (style) {
@@ -696,7 +698,7 @@ private fun EmptyStateCheck() {
 
 @Composable
 private fun CestaDetailsDialog(
-    cesta: Cesta,
+    cesta: ApoiadoCesta,
     onDismiss: () -> Unit
 ) {
     val fmtFull = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }

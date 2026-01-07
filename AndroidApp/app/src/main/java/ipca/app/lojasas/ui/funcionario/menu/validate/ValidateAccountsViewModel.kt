@@ -2,13 +2,18 @@ package ipca.app.lojasas.ui.funcionario.menu.validate
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.AuditLogger
-import ipca.app.lojasas.utils.AccountValidity
+import ipca.app.lojasas.data.apoiado.ApoiadoDetails
+import ipca.app.lojasas.data.apoiado.ApoiadoDocumentsRepository
+import ipca.app.lojasas.data.apoiado.ApoiadoRepository
+import ipca.app.lojasas.data.apoiado.ApoiadoSummary
+import ipca.app.lojasas.data.apoiado.DocumentSummary
+import ipca.app.lojasas.data.apoiado.SubmittedFile
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.funcionario.FuncionarioRepository
 import java.util.Date
+import javax.inject.Inject
 
 // Estado da UI
 data class ValidateState(
@@ -19,56 +24,16 @@ data class ValidateState(
     val error: String? = null
 )
 
-// Resumo para a lista
-data class ApoiadoSummary(
-    val id: String,
-    val nome: String,
-    val dataPedido: Date?
-)
-
-// Detalhes completos para o pop-up
-data class ApoiadoDetails(
-    val id: String,
-    val nome: String,
-    val email: String,
-    val contacto: String,
-
-    // Identificação Civil
-    val documentNumber: String, // Substitui o antigo 'nif'
-    val documentType: String,   // "NIF" ou "Passaporte"
-    val morada: String,
-
-    // Relação com IPCA
-    val tipo: String, // Estudante, Funcionário, etc.
-    val dadosIncompletos: Boolean,
-
-    // Campos do Formulário "CompleteData"
-    val nacionalidade: String,
-    val dataNascimento: Date?,
-    val curso: String?,
-    val grauEnsino: String?,
-    val apoioEmergencia: Boolean,
-    val bolsaEstudos: Boolean,
-    val valorBolsa: String?,
-    val necessidades: List<String>
-)
-
-// Resumo dos documentos submetidos
-data class DocumentSummary(
-    val typeTitle: String,
-    val fileName: String,
-    val url: String,
-    val date: Date?,
-    val entrega: Int
-)
-
-class ValidateAccountsViewModel : ViewModel() {
+@HiltViewModel
+class ValidateAccountsViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val funcionarioRepository: FuncionarioRepository,
+    private val apoiadoRepository: ApoiadoRepository,
+    private val documentsRepository: ApoiadoDocumentsRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(ValidateState())
         private set
-
-    private val db = Firebase.firestore
-    private val auth = Firebase.auth
 
     init {
         loadPendingAccounts()
@@ -77,91 +42,55 @@ class ValidateAccountsViewModel : ViewModel() {
     fun loadPendingAccounts() {
         uiState.value = uiState.value.copy(isLoading = true)
 
-        db.collection("apoiados")
-            .whereEqualTo("estadoConta", "Analise")
-            .get()
-            .addOnSuccessListener { result ->
-                val list = result.documents.map { doc ->
-                    ApoiadoSummary(
-                        id = doc.id,
-                        nome = doc.getString("nome") ?: "Sem Nome",
-                        dataPedido = null // Pode-se adicionar data de pedido se existir no doc
-                    )
-                }
+        apoiadoRepository.fetchPendingApoiados(
+            onSuccess = { list ->
                 uiState.value = uiState.value.copy(pendingAccounts = list, isLoading = false)
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(isLoading = false, error = error.message)
             }
-            .addOnFailureListener {
-                uiState.value = uiState.value.copy(isLoading = false, error = it.message)
-            }
+        )
     }
 
     fun selectApoiado(apoiadoId: String) {
         uiState.value = uiState.value.copy(isLoading = true)
 
-        db.collection("apoiados").document(apoiadoId).get()
-            .addOnSuccessListener { doc ->
+        apoiadoRepository.fetchApoiadoValidationDetails(
+            apoiadoId = apoiadoId,
+            onSuccess = { details ->
+                if (details == null) {
+                    uiState.value = uiState.value.copy(
+                        isLoading = false,
+                        error = "Apoiado nao encontrado."
+                    )
+                    return@fetchApoiadoValidationDetails
+                }
 
-                // Tentar ler a data de nascimento como Timestamp (formato Firestore)
-                val dtNasc = try {
-                    doc.getTimestamp("dataNascimento")?.toDate()
-                } catch (e: Exception) { null }
-
-                val details = ApoiadoDetails(
-                    id = doc.id,
-                    nome = doc.getString("nome") ?: "",
-                    email = doc.getString("email") ?: doc.getString("emailApoiado") ?: "",
-                    contacto = doc.getString("contacto") ?: "",
-
-                    // Lê o tipo de documento e o número guardados no perfil
-                    documentNumber = doc.getString("documentNumber") ?: "",
-                    documentType = doc.getString("documentType") ?: "NIF",
-
-                    morada = "${doc.getString("morada")}, ${doc.getString("codPostal")}",
-                    tipo = doc.getString("relacaoIPCA") ?: "N/A",
-                    dadosIncompletos = doc.getBoolean("dadosIncompletos") ?: false,
-
-                    // Lê os dados extra do formulário de preenchimento
-                    nacionalidade = doc.getString("nacionalidade") ?: "—",
-                    dataNascimento = dtNasc,
-                    curso = doc.getString("curso"),
-                    grauEnsino = doc.getString("graoEnsino"),
-                    apoioEmergencia = doc.getBoolean("apoioEmergenciaSocial") ?: false,
-                    bolsaEstudos = doc.getBoolean("bolsaEstudos") ?: false,
-                    valorBolsa = doc.getString("valorBolsa"),
-                    necessidades = (doc.get("necessidade") as? List<String>) ?: emptyList()
-                )
-
-                // Buscar documentos submetidos (ordenados por entrega descrescente)
-                db.collection("apoiados").document(apoiadoId)
-                    .collection("Submissoes")
-                    .orderBy("numeroEntrega", Query.Direction.DESCENDING)
-                    .get()
-                    .addOnSuccessListener { docsSnapshot ->
-                        val docsList = docsSnapshot.documents.map { fileDoc ->
-                            DocumentSummary(
-                                typeTitle = fileDoc.getString("typeTitle") ?: "Doc",
-                                fileName = fileDoc.getString("fileName") ?: "",
-                                url = fileDoc.getString("storagePath") ?: "",
-                                date = fileDoc.getLong("date")?.let { Date(it) },
-                                entrega = fileDoc.getLong("numeroEntrega")?.toInt() ?: 1
-                            )
-                        }
-                            // Ordenação secundária por data em memória
-                            .sortedWith(compareByDescending<DocumentSummary> { it.entrega }.thenByDescending { it.date })
-
+                documentsRepository.fetchSubmittedDocuments(
+                    apoiadoId = apoiadoId,
+                    onSuccess = { files ->
+                        val docsList = mapDocumentSummaries(files)
                         uiState.value = uiState.value.copy(
                             selectedApoiadoDetails = details,
                             apoaidoDocuments = docsList,
                             isLoading = false
                         )
+                    },
+                    onError = { error ->
+                        uiState.value = uiState.value.copy(
+                            isLoading = false,
+                            error = "Erro ao carregar documentos: ${error.message}"
+                        )
                     }
-                    .addOnFailureListener {
-                        uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar documentos: ${it.message}")
-                    }
+                )
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = "Erro ao carregar perfil: ${error.message}"
+                )
             }
-            .addOnFailureListener {
-                uiState.value = uiState.value.copy(isLoading = false, error = "Erro ao carregar perfil: ${it.message}")
-            }
+        )
     }
 
     fun clearSelection() {
@@ -171,122 +100,97 @@ class ValidateAccountsViewModel : ViewModel() {
     // --- AÇÕES DE VALIDAÇÃO ---
 
     fun approveAccount(apoiadoId: String, onSuccess: () -> Unit) {
-        getCurrentFuncionarioId { funcionarioId ->
-            // ✅ A validade é atribuída na submissão do formulário.
-            // Porém, para contas antigas (submetidas antes desta alteração),
-            // podemos não ter "validadeConta" ainda. Nesse caso, atribuimos
-            // aqui apenas como fallback para não deixar a conta sem validade.
-            db.collection("apoiados").document(apoiadoId).get()
-                .addOnSuccessListener { doc ->
-                    val updates = hashMapOf<String, Any>(
-                        "estadoConta" to "Aprovado",
-                        "validadoPor" to funcionarioId,
-                        "dataValidacao" to Date()
-                    )
-
-                    val hasValidity = (doc.getTimestamp("validadeConta") != null) || (doc.get("validadeConta") != null)
-                    if (!hasValidity) {
-                        updates["validadeConta"] = AccountValidity.nextSeptembem30()
-                    }
-
-                    updateApoiadoStatus(
-                        apoiadoId,
-                        updates,
-                        actionLabel = "Aprovou beneficiario",
-                        onSuccess = onSuccess
-                    )
+        resolveFuncionarioId { funcionarioId ->
+            uiState.value = uiState.value.copy(isLoading = true)
+            apoiadoRepository.approveApoiadoAccount(
+                apoiadoId = apoiadoId,
+                funcionarioId = funcionarioId,
+                onSuccess = {
+                    loadPendingAccounts()
+                    uiState.value = uiState.value.copy(selectedApoiadoDetails = null)
+                    AuditLogger.logAction("Aprovou beneficiario", "apoiado", apoiadoId)
+                    onSuccess()
+                },
+                onError = { error ->
+                    uiState.value = uiState.value.copy(isLoading = false, error = "Erro: ${error.message}")
                 }
-                .addOnFailureListener {
-                    // Se falhar a leitura, aprovamos na mesma sem mexer na validade.
-                    val updates = hashMapOf<String, Any>(
-                        "estadoConta" to "Aprovado",
-                        "validadoPor" to funcionarioId,
-                        "dataValidacao" to Date()
-                    )
-                    updateApoiadoStatus(
-                        apoiadoId,
-                        updates,
-                        actionLabel = "Aprovou beneficiario",
-                        onSuccess = onSuccess
-                    )
-                }
+            )
         }
     }
 
     fun denyAccount(apoiadoId: String, reason: String, onSuccess: () -> Unit) {
-        getCurrentFuncionarioId { funcionarioId ->
-            val denialData = hashMapOf(
-                "motivo" to reason,
-                "negadoPor" to funcionarioId,
-                "data" to Date()
-            )
-            // Guarda o histórico da negação
-            db.collection("apoiados").document(apoiadoId)
-                .collection("JustificacoesNegacao")
-                .add(denialData)
-                .addOnSuccessListener {
-                    val updates = hashMapOf<String, Any>(
-                        "estadoConta" to "Negado",
-                        "negadoPor" to funcionarioId
+        resolveFuncionarioId { funcionarioId ->
+            uiState.value = uiState.value.copy(isLoading = true)
+            apoiadoRepository.denyApoiadoAccount(
+                apoiadoId = apoiadoId,
+                funcionarioId = funcionarioId,
+                reason = reason,
+                onSuccess = {
+                    loadPendingAccounts()
+                    uiState.value = uiState.value.copy(selectedApoiadoDetails = null)
+                    AuditLogger.logAction(
+                        action = "Negou beneficiario",
+                        entity = "apoiado",
+                        entityId = apoiadoId,
+                        details = "Motivo: $reason"
                     )
-                    updateApoiadoStatus(
-                        apoiadoId,
-                        updates,
-                        actionLabel = "Negou beneficiario",
-                        details = "Motivo: $reason",
-                        onSuccess = onSuccess
-                    )
+                    onSuccess()
+                },
+                onError = { error ->
+                    uiState.value = uiState.value.copy(isLoading = false, error = "Erro: ${error.message}")
                 }
+            )
         }
     }
 
     fun blockAccount(apoiadoId: String, onSuccess: () -> Unit) {
-        getCurrentFuncionarioId { funcionarioId ->
-            val updates = hashMapOf<String, Any>(
-                "estadoConta" to "Bloqueado",
-                "bloqueadoPor" to funcionarioId
-            )
-            updateApoiadoStatus(
-                apoiadoId,
-                updates,
-                actionLabel = "Bloqueou beneficiario",
-                onSuccess = onSuccess
+        resolveFuncionarioId { funcionarioId ->
+            uiState.value = uiState.value.copy(isLoading = true)
+            apoiadoRepository.blockApoiadoAccount(
+                apoiadoId = apoiadoId,
+                funcionarioId = funcionarioId,
+                onSuccess = {
+                    loadPendingAccounts()
+                    uiState.value = uiState.value.copy(selectedApoiadoDetails = null)
+                    AuditLogger.logAction("Bloqueou beneficiario", "apoiado", apoiadoId)
+                    onSuccess()
+                },
+                onError = { error ->
+                    uiState.value = uiState.value.copy(isLoading = false, error = "Erro: ${error.message}")
+                }
             )
         }
     }
 
-    private fun updateApoiadoStatus(
-        id: String,
-        updates: Map<String, Any>,
-        actionLabel: String,
-        details: String? = null,
-        onSuccess: () -> Unit
-    ) {
-        uiState.value = uiState.value.copy(isLoading = true)
-        db.collection("apoiados").document(id).update(updates)
-            .addOnSuccessListener {
-                loadPendingAccounts()
-                uiState.value = uiState.value.copy(selectedApoiadoDetails = null)
-                AuditLogger.logAction(actionLabel, "apoiado", id, details)
-                onSuccess()
-            }
-            .addOnFailureListener {
-                uiState.value = uiState.value.copy(isLoading = false, error = "Erro: ${it.message}")
-            }
-    }
-
-    private fun getCurrentFuncionarioId(onResult: (String) -> Unit) {
-        val uid = auth.currentUser?.uid ?: return
-        db.collection("funcionarios").whereEqualTo("uid", uid).get()
-            .addOnSuccessListener {
-                if (!it.isEmpty) onResult(it.documents[0].id)
-                else onResult("unknown_staff")
-            }
-    }
-
     fun getFileUri(path: String, onResult: (android.net.Uri?) -> Unit) {
-        com.google.firebase.storage.FirebaseStorage.getInstance().reference.child(path).downloadUrl
-            .addOnSuccessListener { onResult(it) }
-            .addOnFailureListener { onResult(null) }
+        documentsRepository.getFileUrl(path, onResult)
+    }
+
+    private fun resolveFuncionarioId(onResult: (String) -> Unit) {
+        val uid = authRepository.currentUserId()
+        if (uid.isNullOrBlank()) {
+            uiState.value = uiState.value.copy(isLoading = false, error = "Utilizador não autenticado.")
+            return
+        }
+
+        funcionarioRepository.fetchFuncionarioIdByUid(
+            uid = uid,
+            onSuccess = { id -> onResult(id ?: "unknown_staff") },
+            onError = { error ->
+                uiState.value = uiState.value.copy(isLoading = false, error = error.message)
+            }
+        )
+    }
+
+    private fun mapDocumentSummaries(files: List<SubmittedFile>): List<DocumentSummary> {
+        return files.map { file ->
+            DocumentSummary(
+                typeTitle = file.title,
+                fileName = file.fileName,
+                url = file.storagePath,
+                date = file.date,
+                entrega = file.numeroEntrega
+            )
+        }.sortedWith(compareByDescending<DocumentSummary> { it.entrega }.thenByDescending { it.date ?: Date(0) })
     }
 }

@@ -3,12 +3,14 @@ package ipca.app.lojasas.ui.apoiado.menu.help
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
-import java.util.Date
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.requests.UrgentRequestsRepository
+import javax.inject.Inject
 
-class UrgentHelpViewModel : ViewModel() {
-    val db = Firebase.firestore
+@HiltViewModel
+class UrgentHelpViewModel @Inject constructor(
+    private val repository: UrgentRequestsRepository
+) : ViewModel() {
 
     var isLoading = mutableStateOf(false)
     var error = mutableStateOf<String?>(null)
@@ -23,24 +25,18 @@ class UrgentHelpViewModel : ViewModel() {
 
         isLoading.value = true
 
-        val pedido = hashMapOf(
-            "numeroMecanografico" to numeroMecanografico,
-            "descricao" to descricao,
-            "estado" to "Analise",
-            "dataSubmissao" to Date(),
-            "tipo" to "Urgente"
-        )
-
-        db.collection("pedidos_ajuda")
-            .add(pedido)
-            .addOnSuccessListener {
+        repository.submitUrgentRequest(
+            numeroMecanografico = numeroMecanografico,
+            descricao = descricao,
+            onSuccess = {
                 isLoading.value = false
                 success.value = true
                 onSuccess()
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 isLoading.value = false
                 error.value = "Erro ao enviar: ${e.message}"
             }
+        )
     }
 }

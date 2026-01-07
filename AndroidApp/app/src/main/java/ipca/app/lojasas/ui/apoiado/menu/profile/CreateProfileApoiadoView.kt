@@ -31,7 +31,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
@@ -45,7 +45,7 @@ fun CreateProfileApoiadoView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: CreateProfileApoiadoViewModel = viewModel()
+    val viewModel: CreateProfileApoiadoViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
 

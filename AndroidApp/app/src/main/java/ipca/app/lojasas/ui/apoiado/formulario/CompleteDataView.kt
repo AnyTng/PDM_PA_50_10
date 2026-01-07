@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -41,7 +41,7 @@ fun CompleteDataView(
     // Se fornecido, mostra um aviso no topo indicando que o formulário está a ser pedido por expiração de validade.
     validadeExpiradaEm: java.util.Date? = null,
 ) {
-    val viewModel: CompleteDataViewModel = viewModel()
+    val viewModel: CompleteDataViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current

@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
@@ -40,7 +40,7 @@ import java.util.Locale
 @Composable
 fun CreateApoiadoView(
     navController: NavController,
-    viewModel: CreateApoiadoViewModel = viewModel()
+    viewModel: CreateApoiadoViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val context = LocalContext.current

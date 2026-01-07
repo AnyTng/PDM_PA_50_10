@@ -24,8 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.data.apoiado.ApoiadoDetails
+import ipca.app.lojasas.data.apoiado.ApoiadoSummary
+import ipca.app.lojasas.data.apoiado.DocumentSummary
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
@@ -36,7 +39,7 @@ fun ValidateAccountsView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: ValidateAccountsViewModel = viewModel()
+    val viewModel: ValidateAccountsViewModel = hiltViewModel()
     val state by viewModel.uiState
     val context = LocalContext.current
 

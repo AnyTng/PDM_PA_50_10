@@ -33,6 +33,17 @@ data class CestaDetails(
     val observacoes: String? = null
 )
 
+data class ApoiadoCesta(
+    val id: String,
+    val dataRecolha: Date? = null,
+    val dataAgendada: Date? = null,
+    val estadoCesta: String = "",
+    val numeroItens: Int = 0,
+    val faltas: Int = 0,
+    val origem: String? = null,
+    val pedidoUrgenteId: String? = null
+)
+
 data class ApoiadoInfo(
     val id: String,
     val nome: String,

@@ -44,11 +44,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
-import ipca.app.lojasas.ui.funcionario.pedidosurgentes.PedidoUrgenteItem
 import ipca.app.lojasas.ui.funcionario.pedidosurgentes.UrgentRequestsViewModel
+import ipca.app.lojasas.data.requests.PedidoUrgenteItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -59,7 +59,7 @@ private val OrangeWarning = Color(0xFFE6A519) // Cor para destacar a ação pend
 @Composable
 fun UrgentRequestsView(
     navController: NavController,
-    viewModel: UrgentRequestsViewModel = viewModel()
+    viewModel: UrgentRequestsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val dateFmt = rememberDateFormatter()

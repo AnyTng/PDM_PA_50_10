@@ -105,6 +105,47 @@ class CestasRepository @Inject constructor(
         return registration.asListenerHandle()
     }
 
+    fun listenCestasForApoiado(
+        apoiadoKeys: List<String>,
+        onSuccess: (List<ApoiadoCesta>) -> Unit,
+        onError: (Exception) -> Unit
+    ): ListenerHandle {
+        val keys = apoiadoKeys.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        if (keys.isEmpty()) {
+            onSuccess(emptyList())
+            return ListenerHandle { }
+        }
+
+        val query = if (keys.size == 1) {
+            cestasCollection.whereEqualTo("apoiadoID", keys.first())
+        } else {
+            cestasCollection.whereIn("apoiadoID", keys)
+        }
+
+        val registration = query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                onError(error)
+                return@addSnapshotListener
+            }
+
+            val list = snapshot?.documents.orEmpty().map { doc ->
+                val rawProdutos = (doc.get("produtos") as? List<*>) ?: emptyList<Any?>()
+                ApoiadoCesta(
+                    id = doc.id,
+                    dataRecolha = snapshotDate(doc, "dataRecolha"),
+                    dataAgendada = snapshotDate(doc, "dataAgendada"),
+                    estadoCesta = doc.getString("estadoCesta")?.trim().orEmpty(),
+                    numeroItens = rawProdutos.size,
+                    faltas = (doc.getLong("faltas") ?: 0L).toInt(),
+                    origem = doc.getString("origem"),
+                    pedidoUrgenteId = doc.getString("pedidoUrgenteId")
+                )
+            }
+            onSuccess(list)
+        }
+        return registration.asListenerHandle()
+    }
+
     fun listenApoiadoInfo(
         apoiadoId: String,
         onSuccess: (ApoiadoInfo?) -> Unit,

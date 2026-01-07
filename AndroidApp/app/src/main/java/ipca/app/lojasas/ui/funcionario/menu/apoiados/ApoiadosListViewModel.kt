@@ -12,17 +12,19 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.R
 import ipca.app.lojasas.data.AuditLogger
-import ipca.app.lojasas.utils.AccountValidity
+import ipca.app.lojasas.data.apoiado.ApoiadoItem
+import ipca.app.lojasas.data.apoiado.ApoiadoPdfDetails
+import ipca.app.lojasas.data.apoiado.ApoiadoRepository
+import ipca.app.lojasas.data.common.ListenerHandle
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 enum class SortOrder {
@@ -42,53 +44,14 @@ data class ApoiadoListState(
     val selectedApoiado: ApoiadoItem? = null
 )
 
-data class ApoiadoItem(
-    val id: String,
-    val nome: String,
-    val email: String,
-    val rawStatus: String, // Estado real na BD
-    val displayStatus: String, // Estado visual (ex: "Apoio Pausado")
-    val contacto: String = "",
-    val documentType: String = "",
-    val documentNumber: String = "",
-    val morada: String = "",
-    val nacionalidade: String = "",
-    val dataNascimento: java.util.Date? = null
-)
-
-data class ApoiadoPdfDetails(
-    val id: String,
-    val nome: String,
-    val email: String,
-    val emailApoiado: String,
-    val contacto: String,
-    val documentType: String,
-    val documentNumber: String,
-    val nacionalidade: String,
-    val dataNascimento: Date?,
-    val morada: String,
-    val codPostal: String,
-    val relacaoIPCA: String,
-    val curso: String,
-    val graoEnsino: String,
-    val apoioEmergencia: Boolean,
-    val bolsaEstudos: Boolean,
-    val valorBolsa: String,
-    val necessidades: List<String>,
-    val estadoConta: String,
-    val dadosIncompletos: Boolean,
-    val faltaDocumentos: Boolean,
-    val mudarPass: Boolean,
-    val uid: String,
-    val extraFields: Map<String, Any?>
-)
-
-class ApoiadosListViewModel : ViewModel() {
+@HiltViewModel
+class ApoiadosListViewModel @Inject constructor(
+    private val apoiadoRepository: ApoiadoRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(ApoiadoListState())
         private set
-
-    private val db = Firebase.firestore
+    private var listener: ListenerHandle? = null
 
     init {
         loadApoiados()
@@ -97,55 +60,16 @@ class ApoiadosListViewModel : ViewModel() {
     fun loadApoiados() {
         uiState.value = uiState.value.copy(isLoading = true)
 
-        db.collection("apoiados")
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(isLoading = false, error = error.message)
-                    return@addSnapshotListener
-                }
-
-                val list = value?.documents?.map { doc ->
-                    val rawStatus = doc.getString("estadoConta") ?: ""
-
-                    // --- VALIDADE DA CONTA ---
-                    // Se a validade já passou (e não estiver Bloqueado/Negado), deve aparecer como "Conta Expirada".
-                    val validadeTs = doc.getTimestamp("validadeConta") ?: doc.getTimestamp("validade")
-                    val validadeDate = validadeTs?.toDate() ?: (doc.get("validadeConta") as? Date ?: doc.get("validade") as? Date)
-                    val isExpired = validadeDate?.let { AccountValidity.isExpired(it) } ?: false
-
-                    // --- MAPEAMENTO DE ESTADOS ---
-                    val displayStatus = if (isExpired &&
-                        !rawStatus.equals("Bloqueado", ignoreCase = true) &&
-                        !rawStatus.equals("Negado", ignoreCase = true)
-                    ) {
-                        "Conta Expirada"
-                    } else {
-                        // --- MAPEAMENTO DE ESTADOS ---
-                        when (rawStatus) {
-                            "Falta_Documentos", "Correcao_Dados", "" -> "Por Submeter"
-                            "Suspenso" -> "Apoio Pausado"
-                            else -> rawStatus
-                        }
-                    }
-
-                    ApoiadoItem(
-                        id = doc.id,
-                        nome = doc.getString("nome") ?: "Sem Nome",
-                        email = doc.getString("email") ?: doc.getString("emailApoiado") ?: "Sem Email",
-                        rawStatus = rawStatus,
-                        displayStatus = displayStatus,
-                        contacto = doc.getString("contacto") ?: "",
-                        documentType = doc.getString("documentType") ?: "Doc",
-                        documentNumber = doc.getString("documentNumber") ?: "",
-                        morada = "${doc.getString("morada")}, ${doc.getString("codPostal")}",
-                        nacionalidade = doc.getString("nacionalidade") ?: "",
-                        dataNascimento = doc.getTimestamp("dataNascimento")?.toDate()
-                    )
-                } ?: emptyList()
-
+        listener?.remove()
+        listener = apoiadoRepository.listenApoiados(
+            onSuccess = { list ->
                 uiState.value = uiState.value.copy(apoiados = list, isLoading = false)
                 applyFiltersAndSort()
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(isLoading = false, error = error.message)
             }
+        )
     }
 
     // --- FILTROS E PESQUISA ---
@@ -227,13 +151,12 @@ class ApoiadosListViewModel : ViewModel() {
     }
 
     private fun updateStatus(id: String, updates: Map<String, Any?>, action: String) {
-        db.collection("apoiados").document(id).update(updates)
-            .addOnSuccessListener {
-                AuditLogger.logAction(action, "apoiado", id)
-            }
-            .addOnFailureListener { e ->
-                uiState.value = uiState.value.copy(error = e.message)
-            }
+        apoiadoRepository.updateApoiadoStatus(
+            apoiadoId = id,
+            updates = updates,
+            onSuccess = { AuditLogger.logAction(action, "apoiado", id) },
+            onError = { e -> uiState.value = uiState.value.copy(error = e.message) }
+        )
     }
 
     fun exportToCSV(context: Context) {
@@ -267,79 +190,25 @@ class ApoiadosListViewModel : ViewModel() {
     }
 
     fun exportApoiadoPdf(context: Context, apoiadoId: String) {
-        db.collection("apoiados").document(apoiadoId)
-            .get()
-            .addOnSuccessListener { doc ->
-                if (!doc.exists()) {
+        apoiadoRepository.fetchApoiadoPdfDetails(
+            apoiadoId = apoiadoId,
+            onSuccess = { details ->
+                if (details == null) {
                     Toast.makeText(context, "Apoiado nao encontrado.", Toast.LENGTH_SHORT).show()
-                    return@addOnSuccessListener
+                    return@fetchApoiadoPdfDetails
                 }
-                val details = buildApoiadoPdfDetails(doc)
                 createApoiadoPdf(context, details)
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 Toast.makeText(context, "Erro ao carregar apoiado: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+        )
     }
-}
 
-private fun buildApoiadoPdfDetails(doc: DocumentSnapshot): ApoiadoPdfDetails {
-    val dataNascimento = doc.getTimestamp("dataNascimento")?.toDate()
-        ?: (doc.get("dataNascimento") as? Date)
-    val necessidades = (doc.get("necessidade") as? List<*>)?.mapNotNull { it as? String }
-        ?: emptyList()
-    val knownKeys = setOf(
-        "uid",
-        "email",
-        "emailApoiado",
-        "nome",
-        "contacto",
-        "documentNumber",
-        "documentType",
-        "nacionalidade",
-        "dataNascimento",
-        "morada",
-        "codPostal",
-        "relacaoIPCA",
-        "curso",
-        "graoEnsino",
-        "apoioEmergenciaSocial",
-        "bolsaEstudos",
-        "valorBolsa",
-        "necessidade",
-        "estadoConta",
-        "faltaDocumentos",
-        "dadosIncompletos",
-        "mudarPass"
-    )
-    val extraFields = doc.data?.filterKeys { key -> key !in knownKeys }.orEmpty()
-
-    return ApoiadoPdfDetails(
-        id = doc.id,
-        nome = doc.getString("nome").orEmpty(),
-        email = doc.getString("email") ?: doc.getString("emailApoiado") ?: "",
-        emailApoiado = doc.getString("emailApoiado").orEmpty(),
-        contacto = doc.getString("contacto").orEmpty(),
-        documentType = doc.getString("documentType") ?: "Doc",
-        documentNumber = doc.getString("documentNumber").orEmpty(),
-        nacionalidade = doc.getString("nacionalidade").orEmpty(),
-        dataNascimento = dataNascimento,
-        morada = doc.getString("morada").orEmpty(),
-        codPostal = doc.getString("codPostal").orEmpty(),
-        relacaoIPCA = doc.getString("relacaoIPCA").orEmpty(),
-        curso = doc.getString("curso").orEmpty(),
-        graoEnsino = doc.getString("graoEnsino").orEmpty(),
-        apoioEmergencia = doc.getBoolean("apoioEmergenciaSocial") ?: false,
-        bolsaEstudos = doc.getBoolean("bolsaEstudos") ?: false,
-        valorBolsa = doc.getString("valorBolsa").orEmpty(),
-        necessidades = necessidades,
-        estadoConta = doc.getString("estadoConta").orEmpty(),
-        dadosIncompletos = doc.getBoolean("dadosIncompletos") ?: false,
-        faltaDocumentos = doc.getBoolean("faltaDocumentos") ?: false,
-        mudarPass = doc.getBoolean("mudarPass") ?: false,
-        uid = doc.getString("uid").orEmpty(),
-        extraFields = extraFields
-    )
+    override fun onCleared() {
+        super.onCleared()
+        listener?.remove()
+    }
 }
 
 private fun createApoiadosListPdf(context: Context, state: ApoiadoListState) {
@@ -753,9 +622,13 @@ private fun formatExtraValue(value: Any?, formatter: SimpleDateFormat): String {
     return when (value) {
         null -> "-"
         is Boolean -> formatBoolean(value)
-        is com.google.firebase.Timestamp -> formatter.format(value.toDate())
         is Date -> formatter.format(value)
-        is List<*> -> value.joinToString(", ") { item -> item?.toString().orEmpty() }
+        is List<*> -> value.joinToString(", ") { item ->
+            when (item) {
+                is Date -> formatter.format(item)
+                else -> item?.toString().orEmpty()
+            }
+        }
         else -> value.toString()
     }
 }
