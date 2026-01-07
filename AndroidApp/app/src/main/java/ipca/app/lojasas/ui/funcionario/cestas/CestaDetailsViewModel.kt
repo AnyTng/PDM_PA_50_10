@@ -2,14 +2,13 @@ package ipca.app.lojasas.ui.funcionario.cestas
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldPath
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.cestas.ApoiadoInfo
+import ipca.app.lojasas.data.cestas.CestaDetails
+import ipca.app.lojasas.data.cestas.CestasRepository
 import ipca.app.lojasas.data.products.Product
-import ipca.app.lojasas.data.products.toProductOrNull
-import java.util.Date
+import javax.inject.Inject
 
 data class CestaDetailsState(
     val isLoading: Boolean = true,
@@ -23,40 +22,13 @@ data class CestaDetailsState(
     val produtosMissingIds: List<String> = emptyList()
 )
 
-data class CestaDetails(
-    val id: String,
-    val apoiadoId: String,
-    val funcionarioId: String,
-    val dataAgendada: Date? = null,
-    val dataRecolha: Date? = null,
-    val dataReagendada: Date? = null,
-    val dataEntregue: Date? = null,
-    val dataCancelada: Date? = null,
-    val dataUltimaFalta: Date? = null,
-    val estado: String = "",
-    val faltas: Int = 0,
-    val origem: String? = null,
-    val tipoApoio: String? = null,
-    val produtoIds: List<String> = emptyList(),
-    val produtosCount: Int = 0,
-    val observacoes: String? = null
-)
+@HiltViewModel
+class CestaDetailsViewModel @Inject constructor(
+    private val repository: CestasRepository
+) : ViewModel() {
 
-data class ApoiadoInfo(
-    val id: String,
-    val nome: String,
-    val email: String,
-    val contacto: String,
-    val documento: String,
-    val morada: String,
-    val nacionalidade: String
-)
-
-class CestaDetailsViewModel : ViewModel() {
-
-    private val db = Firebase.firestore
-    private var cestaListener: ListenerRegistration? = null
-    private var apoiadoListener: ListenerRegistration? = null
+    private var cestaListener: ListenerHandle? = null
+    private var apoiadoListener: ListenerHandle? = null
     private var currentCestaId: String? = null
     private var currentApoiadoId: String? = null
     private var currentProdutoIds: List<String> = emptyList()
@@ -87,45 +59,16 @@ class CestaDetailsViewModel : ViewModel() {
         )
 
         cestaListener?.remove()
-        cestaListener = db.collection("cestas").document(normalized)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(
-                        isLoading = false,
-                        error = error.message ?: "Erro ao carregar cesta."
-                    )
-                    return@addSnapshotListener
-                }
-
-                if (snapshot == null || !snapshot.exists()) {
+        cestaListener = repository.listenCestaDetails(
+            cestaId = normalized,
+            onSuccess = { cesta ->
+                if (cesta == null) {
                     uiState.value = uiState.value.copy(
                         isLoading = false,
                         error = "Cesta nao encontrada."
                     )
-                    return@addSnapshotListener
+                    return@listenCestaDetails
                 }
-
-                val cesta = CestaDetails(
-                    id = snapshot.id,
-                    apoiadoId = snapshot.getString("apoiadoID")?.trim().orEmpty(),
-                    funcionarioId = snapshot.getString("funcionarioID")?.trim().orEmpty(),
-                    dataAgendada = snapshotDate(snapshot, "dataAgendada"),
-                    dataRecolha = snapshotDate(snapshot, "dataRecolha"),
-                    dataReagendada = snapshotDate(snapshot, "dataReagendada"),
-                    dataEntregue = snapshotDate(snapshot, "dataEntregue"),
-                    dataCancelada = snapshotDate(snapshot, "dataCancelada"),
-                    dataUltimaFalta = snapshotDate(snapshot, "dataUltimaFalta"),
-                    estado = snapshot.getString("estadoCesta")?.trim().orEmpty(),
-                    faltas = (snapshot.getLong("faltas") ?: 0L).toInt(),
-                    origem = snapshot.getString("origem"),
-                    tipoApoio = snapshot.getString("tipoApoio"),
-                    produtoIds = (snapshot.get("produtos") as? List<*>)?.mapNotNull { it as? String }
-                        ?.map { it.trim() }
-                        ?.filter { it.isNotBlank() }
-                        ?: emptyList(),
-                    produtosCount = (snapshot.get("produtos") as? List<*>)?.size ?: 0,
-                    observacoes = snapshot.getString("obs")?.trim()
-                )
 
                 uiState.value = uiState.value.copy(isLoading = false, error = null, cesta = cesta)
 
@@ -142,7 +85,14 @@ class CestaDetailsViewModel : ViewModel() {
                 } else {
                     observeApoiado(apoiadoId)
                 }
+            },
+            onError = { e ->
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Erro ao carregar cesta."
+                )
             }
+        )
     }
 
     private fun observeApoiado(apoiadoId: String) {
@@ -151,50 +101,21 @@ class CestaDetailsViewModel : ViewModel() {
         apoiadoListener?.remove()
         uiState.value = uiState.value.copy(apoiado = null, apoiadoError = null)
 
-        apoiadoListener = db.collection("apoiados").document(apoiadoId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(
-                        apoiadoError = error.message ?: "Erro ao carregar apoiado."
-                    )
-                    return@addSnapshotListener
-                }
-                if (snapshot == null || !snapshot.exists()) {
+        apoiadoListener = repository.listenApoiadoInfo(
+            apoiadoId = apoiadoId,
+            onSuccess = { apoiado ->
+                if (apoiado == null) {
                     uiState.value = uiState.value.copy(apoiadoError = "Apoiado nao encontrado.")
-                    return@addSnapshotListener
+                    return@listenApoiadoInfo
                 }
-
-                val docType = snapshot.getString("documentType")?.trim().orEmpty()
-                val docNumber = snapshot.getString("documentNumber")?.trim().orEmpty()
-                val documento = when {
-                    docType.isNotBlank() && docNumber.isNotBlank() -> "$docType: $docNumber"
-                    docType.isNotBlank() -> docType
-                    docNumber.isNotBlank() -> docNumber
-                    else -> "-"
-                }
-
-                val moradaParts = listOf(
-                    snapshot.getString("morada"),
-                    snapshot.getString("codPostal")
-                )
-                    .mapNotNull { it?.trim() }
-                    .filter { it.isNotBlank() }
-                val morada = if (moradaParts.isEmpty()) "-" else moradaParts.joinToString(", ")
-
-                val apoiado = ApoiadoInfo(
-                    id = snapshot.id,
-                    nome = snapshot.getString("nome")?.trim().orEmpty(),
-                    email = (snapshot.getString("email") ?: snapshot.getString("emailApoiado"))
-                        ?.trim()
-                        .orEmpty(),
-                    contacto = snapshot.getString("contacto")?.trim().orEmpty(),
-                    documento = documento,
-                    morada = morada,
-                    nacionalidade = snapshot.getString("nacionalidade")?.trim().orEmpty()
-                )
-
                 uiState.value = uiState.value.copy(apoiado = apoiado, apoiadoError = null)
+            },
+            onError = { e ->
+                uiState.value = uiState.value.copy(
+                    apoiadoError = e.message ?: "Erro ao carregar apoiado."
+                )
             }
+        )
     }
 
     private fun fetchProdutos(produtoIds: List<String>) {
@@ -221,45 +142,14 @@ class CestaDetailsViewModel : ViewModel() {
             produtosMissingIds = emptyList()
         )
 
-        val uniqueIds = normalized.distinct()
-        val chunks = uniqueIds.chunked(10)
-        val productsById = mutableMapOf<String, Product>()
-        var pending = chunks.size
-        var errorMessage: String? = null
-
-        fun finalizeIfDone() {
-            if (requestToken != produtosRequestToken) return
-            if (pending > 0) return
-            val ordered = uniqueIds.mapNotNull { productsById[it] }
-            val missing = uniqueIds.filterNot { productsById.containsKey(it) }
+        repository.fetchProdutosByIds(normalized) { products, missingIds, errorMessage ->
+            if (requestToken != produtosRequestToken) return@fetchProdutosByIds
             uiState.value = uiState.value.copy(
                 isLoadingProdutos = false,
-                produtos = ordered,
+                produtos = products,
                 produtosError = errorMessage,
-                produtosMissingIds = missing
+                produtosMissingIds = missingIds
             )
-        }
-
-        chunks.forEach { chunk ->
-            db.collection("produtos")
-                .whereIn(FieldPath.documentId(), chunk)
-                .get()
-                .addOnSuccessListener { snapshot ->
-                    snapshot.documents.forEach { doc ->
-                        doc.toProductOrNull()?.let { product ->
-                            productsById[product.id] = product
-                        }
-                    }
-                    pending -= 1
-                    finalizeIfDone()
-                }
-                .addOnFailureListener { e ->
-                    if (errorMessage == null) {
-                        errorMessage = e.message ?: "Erro ao carregar produtos."
-                    }
-                    pending -= 1
-                    finalizeIfDone()
-                }
         }
     }
 
@@ -270,8 +160,4 @@ class CestaDetailsViewModel : ViewModel() {
         cestaListener = null
         apoiadoListener = null
     }
-}
-
-private fun snapshotDate(snapshot: DocumentSnapshot, field: String): Date? {
-    return snapshot.getTimestamp(field)?.toDate() ?: (snapshot.get(field) as? Date)
 }

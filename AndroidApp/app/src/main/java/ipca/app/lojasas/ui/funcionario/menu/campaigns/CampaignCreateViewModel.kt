@@ -2,18 +2,21 @@ package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import java.util.Date
+import javax.inject.Inject
 
-class CampaignCreateViewModel : ViewModel() {
+@HiltViewModel
+class CampaignCreateViewModel @Inject constructor(
+    private val repo: CampaignRepository
+) : ViewModel() {
     var nome = mutableStateOf("")
     var desc = mutableStateOf("")
     var dataInicio = mutableStateOf<Date?>(null)
     var dataFim = mutableStateOf<Date?>(null)
     var isLoading = mutableStateOf(false)
-
-    private val repo = CampaignRepository()
 
     fun save(onSuccess: () -> Unit) {
         if (nome.value.isEmpty() || dataInicio.value == null || dataFim.value == null) return

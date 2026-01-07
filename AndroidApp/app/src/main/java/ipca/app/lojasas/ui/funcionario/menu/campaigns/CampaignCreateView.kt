@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
@@ -26,7 +26,7 @@ import java.util.Locale
 
 @Composable
 fun CampaignCreateView(navController: NavController) {
-    val vm: CampaignCreateViewModel = viewModel()
+    val vm: CampaignCreateViewModel = hiltViewModel()
     val context = LocalContext.current
     val calendar = remember { Calendar.getInstance() }
 

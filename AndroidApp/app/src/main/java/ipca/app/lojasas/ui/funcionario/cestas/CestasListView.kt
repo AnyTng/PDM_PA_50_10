@@ -53,9 +53,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.cestas.CestaItem
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
@@ -70,7 +71,7 @@ private val GreyBg = Color(0xFFF2F2F2)
 @Composable
 fun CestasListView(
     navController: NavController,
-    viewModel: CestasListViewModel = viewModel()
+    viewModel: CestasListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val context = LocalContext.current

@@ -78,6 +78,25 @@ class CampaignRepository @Inject constructor(
             .addOnFailureListener { onError(it.message ?: "Erro ao atualizar") }
     }
 
+    fun deleteCampaign(campaign: Campaign, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val id = campaign.id.trim()
+        if (id.isBlank()) {
+            onError("Erro: O ID da campanha está vazio. Verifique o Repository.")
+            return
+        }
+
+        db.collection("campanha")
+            .document(id)
+            .delete()
+            .addOnSuccessListener {
+                val nome = campaign.nomeCampanha.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Apagou campanha", "campanha", id, details)
+                onSuccess()
+            }
+            .addOnFailureListener { e -> onError(e.message ?: "Erro ao apagar") }
+    }
+
     fun getCampaignById(
         campaignId: String,
         onSuccess: (Campaign?) -> Unit,
