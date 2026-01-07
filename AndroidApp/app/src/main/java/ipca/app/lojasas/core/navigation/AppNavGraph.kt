@@ -3,16 +3,17 @@ package ipca.app.lojasas.core.navigation
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
+import ipca.app.lojasas.ui.apoiado.home.ApoiadoViewModel
+import ipca.app.lojasas.ui.apoiado.menu.ManualBeneficiarioView
 import ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView
 import ipca.app.lojasas.ui.apoiado.menu.document.DocumentSubmissionView
 import ipca.app.lojasas.ui.apoiado.menu.document.SubmittedDocumentsView
@@ -23,6 +24,8 @@ import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
+import ipca.app.lojasas.ui.funcionario.menu.history.HistoryView
+import ipca.app.lojasas.ui.funcionario.menu.ManualView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.ApoiadosListView
 import ipca.app.lojasas.ui.funcionario.menu.apoiados.CreateApoiadoView
@@ -54,13 +57,13 @@ fun AppNavGraph(
     ) {
         composable(Screen.Login.route) { LoginView(navController = navController) }
         composable(Screen.ApoiadoHome.route) {
-            ApoiadoHomeScreen(
-                navController = navController,
-                userId = Firebase.auth.currentUser?.uid ?: ""
-            )
+            ApoiadoHomeScreen(navController = navController)
         }
         composable(Screen.FuncionarioHome.route) { CalendarView(navController = navController) }
         composable(Screen.MenuFuncionario.route) { MenuView(navController = navController) }
+        composable(Screen.AdminManual.route) { ManualView() }
+        composable(Screen.BeneficiarioManual.route) { ManualBeneficiarioView() }
+        composable(Screen.Historico.route) { HistoryView() }
         composable(Screen.UrgentRequests.route) { UrgentRequestsView(navController = navController) }
         composable(Screen.CestasList.route) { CestasListView(navController = navController) }
         composable(
@@ -98,7 +101,13 @@ fun AppNavGraph(
         composable(Screen.ProfileFuncionario.route) { ProfileView(navController = navController) }
         composable(Screen.ProfileApoiado.route) { ApoiadoProfileView(navController = navController) }
         composable(Screen.ValidateAccounts.route) { ValidateAccountsView(navController = navController) }
-        composable(Screen.AccountBlocked.route) { BlockedAccountScreen(navController = navController) }
+        composable(Screen.AccountBlocked.route) {
+            val viewModel: ApoiadoViewModel = hiltViewModel()
+            BlockedAccountScreen(
+                navController = navController,
+                onLogout = { viewModel.signOut() }
+            )
+        }
         composable(Screen.SubmittedDocuments.route) { SubmittedDocumentsView(navController = navController) }
         composable(Screen.Campaigns.route) { CampaignsView(navController = navController) }
         composable(Screen.CreateApoiado.route) { CreateApoiadoView(navController = navController) }
@@ -122,10 +131,12 @@ fun AppNavGraph(
 
         composable(
             route = Screen.CampaignResults.route,
-            arguments = listOf(navArgument("campaignName") { type = NavType.StringType })
+            arguments = listOf(navArgument("campaignId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val name = backStackEntry.arguments?.getString("campaignName") ?: ""
-            CampaignResultsView(navController = navController, campaignName = name)
+            val campaignId = backStackEntry.arguments?.getString("campaignId")
+                ?.let { Uri.decode(it) }
+                .orEmpty()
+            CampaignResultsView(navController = navController, campaignId = campaignId)
         }
 
         composable(Screen.CompleteData.route) { backStackEntry ->

@@ -1,65 +1,52 @@
 package ipca.app.lojasas.ui.funcionario.menu.profile
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-
-data class CollaboratorItem(
-    val id: String, // ID do documento (ex: numMecanografico)
-    val uid: String, // UID da autenticação
-    val nome: String,
-    val email: String,
-    val role: String // "Admin" ou "Funcionario"
-)
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.AuditLogger
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.funcionario.CollaboratorItem
+import ipca.app.lojasas.data.funcionario.FuncionarioRepository
+import javax.inject.Inject
 
 data class CollaboratorsListState(
     val collaborators: List<CollaboratorItem> = emptyList(),
     val filteredList: List<CollaboratorItem> = emptyList(),
     val searchQuery: String = "",
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val currentUserId: String = ""
 )
 
-class CollaboratorsListViewModel : ViewModel() {
+@HiltViewModel
+class CollaboratorsListViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val funcionarioRepository: FuncionarioRepository
+) : ViewModel() {
     var uiState = mutableStateOf(CollaboratorsListState())
         private set
 
-    private val db = FirebaseFirestore.getInstance()
-    private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+    private var listener: ListenerHandle? = null
 
     init {
+        val currentUid = authRepository.currentUserId().orEmpty()
+        uiState.value = uiState.value.copy(currentUserId = currentUid)
         loadCollaborators()
     }
 
     private fun loadCollaborators() {
-        // Escuta em tempo real para atualizações automáticas
-        db.collection("funcionarios")
-            .addSnapshotListener { value, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(isLoading = false, error = error.message)
-                    return@addSnapshotListener
-                }
-
-                val list = value?.documents?.mapNotNull { doc ->
-                    // Proteção contra documentos mal formatados
-                    try {
-                        CollaboratorItem(
-                            id = doc.id,
-                            uid = doc.getString("uid") ?: "",
-                            nome = doc.getString("nome") ?: "Sem Nome",
-                            email = doc.getString("email") ?: "",
-                            role = doc.getString("role") ?: "Funcionario"
-                        )
-                    } catch (e: Exception) {
-                        null
-                    }
-                } ?: emptyList()
-
+        uiState.value = uiState.value.copy(isLoading = true)
+        listener?.remove()
+        listener = funcionarioRepository.listenCollaborators(
+            onSuccess = { list ->
                 uiState.value = uiState.value.copy(collaborators = list, isLoading = false)
-                filterList() // Atualiza a lista filtrada
+                filterList()
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(isLoading = false, error = error.message)
             }
+        )
     }
 
     fun onSearchChange(query: String) {
@@ -76,55 +63,91 @@ class CollaboratorsListViewModel : ViewModel() {
         } else {
             val filtered = currentList.filter {
                 it.nome.lowercase().contains(query) ||
-                        it.id.lowercase().contains(query) ||
-                        (if(it.role.equals("Admin", ignoreCase = true)) "administrador" else "colaborador").contains(query)
+                    it.id.lowercase().contains(query) ||
+                    (if (it.role.equals("Admin", ignoreCase = true)) "administrador" else "colaborador").contains(query)
             }
             uiState.value = uiState.value.copy(filteredList = filtered)
         }
     }
 
     fun deleteCollaborator(item: CollaboratorItem, onSuccess: () -> Unit) {
-        if (item.uid == currentUserId) return // Não se pode apagar a si próprio
+        if (item.uid == uiState.value.currentUserId) return
 
-        // Apagar da coleção 'funcionarios'
-        db.collection("funcionarios").document(item.id).delete()
-            .addOnSuccessListener {
-                // Tenta apagar da coleção auxiliar 'users' se existir, mas não falha se não conseguir
-                if (item.uid.isNotEmpty()) {
-                    db.collection("users").document(item.uid).delete().addOnFailureListener { e ->
-                        Log.w("CollaboratorsList", "Erro ao apagar user auth doc: ${e.message}")
+        funcionarioRepository.deleteCollaborator(
+            collaboratorId = item.id,
+            uid = item.uid,
+            onSuccess = {
+                val details = buildString {
+                    if (item.nome.isNotBlank()) append("Nome: ").append(item.nome)
+                    if (item.email.isNotBlank()) {
+                        if (isNotEmpty()) append(" | ")
+                        append("Email: ").append(item.email)
                     }
-                }
+                }.takeIf { it.isNotBlank() }
+                AuditLogger.logAction(
+                    action = "Removeu colaborador",
+                    entity = "funcionario",
+                    entityId = item.id,
+                    details = details
+                )
                 onSuccess()
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = "Erro ao apagar: ${e.message}")
             }
+        )
     }
 
     fun promoteToAdmin(item: CollaboratorItem) {
-        db.collection("funcionarios").document(item.id)
-            .update("role", "Admin")
-            .addOnFailureListener { e ->
+        funcionarioRepository.updateCollaboratorRole(
+            collaboratorId = item.id,
+            role = "Admin",
+            onSuccess = {
+                val details = if (item.nome.isNotBlank()) "Nome: ${item.nome}" else null
+                AuditLogger.logAction(
+                    action = "Promoveu colaborador a Admin",
+                    entity = "funcionario",
+                    entityId = item.id,
+                    details = details
+                )
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = "Erro ao promover: ${e.message}")
             }
+        )
     }
 
     fun demoteToFuncionario(item: CollaboratorItem) {
-        // REGRA: Admin não pode remover o seu próprio admin
-        if (item.uid == currentUserId) {
+        if (item.uid == uiState.value.currentUserId) {
             uiState.value = uiState.value.copy(error = "Não pode remover as suas próprias permissões de Admin.")
             return
         }
 
-        db.collection("funcionarios").document(item.id)
-            .update("role", "Funcionario")
-            .addOnFailureListener { e ->
+        funcionarioRepository.updateCollaboratorRole(
+            collaboratorId = item.id,
+            role = "Funcionario",
+            onSuccess = {
+                val details = if (item.nome.isNotBlank()) "Nome: ${item.nome}" else null
+                AuditLogger.logAction(
+                    action = "Despromoveu colaborador",
+                    entity = "funcionario",
+                    entityId = item.id,
+                    details = details
+                )
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = "Erro ao despromover: ${e.message}")
             }
+        )
     }
 
     fun clearError() {
         uiState.value = uiState.value.copy(error = null)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        listener?.remove()
+        listener = null
     }
 }

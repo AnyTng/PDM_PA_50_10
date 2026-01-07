@@ -2,11 +2,17 @@ package ipca.app.lojasas.ui.apoiado.menu
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.apoiado.ApoiadoRepository
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.common.ListenerHandle
+import javax.inject.Inject
 
-class MenuApoiadoViewModel : ViewModel() {
+@HiltViewModel
+class MenuApoiadoViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val apoiadoRepository: ApoiadoRepository
+) : ViewModel() {
     var isBlock = mutableStateOf(false)
         private set
     var isApproved = mutableStateOf(false)
@@ -16,29 +22,36 @@ class MenuApoiadoViewModel : ViewModel() {
     var numeroMecanografico = mutableStateOf("")
         private set
 
+    private var statusListener: ListenerHandle? = null
+
     init {
         checkStatus()
     }
 
     private fun checkStatus() {
-        val user = Firebase.auth.currentUser
-        val db = Firebase.firestore
+        val uid = authRepository.currentUserId().orEmpty()
+        if (uid.isBlank()) return
 
-        if (user != null) {
-            db.collection("apoiados")
-                .whereEqualTo("uid", user.uid)
-                .addSnapshotListener { documents, e ->
-                    if (e == null && documents != null && !documents.isEmpty) {
-                        val doc = documents.documents[0]
-                        val estado = doc.getString("estadoConta") ?: ""
+        statusListener?.remove()
+        statusListener = apoiadoRepository.listenApoiadoStatus(
+            uid = uid,
+            onSuccess = { status ->
+                val estado = status.estadoConta
+                isBlock.value = (estado == "Bloqueado")
+                isApproved.value = (estado == "Aprovado" || estado == "Suspenso")
+                numeroMecanografico.value = status.numeroMecanografico
+            },
+            onError = { }
+        )
+    }
 
-                        // 2. Ler o número mecanográfico do documento
-                        val numMec = doc.getString("numMecanografico") ?: ""
-                        isBlock.value = (estado == "Bloqueado")
-                        isApproved.value = (estado == "Aprovado" || estado == "Suspenso")
-                        numeroMecanografico.value = numMec // Atualizar o estado
-                    }
-                }
-        }
+    override fun onCleared() {
+        statusListener?.remove()
+        statusListener = null
+        super.onCleared()
+    }
+
+    fun signOut() {
+        authRepository.signOut()
     }
 }

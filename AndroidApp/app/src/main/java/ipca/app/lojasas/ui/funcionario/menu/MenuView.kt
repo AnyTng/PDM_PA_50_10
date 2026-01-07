@@ -1,7 +1,9 @@
 package ipca.app.lojasas.ui.funcionario.menu
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -14,9 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import ipca.app.lojasas.core.navigation.Screen
 
 @Composable
@@ -24,26 +25,9 @@ fun MenuView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    val viewModel: MenuFuncionarioViewModel = hiltViewModel()
+    val isAdmin by viewModel.isAdmin
     val backgroundColor = Color(0xFFF2F2F2)
-
-    // Estado para saber se é Admin
-    var isAdmin by remember { mutableStateOf(false) }
-
-    // Verificar permissões ao iniciar
-    LaunchedEffect(Unit) {
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) {
-            FirebaseFirestore.getInstance().collection("funcionarios")
-                .whereEqualTo("uid", user.uid)
-                .get()
-                .addOnSuccessListener { docs ->
-                    if (!docs.isEmpty) {
-                        val role = docs.documents[0].getString("role")
-                        isAdmin = role.equals("Admin", ignoreCase = true)
-                    }
-                }
-        }
-    }
 
     MenuViewContent(
         isAdmin = isAdmin,
@@ -51,7 +35,7 @@ fun MenuView(
         onNavigate = { route -> navController.navigate(route) },
         onLogout = {
             try {
-                FirebaseAuth.getInstance().signOut()
+                viewModel.signOut()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -72,41 +56,23 @@ private fun MenuViewContent(
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        containerColor = backgroundColor,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    Box(
         modifier = modifier
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp),
+            .fillMaxSize()
+            .background(backgroundColor)
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 24.dp,
+                bottom = 120.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-
-            // --- GRUPO PERFIL / ADMIN ---
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    MenuRow(title = "Gerir o meu Perfil") { onNavigate(Screen.ProfileFuncionario.route) }
-
-                    if (isAdmin) {
-                        MenuDivider()
-                        MenuRow(title = "Criar novo Colaborador") { onNavigate(Screen.CreateProfile.route) }
-                        MenuDivider()
-                        MenuRow(title = "Ver Colaboradores") { onNavigate(Screen.CollaboratorsList.route) }
-                    }
-                    MenuDivider()
-                }
-            }
-
-            // --- BLOCO EXTRA ADMIN (como tinhas “Historico”) ---
-            if (isAdmin) {
+            item {
+                // --- GRUPO PERFIL / ADMIN ---
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     shape = RoundedCornerShape(12.dp),
@@ -114,51 +80,99 @@ private fun MenuViewContent(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        MenuRow(title = "Historico") { /* onNavigate("...") */ }
+                        MenuRow(title = "Gerir o meu Perfil") { onNavigate(Screen.ProfileFuncionario.route) }
+
+                        if (isAdmin) {
+                            MenuDivider()
+                            MenuRow(title = "Criar novo Colaborador") { onNavigate(Screen.CreateProfile.route) }
+                            MenuDivider()
+                            MenuRow(title = "Ver Colaboradores") { onNavigate(Screen.CollaboratorsList.route) }
+                        }
                         MenuDivider()
                     }
                 }
             }
 
+            if (isAdmin) {
+                // --- BLOCO EXTRA ADMIN (como tinhas “Historico”) ---
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            MenuRow(title = "Histórico") { onNavigate(Screen.Historico.route) }
+                            MenuDivider()
+                        }
+                    }
+                }
+            }
+
             // --- OUTRAS OPÇÕES ---
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    MenuRow(title = "Apoiados") { onNavigate(Screen.ApoiadosList.route) }
-                    MenuDivider()
-                    MenuRow(title = "Pedidos Urgentes") { onNavigate(Screen.UrgentRequests.route) }
-                    MenuDivider()
-                    MenuRow(title = "Validar Beneficiario") { onNavigate(Screen.ValidateAccounts.route) }
-                    MenuDivider()
-                    MenuRow(title = "Ver Campanhas") { onNavigate(Screen.Campaigns.route) }
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        MenuRow(title = "Beneficiario") { onNavigate(Screen.ApoiadosList.route) }
+                        MenuDivider()
+                        MenuRow(title = "Pedidos Urgentes") { onNavigate(Screen.UrgentRequests.route) }
+                        MenuDivider()
+                        MenuRow(title = "Validar Beneficiario") { onNavigate(Screen.ValidateAccounts.route) }
+                        MenuDivider()
+                        MenuRow(title = "Ver Campanhas") { onNavigate(Screen.Campaigns.route) }
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        if (isAdmin) {
+                            MenuRow(title = "Manual de Utilização do Administrador") { onNavigate(Screen.AdminManual.route) }
+                            MenuDivider()
+                        }
+                        if (!isAdmin) {
+                            MenuRow(title = "Manual de Utilização do Colaborador") { onNavigate(Screen.AdminManual.route) }
+                            MenuDivider()
+                        }
+                    }
                 }
             }
 
             // --- BOTÃO TERMINAR SESSÃO ---
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onLogout() }
-            ) {
-                Box(
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 18.dp),
-                    contentAlignment = Alignment.Center
+                        .clickable { onLogout() }
                 ) {
-                    Text(
-                        text = "Terminar Sessão",
-                        color = Color.Red,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 18.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Terminar Sessão",
+                            color = Color.Red,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

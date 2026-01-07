@@ -3,14 +3,16 @@ package ipca.app.lojasas.ui.funcionario.stock
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.ListenerRegistration
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
+import ipca.app.lojasas.data.common.ListenerHandle
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 data class ProductDetailsUiState(
     val isLoading: Boolean = true,
@@ -55,23 +57,28 @@ const val BRAND_ALL = "Todas as marcas"
 const val CAMPAIGN_ALL = "__ALL__"
 const val CAMPAIGN_NONE = "__NONE__"
 
-class ProductDetailsViewModel(
-    private val repository: ProductsRepository = ProductsRepository(),
-    private val campaignRepository: CampaignRepository = CampaignRepository()
+@HiltViewModel
+class ProductDetailsViewModel @Inject constructor(
+    private val repository: ProductsRepository,
+    private val campaignRepository: CampaignRepository
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProductDetailsUiState())
     val uiState: State<ProductDetailsUiState> = _uiState
 
-    private var listener: ListenerRegistration? = null
+    private var listener: ListenerHandle? = null
     private var allGroups: List<ProductGroupUi> = emptyList()
     private var currentNomeProduto: String? = null
     private var campaignsById: Map<String, Campaign> = emptyMap()
+    private var campaignsByName: Map<String, Campaign> = emptyMap()
 
     init {
         campaignRepository.listenCampaigns(
             onSuccess = { campaigns ->
                 campaignsById = campaigns.associateBy { it.id }
+                campaignsByName = campaigns.associateBy {
+                    it.nomeCampanha.trim().lowercase(Locale.getDefault())
+                }
                 updateAvailableFilters()
             },
             onError = { }
@@ -161,7 +168,7 @@ class ProductDetailsViewModel(
         }
         campaignIds
             .map { id ->
-                val label = campaignsById[id]?.nomeCampanha?.trim().takeUnless { it.isNullOrBlank() } ?: id
+                val label = resolveCampaignLabel(id)
                 CampaignFilterOption(id, label)
             }
             .sortedBy { it.label.lowercase(Locale.getDefault()) }
@@ -188,6 +195,19 @@ class ProductDetailsViewModel(
             availableCampaigns = campaignOptions,
             selectedCampaign = resolvedCampaign
         )
+    }
+
+    private fun resolveCampaignLabel(value: String): String {
+        val normalized = value.trim()
+        if (normalized.isBlank()) return normalized
+
+        val byId = campaignsById[normalized]?.nomeCampanha?.trim()
+        if (!byId.isNullOrBlank()) return byId
+
+        val byName = campaignsByName[normalized.lowercase(Locale.getDefault())]?.nomeCampanha?.trim()
+        if (!byName.isNullOrBlank()) return byName
+
+        return normalized
     }
 
     private fun applyFilter() {
@@ -297,14 +317,11 @@ private fun sizeInBaseUnits(product: Product): Double? {
 
 private fun groupIdenticalProducts(products: List<Product>): List<ProductGroupUi> {
     return products
-        .groupBy { it.identity() }
-        .values
-        .map { groupProducts ->
-            val representative = groupProducts.first()
+        .map { product ->
             ProductGroupUi(
-                product = representative,
-                quantity = groupProducts.size,
-                productIds = groupProducts.map { it.id }
+                product = product,
+                quantity = 1,
+                productIds = listOf(product.id)
             )
         }
         .sortedWith(

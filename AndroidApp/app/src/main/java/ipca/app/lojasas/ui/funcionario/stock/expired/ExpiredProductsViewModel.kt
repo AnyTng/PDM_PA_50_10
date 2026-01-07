@@ -3,17 +3,18 @@ package ipca.app.lojasas.ui.funcionario.stock.expired
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ListenerRegistration
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.common.ListenerHandle
 import ipca.app.lojasas.data.donations.ExpiredDonationsRepository
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
 import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
 import ipca.app.lojasas.ui.funcionario.stock.ProductSortOption
-import ipca.app.lojasas.ui.funcionario.stock.identity
 import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 data class ExpiredProductsUiState(
     val isLoading: Boolean = true,
@@ -26,15 +27,17 @@ data class ExpiredProductsUiState(
     val donationError: String? = null
 )
 
-class ExpiredProductsViewModel(
-    private val repository: ProductsRepository = ProductsRepository(),
-    private val donationsRepository: ExpiredDonationsRepository = ExpiredDonationsRepository()
+@HiltViewModel
+class ExpiredProductsViewModel @Inject constructor(
+    private val repository: ProductsRepository,
+    private val donationsRepository: ExpiredDonationsRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ExpiredProductsUiState())
     val uiState: State<ExpiredProductsUiState> = _uiState
 
-    private var listener: ListenerRegistration? = null
+    private var listener: ListenerHandle? = null
     private var allGroups: List<ProductGroupUi> = emptyList()
 
     init {
@@ -94,7 +97,7 @@ class ExpiredProductsViewModel(
             _uiState.value = state.copy(donationError = "Selecione produtos para doar.")
             return
         }
-        val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        val userId = authRepository.currentUserId().orEmpty()
         if (userId.isBlank()) {
             _uiState.value = state.copy(donationError = "Sem utilizador autenticado.")
             return
@@ -222,14 +225,11 @@ private fun sizeInBaseUnits(product: Product): Double? {
 
 private fun groupIdenticalProducts(products: List<Product>): List<ProductGroupUi> {
     return products
-        .groupBy { it.identity() }
-        .values
-        .map { groupProducts ->
-            val representative = groupProducts.first()
+        .map { product ->
             ProductGroupUi(
-                product = representative,
-                quantity = groupProducts.size,
-                productIds = groupProducts.map { it.id }
+                product = product,
+                quantity = 1,
+                productIds = listOf(product.id)
             )
         }
         .sortedWith(

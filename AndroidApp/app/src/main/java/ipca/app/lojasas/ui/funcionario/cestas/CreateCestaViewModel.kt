@@ -2,43 +2,14 @@ package ipca.app.lojasas.ui.funcionario.cestas
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.cestas.ApoiadoOption
+import ipca.app.lojasas.data.cestas.CestasRepository
 import ipca.app.lojasas.data.products.Product
-import ipca.app.lojasas.data.products.ProductStatus
-import ipca.app.lojasas.data.products.toProductOrNull
-import ipca.app.lojasas.utils.AccountValidity
-import java.util.Calendar
 import java.util.Date
-
-data class ApoiadoOption(
-    val id: String,
-    val nome: String,
-    val ultimoLevantamento: Date? = null,
-    val rawStatus: String = "",
-    val displayStatus: String = ""
-)
-
-private fun mapApoiadoDisplayStatus(rawStatus: String): String {
-    return when (rawStatus) {
-        "Falta_Documentos", "Correcao_Dados", "" -> "Por Submeter"
-        "Suspenso" -> "Apoio Pausado"
-        else -> rawStatus
-    }
-}
-
-private fun apoiadoValidUntil(doc: DocumentSnapshot): Date? {
-    // Preferimos o campo "validadeConta" (novo). Mantemos fallback para "validade" (legado).
-    val ts = doc.getTimestamp("validadeConta") ?: doc.getTimestamp("validade")
-    if (ts != null) return ts.toDate()
-
-    // Alguns projetos podem gravar como Date diretamente.
-    val any = doc.get("validadeConta") ?: doc.get("validade")
-    return any as? Date
-}
+import javax.inject.Inject
 
 data class CreateCestaState(
     val isLoading: Boolean = true,
@@ -72,10 +43,12 @@ data class CreateCestaState(
     val obs: String = ""
 )
 
-class CreateCestaViewModel : ViewModel() {
+@HiltViewModel
+class CreateCestaViewModel @Inject constructor(
+    private val repository: CestasRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
-    private val db = Firebase.firestore
-    private val auth = Firebase.auth
     private companion object {
         const val RECORRENCIA_DIAS_DEFAULT = 30
     }
@@ -85,8 +58,8 @@ class CreateCestaViewModel : ViewModel() {
 
     private var initialized = false
 
-    private var produtosListener: ListenerRegistration? = null
-    private var apoiadosListener: ListenerRegistration? = null
+    private var produtosListener: ListenerHandle? = null
+    private var apoiadosListener: ListenerHandle? = null
 
     override fun onCleared() {
         super.onCleared()
@@ -120,138 +93,75 @@ class CreateCestaViewModel : ViewModel() {
     }
 
     private fun loadFuncionarioId() {
-        val user = auth.currentUser
-        if (user == null) {
+        val uid = authRepository.currentUserId()
+        if (uid.isNullOrBlank()) {
             uiState.value = uiState.value.copy(isLoading = false, error = "Utilizador não autenticado.")
             return
         }
 
-        db.collection("funcionarios")
-            .whereEqualTo("uid", user.uid)
-            .limit(1)
-            .get()
-            .addOnSuccessListener { docs ->
-                val doc = docs.documents.firstOrNull()
-                val id = doc?.id.orEmpty()
-                uiState.value = uiState.value.copy(funcionarioId = id)
-            }
-            .addOnFailureListener { e ->
+        repository.fetchFuncionarioIdByUid(
+            uid = uid,
+            onSuccess = { id ->
+                uiState.value = uiState.value.copy(funcionarioId = id.orEmpty())
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = e.message)
             }
+        )
     }
 
     private fun listenProdutosDisponiveis() {
         produtosListener?.remove()
-        produtosListener = db.collection("produtos")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(isLoading = false, error = error.message)
-                    return@addSnapshotListener
-                }
-
-                val produtos = snapshot?.documents.orEmpty()
-                    .mapNotNull { it.toProductOrNull() }
-                    // Apenas produtos disponíveis (quando o campo existe)
-                    .filter { p ->
-                        ProductStatus.fromFirestore(p.estadoProduto) == ProductStatus.AVAILABLE
-                    }
-                    // Nao mostrar produtos fora de validade
-                    .filter { p ->
-                        val validade = p.validade
-                        validade == null || !isExpired(validade)
-                    }
-
+        produtosListener = repository.listenProdutosDisponiveis(
+            onSuccess = { produtos ->
                 uiState.value = uiState.value.copy(isLoading = false, produtos = produtos)
+            },
+            onError = { e ->
+                uiState.value = uiState.value.copy(isLoading = false, error = e.message)
             }
-    }
-
-    private fun isExpired(validade: Date): Boolean {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val startOfToday = calendar.time
-        return validade.before(startOfToday)
+        )
     }
 
     private fun listenApoiados() {
         apoiadosListener?.remove()
-        apoiadosListener = db.collection("apoiados")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(isLoading = false, error = error.message)
-                    return@addSnapshotListener
-                }
-
-                val list = snapshot?.documents.orEmpty()
-                    // Não mostrar apoiados bloqueados
-                    .filterNot { doc ->
-                        val estado = doc.getString("estadoConta")?.trim().orEmpty()
-                        estado.equals("Bloqueado", ignoreCase = true)
-                    }
-                    // ✅ Regra: não mostrar apoiados com conta fora de validade
-                    .filter { doc ->
-                        val validUntil = apoiadoValidUntil(doc)
-                        // Se não tivermos validade gravada, assumimos que não está válida (não elegível)
-                        validUntil != null && !AccountValidity.isExpired(validUntil)
-                    }
-                    .map { doc ->
-                        val rawStatus = doc.getString("estadoConta")?.trim().orEmpty()
-                        val displayStatus = mapApoiadoDisplayStatus(rawStatus)
-                        val ultimo = doc.getTimestamp("ultimoLevantamento")?.toDate()
-                            ?: (doc.get("ultimoLevantamento") as? Date)
-                        ApoiadoOption(
-                            id = doc.id,
-                            nome = doc.getString("nome")?.trim().orEmpty().ifBlank { doc.id },
-                            ultimoLevantamento = ultimo,
-                            rawStatus = rawStatus,
-                            displayStatus = displayStatus
-                        )
-                    }
-                    // Ordem por último levantamento (quem levantou há mais tempo primeiro)
-                    .sortedWith(compareBy<ApoiadoOption> { it.ultimoLevantamento ?: Date(0) })
-
+        apoiadosListener = repository.listenApoiados(
+            onSuccess = { list ->
                 uiState.value = uiState.value.copy(apoiados = list)
+            },
+            onError = { e ->
+                uiState.value = uiState.value.copy(isLoading = false, error = e.message)
             }
+        )
     }
 
     private fun loadPedido(pedidoId: String) {
-        db.collection("pedidos_ajuda").document(pedidoId)
-            .get()
-            .addOnSuccessListener { doc ->
-                val desc = doc.getString("descricao")?.trim()
+        repository.fetchPedidoDescricao(
+            pedidoId = pedidoId,
+            onSuccess = { desc ->
                 uiState.value = uiState.value.copy(
                     pedidoDescricao = desc,
                     // Prefill da nota com a descrição (pode ser editada)
                     obs = uiState.value.obs.ifBlank { desc.orEmpty() }
                 )
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = e.message)
             }
+        )
     }
 
     private fun loadApoiado(apoiadoId: String) {
-        db.collection("apoiados").document(apoiadoId)
-            .get()
-            .addOnSuccessListener { doc ->
-                if (!doc.exists()) return@addOnSuccessListener
-                val ultimo = doc.getTimestamp("ultimoLevantamento")?.toDate() ?: (doc.get("ultimoLevantamento") as? Date)
-                val rawStatus = doc.getString("estadoConta")?.trim().orEmpty()
-                val displayStatus = mapApoiadoDisplayStatus(rawStatus)
-                val option = ApoiadoOption(
-                    id = doc.id,
-                    nome = doc.getString("nome")?.trim().orEmpty().ifBlank { doc.id },
-                    ultimoLevantamento = ultimo,
-                    rawStatus = rawStatus,
-                    displayStatus = displayStatus
-                )
-                uiState.value = uiState.value.copy(apoiadoSelecionado = option)
-            }
-            .addOnFailureListener { e ->
+        repository.fetchApoiadoOption(
+            apoiadoId = apoiadoId,
+            onSuccess = { option ->
+                if (option != null) {
+                    uiState.value = uiState.value.copy(apoiadoSelecionado = option)
+                }
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = e.message)
             }
+        )
     }
 
     fun selecionarApoiado(option: ApoiadoOption) {
@@ -329,114 +239,24 @@ class CreateCestaViewModel : ViewModel() {
 
         uiState.value = s.copy(isSubmitting = true, error = null)
 
-        val now = Date()
         val produtoIds = s.produtosSelecionados.map { it.id }
-
-        // Criamos o ID da cesta antes para também o ligar às reservas de produtos.
-        val cestaRef = db.collection("cestas").document()
-        val cestaId = cestaRef.id
-
-        val cestaMap = mutableMapOf<String, Any>(
-            "apoiadoID" to apoiado.id,
-            "funcionarioID" to funcId,
-            "dataAtual" to now,
-            "dataAgendada" to agendada,
-            "dataRecolha" to agendada,
-            "estadoCesta" to "Agendada",
-            "produtos" to produtoIds,
-            "obs" to s.obs,
-            "tipoApoio" to (if (recorrente) "Recorrente" else "Unica"),
-            "faltas" to 0,
-            "origem" to (if (s.fromUrgent) "Urgente" else "Manual")
-        )
-
-        if (recDias != null) cestaMap["recorrenciaDias"] = recDias
-        if (!s.pedidoId.isNullOrBlank()) cestaMap["pedidoUrgenteId"] = s.pedidoId!!
-
-        // --- APENAS ESTA TRANSAÇÃO (A mais completa) ---
-        db.runTransaction { txn ->
-            // Leitura dos produtos (Firestore exige leituras antes de escritas)
-            val produtoRefs = produtoIds.map { pid ->
-                pid to db.collection("produtos").document(pid)
-            }
-            val produtoSnaps = produtoRefs.map { (pid, ref) ->
-                pid to txn.get(ref)
-            }
-
-            // ✅ Regra: não permitir criar cesta para apoiados com conta fora de validade
-            // (e também garante consistência caso a seleção tenha sido pré-carregada, ex: pedido urgente).
-            val apoiadoRef = db.collection("apoiados").document(apoiado.id)
-            val apoiadoSnap = txn.get(apoiadoRef)
-            val estadoConta = apoiadoSnap.getString("estadoConta")?.trim().orEmpty()
-            if (estadoConta.equals("Bloqueado", ignoreCase = true)) {
-                throw IllegalStateException("Conta do apoiado bloqueada.")
-            }
-            val validUntil = (apoiadoSnap.getTimestamp("validadeConta")
-                ?: apoiadoSnap.getTimestamp("validade"))?.toDate()
-                ?: (apoiadoSnap.get("validadeConta") as? Date
-                    ?: apoiadoSnap.get("validade") as? Date)
-
-            if (validUntil == null || AccountValidity.isExpired(validUntil, now)) {
-                throw IllegalStateException("A conta do apoiado está expirada. O apoiado deve voltar a submeter o formulário.")
-            }
-
-            // 1) Verifica produtos e disponibilidade
-            produtoSnaps.forEach { (pid, snap) ->
-                if (!snap.exists()) {
-                    throw IllegalStateException("Produto não encontrado: $pid")
-                }
-                val estado = snap.getString("estadoProduto")?.trim().orEmpty()
-                val isDisponivel = ProductStatus.fromFirestore(estado) == ProductStatus.AVAILABLE
-                if (!isDisponivel) {
-                    throw IllegalStateException("O produto '$pid' já não está disponível.")
-                }
-            }
-
-            // 1.1) Reserva produtos
-            produtoRefs.forEach { (_, ref) ->
-                txn.update(
-                    ref,
-                    mapOf(
-                        "estadoProduto" to ProductStatus.RESERVED.firestoreValue,
-                        "cestaReservaId" to cestaId,
-                        "reservadoEm" to now
-                    )
-                )
-            }
-
-            // 2) Criar cesta
-            txn.set(cestaRef, cestaMap)
-
-            // 3) Se for recorrente, guardar no apoiado a data agendada
-            if (recorrente) {
-                val apoioUpdates = mutableMapOf<String, Any>(
-                    "dataLevantamentoAgendado" to agendada,
-                    "recorrenciaDias" to recDias!!
-                )
-                txn.update(db.collection("apoiados").document(apoiado.id), apoioUpdates)
-            }
-
-            // 4) ATUALIZAR PEDIDO URGENTE (Isto é o que precisas!)
-            val pedidoIdLocal = s.pedidoId
-            if (s.fromUrgent && !pedidoIdLocal.isNullOrBlank()) {
-                val updates = mutableMapOf<String, Any>(
-                    "estado" to "Preparar_Apoio", // Mantém o estado aprovado
-                    "cestaId" to cestaId,         // <--- ISTO FAZ O BOTÃO DESAPARECER
-                    "funcionarioID" to funcId,
-                    "dataDecisao" to now
-                )
-                // Nota: A coleção aqui tem de ser "pedidos_ajuda"
-                txn.update(db.collection("pedidos_ajuda").document(pedidoIdLocal), updates)
-            }
-
-            null
-        }
-            .addOnSuccessListener {
+        repository.createCesta(
+            funcionarioId = funcId,
+            apoiadoId = apoiado.id,
+            produtoIds = produtoIds,
+            dataAgendada = agendada,
+            observacoes = s.obs,
+            fromUrgent = s.fromUrgent,
+            pedidoId = s.pedidoId,
+            recorrente = recorrente,
+            recorrenciaDias = recDias,
+            onSuccess = {
                 uiState.value = uiState.value.copy(isSubmitting = false)
                 onSuccess()
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(isSubmitting = false, error = e.message)
             }
+        )
     }
 }

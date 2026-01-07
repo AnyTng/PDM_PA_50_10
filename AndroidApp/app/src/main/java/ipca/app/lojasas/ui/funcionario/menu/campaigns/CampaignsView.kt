@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
@@ -34,7 +34,7 @@ import java.util.Locale
 
 @Composable
 fun CampaignsView(navController: NavController) {
-    val viewModel: CampaignsViewModel = viewModel()
+    val viewModel: CampaignsViewModel = hiltViewModel()
     val state by viewModel.uiState
     var campaignToEdit by remember { mutableStateOf<Campaign?>(null) }
     val context = LocalContext.current // Necessário para os Toasts
@@ -93,7 +93,7 @@ fun CampaignsView(navController: NavController) {
             )
         },
         onResults = { campaign ->
-            navController.navigate(Screen.CampaignResults.createRoute(campaign.nomeCampanha))
+            navController.navigate(Screen.CampaignResults.createRoute(campaign.id))
         }
     )
 

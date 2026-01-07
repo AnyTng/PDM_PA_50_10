@@ -21,11 +21,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.menu.profile.*
-import ipca.app.lojasas.ui.login.GreenIPCA
+import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -34,7 +34,7 @@ fun ApoiadoProfileView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: ProfileViewModel = viewModel()
+    val viewModel: ApoiadoProfileViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -57,7 +57,7 @@ fun ApoiadoProfileView(
                             navController.popBackStack()
                         }
                     },
-                    containerColor = GreenIPCA,
+                    containerColor = GreenSas,
                     contentColor = Color.White,
                     shape = CircleShape,
                     modifier = Modifier.size(64.dp)
@@ -74,7 +74,7 @@ fun ApoiadoProfileView(
 
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenIPCA)
+                CircularProgressIndicator(color = GreenSas)
             }
         } else {
             Column(

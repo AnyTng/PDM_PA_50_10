@@ -1,20 +1,26 @@
 package ipca.app.lojasas.data.products
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
+import ipca.app.lojasas.data.AuditLogger
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.common.asListenerHandle
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.text.get
 
-class ProductsRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+@Singleton
+class ProductsRepository @Inject constructor(
+    private val firestore: FirebaseFirestore
 ) {
+    constructor() : this(FirebaseFirestore.getInstance())
     private val collection = firestore.collection("produtos")
 
     fun listenAllProducts(
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection.addSnapshotListener { snapshot, error ->
+    ): ListenerHandle {
+        val registration = collection.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 onError(error)
                 return@addSnapshotListener
@@ -22,14 +28,15 @@ class ProductsRepository(
             val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
             onSuccess(products)
         }
+        return registration.asListenerHandle()
     }
 
     fun listenProductsBySubCategoria(
         subCategoria: String,
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection
+    ): ListenerHandle {
+        val registration = collection
             .whereEqualTo("subCategoria", subCategoria)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -39,14 +46,15 @@ class ProductsRepository(
                 val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
                 onSuccess(products)
             }
+        return registration.asListenerHandle()
     }
 
     fun listenProductsByNomeProduto(
         nomeProduto: String,
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection
+    ): ListenerHandle {
+        val registration = collection
             .whereEqualTo("nomeProduto", nomeProduto)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -56,20 +64,22 @@ class ProductsRepository(
                 val products = snapshot?.documents.orEmpty().mapNotNull { it.toProductOrNull() }
                 onSuccess(products)
             }
+        return registration.asListenerHandle()
     }
 
     fun listenProduct(
         productId: String,
         onSuccess: (Product?) -> Unit,
         onError: (Exception) -> Unit
-    ): ListenerRegistration {
-        return collection.document(productId).addSnapshotListener { snapshot, error ->
+    ): ListenerHandle {
+        val registration = collection.document(productId).addSnapshotListener { snapshot, error ->
             if (error != null) {
                 onError(error)
                 return@addSnapshotListener
             }
             onSuccess(snapshot?.toProductOrNull())
         }
+        return registration.asListenerHandle()
     }
 
     fun fetchProduct(
@@ -130,7 +140,12 @@ class ProductsRepository(
         onError: (Exception) -> Unit
     ) {
         collection.add(product.toFirestoreMap())
-            .addOnSuccessListener { onSuccess(it.id) }
+            .addOnSuccessListener { doc ->
+                val nome = product.nomeProduto.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Criou produto", "produto", doc.id, details)
+                onSuccess(doc.id)
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -142,7 +157,12 @@ class ProductsRepository(
     ) {
         collection.document(productId)
             .set(product.toFirestoreMap(), SetOptions.merge())
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val nome = product.nomeProduto.trim()
+                val details = if (nome.isNotBlank()) "Nome: $nome" else null
+                AuditLogger.logAction("Editou produto", "produto", productId, details)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -154,7 +174,12 @@ class ProductsRepository(
     ) {
         collection.document(productId)
             .set(mapOf("codBarras" to codBarras.trim()), SetOptions.merge())
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                val normalized = codBarras.trim()
+                val details = if (normalized.isNotBlank()) "Codigo: $normalized" else null
+                AuditLogger.logAction("Atualizou codigo de barras", "produto", productId, details)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 
@@ -178,7 +203,10 @@ class ProductsRepository(
     ) {
         collection.document(productId)
             .delete()
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                AuditLogger.logAction("Apagou produto", "produto", productId)
+                onSuccess()
+            }
             .addOnFailureListener { onError(it) }
     }
 }

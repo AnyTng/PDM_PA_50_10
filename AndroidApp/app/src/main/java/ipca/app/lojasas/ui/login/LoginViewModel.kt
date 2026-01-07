@@ -3,14 +3,12 @@ package ipca.app.lojasas.ui.login
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.data.UserRoleRepository
-import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.auth
-import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.notifications.NotificationRepository
+import javax.inject.Inject
 
 
 const val TAG = "LojaSocial"
@@ -22,7 +20,12 @@ data class LoginState (
     var isLoading : Boolean = false
 )
 
-class LoginViewModel : ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val userRoleRepository: UserRoleRepository,
+    private val notificationRepository: NotificationRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(LoginState())
         private set
@@ -49,17 +52,18 @@ class LoginViewModel : ViewModel() {
         }
 
         val email = uiState.value.email!!.trim()
-        val auth: FirebaseAuth = Firebase.auth
-        auth.signInWithEmailAndPassword(email, uiState.value.password!!)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Log.d(TAG, "signInWithEmail:success")
-                    resolveRoleAndProceed(email, onLoginSuccess)
-                } else {
-                    Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    uiState.value = uiState.value.copy(isLoading = false, error = "Credenciais inválidas ou sem internet.")
-                }
+        authRepository.signIn(
+            email = email,
+            password = uiState.value.password!!,
+            onSuccess = {
+                Log.d(TAG, "signInWithEmail:success")
+                resolveRoleAndProceed(email, onLoginSuccess)
+            },
+            onError = { error ->
+                Log.w(TAG, "signInWithEmail:failure", error)
+                uiState.value = uiState.value.copy(isLoading = false, error = "Credenciais inválidas ou sem internet.")
             }
+        )
     }
 
     // --- ESTA É A FUNÇÃO QUE FALTAVA ---
@@ -72,30 +76,32 @@ class LoginViewModel : ViewModel() {
 
         uiState.value = uiState.value.copy(isLoading = true)
 
-        Firebase.auth.sendPasswordResetEmail(email)
-            .addOnCompleteListener { task ->
+        authRepository.sendPasswordReset(
+            email = email,
+            onSuccess = {
                 uiState.value = uiState.value.copy(isLoading = false)
-                if (task.isSuccessful) {
-                    onResult("Email de recuperação enviado! Verifique a sua caixa de correio.")
-                } else {
-                    onResult("Erro: ${task.exception?.message}")
-                }
+                onResult("Email de recuperação enviado! Verifique a sua caixa de correio.")
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(isLoading = false)
+                onResult("Erro: ${error?.message}")
             }
+        )
     }
     // -----------------------------------
 
     private fun resolveRoleAndProceed(email: String, onLoginSuccess: (UserRole) -> Unit) {
-        UserRoleRepository.fetchUserRoleByEmail(
+        userRoleRepository.fetchUserRoleByEmail(
             email = email,
             onSuccess = { role ->
                 uiState.value = uiState.value.copy(isLoading = false, error = null)
 
                 // 1) Tópicos (funcionarios + admin)
-                configureTopicForRole(role)
+                notificationRepository.configureForRole(role)
 
                 // 2) Se for Apoiado, guarda token para notificações "1 a 1"
-                if (role.toString().equals("Apoiado", ignoreCase = true)) {
-                    saveApoiadoTokenToFirestore()
+                if (role == UserRole.APOIADO) {
+                    notificationRepository.saveApoiadoToken(email)
                 }
 
                 onLoginSuccess(role)
@@ -111,95 +117,3 @@ class LoginViewModel : ViewModel() {
     }
 
 }
-
-
-//Para notificações
-private fun configureTopicForRole(role: UserRole) {
-    val messaging = FirebaseMessaging.getInstance()
-    val roleStr = role.toString()
-
-    val isFuncionario = roleStr.equals("Funcionario", ignoreCase = true)
-    val isAdmin = roleStr.equals("Admin", ignoreCase = true) ||
-            roleStr.equals("Administrador", ignoreCase = true)
-
-    if (isFuncionario || isAdmin) {
-        // ✅ ambos recebem as notificações que vão para "funcionarios"
-        messaging.subscribeToTopic("funcionarios")
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) Log.d(TAG, "FCM: Subscrito em funcionarios ✅")
-                else Log.e(TAG, "FCM: Falhou subscribe funcionarios", task.exception)
-            }
-    } else {
-        messaging.unsubscribeFromTopic("funcionarios")
-    }
-}
-
-//Para notificações
-private fun saveApoiadoTokenToFirestore() {
-    val email = FirebaseAuth.getInstance().currentUser?.email?.trim()
-    if (email.isNullOrEmpty()) {
-        Log.e(TAG, "FCM Apoiado: FirebaseAuth email está vazio ❌")
-        return
-    }
-
-    Log.d(TAG, "FCM Apoiado: vou guardar token para email=$email")
-
-    val db = FirebaseFirestore.getInstance()
-
-    FirebaseMessaging.getInstance().token
-        .addOnSuccessListener { token ->
-            Log.d(TAG, "FCM Apoiado: token obtido ✅ (tamanho=${token.length})")
-
-            fun saveTokenOnDoc(docId: String) {
-                Log.d(TAG, "FCM Apoiado: a guardar token no doc apoiados/$docId/fcmTokens/$token")
-
-                db.collection("apoiados")
-                    .document(docId)
-                    .collection("fcmTokens")
-                    .document(token)
-                    .set(mapOf("updatedAt" to FieldValue.serverTimestamp()))
-                    .addOnSuccessListener { Log.d(TAG, "FCM Apoiado: token guardado ✅") }
-                    .addOnFailureListener { e -> Log.e(TAG, "FCM Apoiado: ERRO a guardar token ❌", e) }
-            }
-
-            // 1) tenta por emailApoiado
-            db.collection("apoiados")
-                .whereEqualTo("emailApoiado", email)
-                .limit(1)
-                .get()
-                .addOnSuccessListener { snap ->
-                    val doc = snap.documents.firstOrNull()
-                    if (doc != null) {
-                        Log.d(TAG, "FCM Apoiado: encontrado por emailApoiado ✅ docId=${doc.id}")
-                        saveTokenOnDoc(doc.id)
-                    } else {
-                        Log.w(TAG, "FCM Apoiado: não encontrou por emailApoiado, vou tentar por 'email'…")
-
-                        // 2) fallback por email
-                        db.collection("apoiados")
-                            .whereEqualTo("email", email)
-                            .limit(1)
-                            .get()
-                            .addOnSuccessListener { snap2 ->
-                                val doc2 = snap2.documents.firstOrNull()
-                                if (doc2 != null) {
-                                    Log.d(TAG, "FCM Apoiado: encontrado por email ✅ docId=${doc2.id}")
-                                    saveTokenOnDoc(doc2.id)
-                                } else {
-                                    Log.e(TAG, "FCM Apoiado: NÃO encontrou apoiado com email=$email ❌")
-                                }
-                            }
-                            .addOnFailureListener { e ->
-                                Log.e(TAG, "FCM Apoiado: erro na query por 'email' ❌", e)
-                            }
-                    }
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "FCM Apoiado: erro na query por 'emailApoiado' ❌", e)
-                }
-        }
-        .addOnFailureListener { e ->
-            Log.e(TAG, "FCM Apoiado: erro a obter token FCM ❌", e)
-        }
-}
-

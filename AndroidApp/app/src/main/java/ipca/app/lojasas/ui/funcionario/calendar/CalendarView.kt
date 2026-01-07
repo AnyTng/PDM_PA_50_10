@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.data.calendar.CalendarEvent
+import ipca.app.lojasas.data.calendar.EventType
 import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,7 +33,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun CalendarView(
     navController: NavController,
-    viewModel: CalendarViewModel = viewModel()
+    viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val scope = rememberCoroutineScope()

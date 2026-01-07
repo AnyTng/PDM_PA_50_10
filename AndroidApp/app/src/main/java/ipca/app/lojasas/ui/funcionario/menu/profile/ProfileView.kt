@@ -25,18 +25,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
-import ipca.app.lojasas.ui.login.GreenIPCA
+import ipca.app.lojasas.ui.theme.GreenSas
+
 
 @Composable
 fun ProfileView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: ProfileViewModel = viewModel()
+    val viewModel: FuncionarioProfileViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -61,7 +62,7 @@ fun ProfileView(
                             navController.popBackStack()
                         }
                     },
-                    containerColor = GreenIPCA,
+                    containerColor = GreenSas,
                     contentColor = Color.White,
                     modifier = Modifier.size(64.dp)
                 ) {
@@ -77,7 +78,7 @@ fun ProfileView(
 
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenIPCA)
+                CircularProgressIndicator(color = GreenSas)
             }
         } else {
             Column(
@@ -184,7 +185,7 @@ fun ProfileView(
                     confirmButton = {
                         Button(
                             onClick = { showDeleteDialog = false },
-                            colors = ButtonDefaults.buttonColors(containerColor = GreenIPCA)
+                            colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
                         ) {
                             Text("Entendi")
                         }
@@ -312,7 +313,7 @@ fun ChangePasswordDialog(
                         onConfirm(oldPass, newPass)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = GreenIPCA)
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
             ) {
                 Text("Alterar")
             }

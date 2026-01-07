@@ -55,26 +55,26 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
+import ipca.app.lojasas.ui.theme.GreenSas
+import ipca.app.lojasas.ui.theme.WhiteColor
+import ipca.app.lojasas.ui.theme.InputBorder
+import ipca.app.lojasas.ui.theme.InputBackground
 
-// Definição das Cores do Figma
-val GreenIPCA = Color(0xFF094E33)
-val WhiteColor = Color(0xFFFFFFFF)
-val InputBackground = Color(0x0DC6DBD3)
-val InputBorder = Color(0x808B8B8B)
+
 
 @Composable
 fun LoginView(
     navController: NavController = rememberNavController(),
     modifier: Modifier = Modifier
 ) {
-    val viewModel: LoginViewModel = viewModel()
+    val viewModel: LoginViewModel = hiltViewModel()
     val uiState by viewModel.uiState
     val focusManager = LocalFocusManager.current
     val passwordFocusRequester = remember { FocusRequester() }
@@ -106,7 +106,7 @@ fun LoginView(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(color = GreenIPCA)
+            .background(color = GreenSas)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // --- Secção do Logótipo + Ilustração ---
@@ -225,7 +225,7 @@ fun LoginView(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
-                                .border(width = 0.7.dp, color = GreenIPCA, shape = RoundedCornerShape(5.dp))
+                                .border(width = 0.7.dp, color = GreenSas, shape = RoundedCornerShape(5.dp))
                                 .background(color = WhiteColor, shape = RoundedCornerShape(5.dp))
                                 .clickable {
                                     navController.navigate(Screen.CreateProfileApoiado.route)
@@ -233,7 +233,7 @@ fun LoginView(
                         ) {
                             Text(
                                 text = "Não tens conta?",
-                                color = GreenIPCA,
+                                color = GreenSas,
                                 fontFamily = FontFamily(Font(R.font.introboldalt)),
                             )
                         }
@@ -244,7 +244,7 @@ fun LoginView(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
-                                .background(color = GreenIPCA, shape = RoundedCornerShape(5.dp))
+                                .background(color = GreenSas, shape = RoundedCornerShape(5.dp))
                                 .clickable {
                                     performLogin()
                                 }
@@ -292,7 +292,7 @@ fun LoginView(
                 title = {
                     Text(
                         text = "Recuperar Palavra-passe",
-                        color = GreenIPCA,
+                        color = GreenSas,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -323,7 +323,7 @@ fun LoginView(
                                 Toast.makeText(context, "Por favor, insira um email.", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenIPCA)
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(

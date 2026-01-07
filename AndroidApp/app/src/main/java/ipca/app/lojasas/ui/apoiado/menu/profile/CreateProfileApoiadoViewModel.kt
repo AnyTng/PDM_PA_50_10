@@ -2,11 +2,13 @@ package ipca.app.lojasas.ui.apoiado.menu.profile
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.UserRole
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.users.UserProfileInput
+import ipca.app.lojasas.data.users.UserProfilesRepository
 import ipca.app.lojasas.utils.Validators
+import javax.inject.Inject
 
 data class CreateProfileApoiadoState(
     var numMecanografico: String = "",
@@ -24,7 +26,11 @@ data class CreateProfileApoiadoState(
     var success: Boolean = false
 )
 
-class CreateProfileApoiadoViewModel : ViewModel() {
+@HiltViewModel
+class CreateProfileApoiadoViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val profilesRepository: UserProfilesRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(CreateProfileApoiadoState())
         private set
@@ -119,55 +125,45 @@ class CreateProfileApoiadoViewModel : ViewModel() {
 
         uiState.value = normalizedState.copy(isLoading = true, error = null)
 
-        val auth = Firebase.auth
-
-        auth.createUserWithEmailAndPassword(normalizedState.email, normalizedState.password)
-            .addOnSuccessListener { result ->
-                val userId = result.user?.uid
-                if (userId != null) {
-                    saveToFirestore(authUid = userId, onSuccess)
-                }
+        authRepository.createUser(
+            email = normalizedState.email,
+            password = normalizedState.password,
+            onSuccess = { userId ->
+                saveToFirestore(authUid = userId, onSuccess)
+            },
+            onError = { e ->
+                uiState.value = uiState.value.copy(
+                    isLoading = false,
+                    error = e?.message ?: "Erro ao criar conta."
+                )
             }
-            .addOnFailureListener { e ->
-                uiState.value = uiState.value.copy(isLoading = false, error = e.message ?: "Erro ao criar conta.")
-            }
+        )
     }
 
     private fun saveToFirestore(authUid: String, onSuccess: () -> Unit) {
         val state = uiState.value
-        val db = Firebase.firestore
-
-        val userMap = hashMapOf(
-            "uid" to authUid,
-            "numMecanografico" to state.numMecanografico,
-            "nome" to state.nome,
-            "contacto" to state.contacto,
-            "documentNumber" to state.documentNumber,
-            "documentType" to state.documentType,
-            "morada" to state.morada,
-            "codPostal" to state.codPostal,
-            "email" to state.email,
-            "role" to state.role.name,
-            "mudarPass" to false
+        val input = UserProfileInput(
+            uid = authUid,
+            numMecanografico = state.numMecanografico,
+            nome = state.nome,
+            contacto = state.contacto,
+            documentNumber = state.documentNumber,
+            documentType = state.documentType,
+            morada = state.morada,
+            codPostal = state.codPostal,
+            email = state.email,
+            role = state.role
         )
 
-        val collectionName = if (state.role == UserRole.FUNCIONARIO) "funcionarios" else "apoiados"
-
-        // Lógica específica para Apoiados
-        if (state.role == UserRole.APOIADO) {
-            userMap["emailApoiado"] = state.email
-            // --- VARIÁVEL PARA LEMBRAR DE PREENCHER DADOS ---
-            userMap["dadosIncompletos"] = true
-        }
-
-        db.collection(collectionName).document(state.numMecanografico)
-            .set(userMap)
-            .addOnSuccessListener {
+        profilesRepository.createProfile(
+            input = input,
+            onSuccess = {
                 uiState.value = state.copy(isLoading = false, success = true)
                 onSuccess()
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 uiState.value = state.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")
             }
+        )
     }
 }

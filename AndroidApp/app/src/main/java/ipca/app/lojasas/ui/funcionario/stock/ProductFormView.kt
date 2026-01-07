@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
@@ -40,7 +40,7 @@ fun ProductFormView(
     navController: NavController,
     productId: String? = null,
     prefillNomeProduto: String? = null,
-    viewModel: ProductFormViewModel = viewModel()
+    viewModel: ProductFormViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     var showDatePicker by remember { mutableStateOf(false) }
@@ -182,24 +182,28 @@ private fun ProductFormViewContent(
             label = "Categoria (Ex: Alimentar)",
             value = form.categoria,
             suggestions = state.availableCategories,
+            readOnly = state.isBarcodeMatchLocked,
             onValueChange = { onEvent(ProductFormEvent.CategoriaChanged(it)) }
         )
 
         StockInput(
             label = "Produto (Ex: Arroz)",
             value = form.nomeProduto,
+            readOnly = state.isBarcodeMatchLocked,
             onValueChange = { onEvent(ProductFormEvent.NomeProdutoChanged(it)) }
         )
 
         StockInput(
             label = "Tipo / Variedade (Ex: Carolino)",
             value = form.subCategoria,
+            readOnly = state.isBarcodeMatchLocked,
             onValueChange = { onEvent(ProductFormEvent.SubCategoriaChanged(it)) }
         )
 
         StockInput(
             label = "Marca",
             value = form.marca,
+            readOnly = state.isBarcodeMatchLocked,
             onValueChange = { onEvent(ProductFormEvent.MarcaChanged(it)) }
         )
 
@@ -226,6 +230,7 @@ private fun ProductFormViewContent(
             StockInput(
                 label = "Tamanho (Valor)",
                 value = form.tamanhoValor,
+                readOnly = state.isBarcodeMatchLocked,
                 onValueChange = { onEvent(ProductFormEvent.TamanhoValorChanged(it)) },
                 keyboardType = KeyboardType.Number,
                 modifier = Modifier.weight(1f)
@@ -233,6 +238,7 @@ private fun ProductFormViewContent(
             StockInput(
                 label = "Unidade (Kg...)",
                 value = form.tamanhoUnidade,
+                readOnly = state.isBarcodeMatchLocked,
                 onValueChange = { onEvent(ProductFormEvent.TamanhoUnidadeChanged(it)) },
                 modifier = Modifier.weight(1f)
             )
@@ -365,7 +371,9 @@ fun StockCampaignSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val displayText = campaigns.find { it.id == selectedId }?.nomeCampanha
+    val resolvedCampaign = campaigns.firstOrNull { it.id == selectedId }
+        ?: campaigns.firstOrNull { it.nomeCampanha.equals(selectedId, ignoreCase = true) }
+    val displayText = resolvedCampaign?.nomeCampanha
         ?: if (selectedId.isNotBlank()) "ID: $selectedId" else ""
 
     Box(modifier = modifier.fillMaxWidth()) {
@@ -430,23 +438,34 @@ fun StockAutocomplete(
     value: String,
     suggestions: List<String>,
     onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    readOnly: Boolean = false
 ) {
     var expanded by remember { mutableStateOf(false) }
     val filteredSuggestions = suggestions.filter {
         it.contains(value, ignoreCase = true)
     }
 
+    LaunchedEffect(readOnly) {
+        if (readOnly) expanded = false
+    }
+
     Box(modifier = modifier.fillMaxWidth()) {
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+            onExpandedChange = {
+                if (!readOnly) {
+                    expanded = !expanded
+                }
+            }
         ) {
             OutlinedTextField(
                 value = value,
                 onValueChange = {
-                    onValueChange(it)
-                    expanded = true
+                    if (!readOnly) {
+                        onValueChange(it)
+                        expanded = true
+                    }
                 },
                 label = { Text(label) },
                 modifier = Modifier
@@ -454,6 +473,7 @@ fun StockAutocomplete(
                     .menuAnchor(),
                 shape = RoundedCornerShape(10.dp),
                 singleLine = true,
+                readOnly = readOnly,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = GreenSas,
                     focusedLabelColor = GreenSas,
@@ -464,7 +484,7 @@ fun StockAutocomplete(
                     unfocusedTextColor = Color.Black
                 ),
                 trailingIcon = {
-                    if (filteredSuggestions.isNotEmpty()) {
+                    if (!readOnly && filteredSuggestions.isNotEmpty()) {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     }
                 }
@@ -499,7 +519,8 @@ fun StockInput(
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    readOnly: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
@@ -509,6 +530,7 @@ fun StockInput(
         shape = RoundedCornerShape(10.dp),
         singleLine = singleLine,
         maxLines = if (singleLine) 1 else 3,
+        readOnly = readOnly,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = GreenSas,

@@ -12,31 +12,24 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.AuditLogger
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.funcionario.FuncionarioRepository
+import ipca.app.lojasas.data.requests.PedidoUrgenteItem
+import ipca.app.lojasas.data.requests.UrgentRequestsRepository
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 private const val YEAR_FILTER_ALL = "Todos"
-
-// 1. ADICIONAR O CAMPO cestaId AQUI
-data class PedidoUrgenteItem(
-    val id: String,
-    val numeroMecanografico: String,
-    val descricao: String,
-    val estado: String,
-    val dataSubmissao: Date? = null,
-    val dataDecisao: Date? = null,
-    val cestaId: String? = null // <--- IMPORTANTE
-)
 
 data class UrgentRequestsState(
     val isLoading: Boolean = true,
@@ -49,15 +42,17 @@ data class UrgentRequestsState(
     val availableYears: List<String> = listOf(YEAR_FILTER_ALL)
 )
 
-class UrgentRequestsViewModel : ViewModel() {
-
-    private val db = Firebase.firestore
-    private val auth = Firebase.auth
+@HiltViewModel
+class UrgentRequestsViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val funcionarioRepository: FuncionarioRepository,
+    private val urgentRequestsRepository: UrgentRequestsRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(UrgentRequestsState())
         private set
 
-    private var listener: ListenerRegistration? = null
+    private var listener: ListenerHandle? = null
 
     init {
         loadFuncionarioId()
@@ -70,56 +65,29 @@ class UrgentRequestsViewModel : ViewModel() {
     }
 
     private fun loadFuncionarioId() {
-        val user = auth.currentUser
-        if (user == null) {
+        val uid = authRepository.currentUserId()
+        if (uid.isNullOrBlank()) {
             uiState.value = uiState.value.copy(error = "Utilizador não autenticado.", isLoading = false)
             return
         }
 
-        db.collection("funcionarios")
-            .whereEqualTo("uid", user.uid)
-            .limit(1)
-            .get()
-            .addOnSuccessListener { docs ->
-                val doc = docs.documents.firstOrNull()
-                val id = doc?.id.orEmpty()
-                uiState.value = uiState.value.copy(funcionarioId = id)
-            }
-            .addOnFailureListener { e ->
+        funcionarioRepository.fetchFuncionarioIdByUid(
+            uid = uid,
+            onSuccess = { id ->
+                uiState.value = uiState.value.copy(funcionarioId = id.orEmpty())
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = e.message)
             }
+        )
     }
 
     private fun listenPedidosUrgentes() {
         uiState.value = uiState.value.copy(isLoading = true, error = null)
 
         listener?.remove()
-        listener = db.collection("pedidos_ajuda")
-            .whereEqualTo("tipo", "Urgente")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    uiState.value = uiState.value.copy(isLoading = false, error = error.message)
-                    return@addSnapshotListener
-                }
-
-                val pedidos = snapshot?.documents.orEmpty().map { doc ->
-                    val dataSubmissao = doc.getTimestamp("dataSubmissao")?.toDate()
-                        ?: (doc.get("dataSubmissao") as? Date)
-                    val dataDecisao = doc.getTimestamp("dataDecisao")?.toDate()
-                        ?: (doc.get("dataDecisao") as? Date)
-
-                    // 2. LER O CAMPO cestaId DA BASE DE DADOS
-                    PedidoUrgenteItem(
-                        id = doc.id,
-                        numeroMecanografico = doc.getString("numeroMecanografico")?.trim().orEmpty(),
-                        descricao = doc.getString("descricao")?.trim().orEmpty(),
-                        estado = doc.getString("estado")?.trim().orEmpty(),
-                        dataSubmissao = dataSubmissao,
-                        dataDecisao = dataDecisao,
-                        cestaId = doc.getString("cestaId") // <--- IMPORTANTE
-                    )
-                }.sortedByDescending { it.dataSubmissao ?: Date(0) }
-
+        listener = urgentRequestsRepository.listenUrgentRequests(
+            onSuccess = { pedidos ->
                 val years = pedidos.mapNotNull { item ->
                     item.dataSubmissao?.let { extractYear(it) }
                 }.distinct()
@@ -139,7 +107,11 @@ class UrgentRequestsViewModel : ViewModel() {
                     availableYears = availableYears
                 )
                 applyFilters()
+            },
+            onError = { error ->
+                uiState.value = uiState.value.copy(isLoading = false, error = error.message)
             }
+        )
     }
 
     fun onSearchQueryChange(query: String) {
@@ -192,13 +164,18 @@ class UrgentRequestsViewModel : ViewModel() {
         )
         if (funcId.isNotBlank()) updates["funcionarioID"] = funcId
 
-        db.collection("pedidos_ajuda").document(pedidoId)
-            .update(updates)
-            .addOnSuccessListener { onDone(true) }
-            .addOnFailureListener { e ->
+        urgentRequestsRepository.updateUrgentRequest(
+            pedidoId = pedidoId,
+            updates = updates,
+            onSuccess = {
+                AuditLogger.logAction("Negou pedido urgente", "pedido_ajuda", pedidoId)
+                onDone(true)
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = e.message)
                 onDone(false)
             }
+        )
     }
 
     fun aprovarPedido(pedidoId: String, onDone: (Boolean) -> Unit = {}) {
@@ -209,13 +186,18 @@ class UrgentRequestsViewModel : ViewModel() {
         )
         if (funcId.isNotBlank()) updates["funcionarioID"] = funcId
 
-        db.collection("pedidos_ajuda").document(pedidoId)
-            .update(updates)
-            .addOnSuccessListener { onDone(true) }
-            .addOnFailureListener { e ->
+        urgentRequestsRepository.updateUrgentRequest(
+            pedidoId = pedidoId,
+            updates = updates,
+            onSuccess = {
+                AuditLogger.logAction("Aprovou pedido urgente", "pedido_ajuda", pedidoId)
+                onDone(true)
+            },
+            onError = { e ->
                 uiState.value = uiState.value.copy(error = e.message)
                 onDone(false)
             }
+        )
     }
 }
 

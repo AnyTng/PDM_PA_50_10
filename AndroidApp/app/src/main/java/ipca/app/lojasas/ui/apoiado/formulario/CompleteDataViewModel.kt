@@ -2,11 +2,13 @@ package ipca.app.lojasas.ui.apoiado.formulario
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.apoiado.ApoiadoFormData
+import ipca.app.lojasas.data.apoiado.ApoiadoRepository
 import ipca.app.lojasas.utils.AccountValidity
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
+import javax.inject.Inject
 
 data class CompleteDataState(
     var relacaoIPCA: String = "", // "Estudante", "Funcionário", "Docente"
@@ -26,12 +28,13 @@ data class CompleteDataState(
     var error: String? = null
 )
 
-class CompleteDataViewModel : ViewModel() {
+@HiltViewModel
+class CompleteDataViewModel @Inject constructor(
+    private val repository: ApoiadoRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(CompleteDataState())
         private set
-
-    val db = Firebase.firestore
 
     init {
         fetchNationalities()
@@ -73,47 +76,30 @@ class CompleteDataViewModel : ViewModel() {
     // --- CARREGAMENTO DE DADOS ---
 
     private fun fetchNationalities() {
-        db.collection("apoiados").get()
-            .addOnSuccessListener { result ->
-                val list = result.documents
-                    .mapNotNull { it.getString("nacionalidade") }
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-                    .distinct()
-                    .sorted()
+        repository.fetchNationalities(
+            onSuccess = { list ->
                 uiState.value = uiState.value.copy(availableNationalities = list)
-            }
+            },
+            onError = { }
+        )
     }
 
     fun loadData(docId: String) {
         uiState.value = uiState.value.copy(isLoading = true)
-        db.collection("apoiados").document(docId).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val data = document.data
-                    if (data != null) {
-                        val timestamp = (data["dataNascimento"] as? com.google.firebase.Timestamp)
-
-                        uiState.value = uiState.value.copy(
-                            relacaoIPCA = data["relacaoIPCA"] as? String ?: "",
-                            curso = data["curso"] as? String ?: "",
-                            graoEnsino = data["graoEnsino"] as? String ?: "",
-                            apoioEmergencia = data["apoioEmergenciaSocial"] as? Boolean ?: false,
-                            bolsaEstudos = data["bolsaEstudos"] as? Boolean ?: false,
-                            valorBolsa = (data["valorBolsa"] as? String) ?: "",
-                            nacionalidade = data["nacionalidade"] as? String ?: "",
-                            necessidades = (data["necessidade"] as? List<String>) ?: emptyList(),
-                            dataNascimento = timestamp?.toDate()?.time,
-                            isLoading = false
-                        )
-                    }
-                } else {
+        repository.fetchApoiadoFormData(
+            docId = docId,
+            onSuccess = { form ->
+                if (form == null) {
                     uiState.value = uiState.value.copy(isLoading = false)
+                    return@fetchApoiadoFormData
                 }
-            }
-            .addOnFailureListener {
+
+                applyFormData(form)
+            },
+            onError = {
                 uiState.value = uiState.value.copy(isLoading = false, error = it.message)
             }
+        )
     }
 
     fun submitData(docId: String, onSuccess: () -> Unit) {
@@ -186,14 +172,31 @@ class CompleteDataViewModel : ViewModel() {
         if (state.graoEnsino.isNotBlank()) updateMap["graoEnsino"] = state.graoEnsino.trim()
         if (state.valorBolsa.isNotBlank()) updateMap["valorBolsa"] = state.valorBolsa.trim()
 
-        db.collection("apoiados").document(docId)
-            .update(updateMap)
-            .addOnSuccessListener {
+        repository.updateApoiadoFormData(
+            docId = docId,
+            data = updateMap,
+            onSuccess = {
                 uiState.value = state.copy(isLoading = false)
                 onSuccess()
-            }
-            .addOnFailureListener { e ->
+            },
+            onError = { e ->
                 uiState.value = state.copy(isLoading = false, error = "Erro ao guardar: ${e.message}")
             }
+        )
+    }
+
+    private fun applyFormData(form: ApoiadoFormData) {
+        uiState.value = uiState.value.copy(
+            relacaoIPCA = form.relacaoIPCA,
+            curso = form.curso,
+            graoEnsino = form.graoEnsino,
+            apoioEmergencia = form.apoioEmergencia,
+            bolsaEstudos = form.bolsaEstudos,
+            valorBolsa = form.valorBolsa,
+            nacionalidade = form.nacionalidade,
+            necessidades = form.necessidades,
+            dataNascimento = form.dataNascimento?.time,
+            isLoading = false
+        )
     }
 }

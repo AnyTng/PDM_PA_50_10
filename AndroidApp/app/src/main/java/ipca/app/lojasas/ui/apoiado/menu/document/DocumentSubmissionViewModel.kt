@@ -7,31 +7,20 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
-import com.google.firebase.storage.storage
-import java.util.Date
-import java.util.UUID
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.apoiado.ApoiadoDocumentsRepository
+import ipca.app.lojasas.data.apoiado.ApoiadoRepository
+import ipca.app.lojasas.data.apoiado.UploadedFile
+import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.common.ListenerHandle
+import javax.inject.Inject
 
-// ... (Data Classes DocumentItem, UploadedFile, SubmissionState mantêm-se iguais) ...
+// ... (Data Classes DocumentItem e SubmissionState mantêm-se iguais) ...
 data class DocumentItem(
     val id: String,
     val title: String,
     val description: String,
     val isMandatory: Boolean = false
-)
-
-data class UploadedFile(
-    val id: String,
-    val typeId: String,
-    val typeTitle: String,
-    val fileName: String,
-    val storagePath: String,
-    val date: Long,
-    val customDescription: String? = null,
-    val numeroEntrega: Int,
-    val submetido: Boolean
 )
 
 data class SubmissionState(
@@ -50,73 +39,64 @@ data class SubmissionState(
     val submissionSuccess: Boolean = false
 )
 
-class DocumentSubmissionViewModel : ViewModel() {
+@HiltViewModel
+class DocumentSubmissionViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val apoiadoRepository: ApoiadoRepository,
+    private val documentsRepository: ApoiadoDocumentsRepository
+) : ViewModel() {
 
     var uiState = mutableStateOf(SubmissionState())
         private set
 
-    private val auth = Firebase.auth
-    private val db = Firebase.firestore
-    private val storage = Firebase.storage
+    private var filesListener: ListenerHandle? = null
 
     fun loadSubmissionStatus() {
-        val user = auth.currentUser ?: return
+        val uid = authRepository.currentUserId().orEmpty()
+        if (uid.isBlank()) return
         uiState.value = uiState.value.copy(isLoading = true)
 
-        db.collection("apoiados").whereEqualTo("uid", user.uid).get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val numMecanografico = documents.documents[0].id
-                    calculateDeliveryNumber(numMecanografico)
+        apoiadoRepository.fetchApoiadoIdByUid(
+            uid = uid,
+            onSuccess = { apoiadoId ->
+                if (apoiadoId.isNullOrBlank()) {
+                    uiState.value = uiState.value.copy(isLoading = false)
+                    return@fetchApoiadoIdByUid
                 }
+                calculateDeliveryNumber(apoiadoId)
+            },
+            onError = {
+                uiState.value = uiState.value.copy(isLoading = false)
             }
+        )
     }
 
     // LÓGICA DE ENTREGA: Baseada no nº de negações
     private fun calculateDeliveryNumber(numMecanografico: String) {
-        db.collection("apoiados").document(numMecanografico)
-            .collection("JustificacoesNegacao")
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val denialCount = snapshot.size()
-                val currentDelivery = denialCount + 1
-
+        documentsRepository.fetchDeliveryNumber(
+            apoiadoId = numMecanografico,
+            onSuccess = { currentDelivery ->
                 uiState.value = uiState.value.copy(currentDeliveryNumber = currentDelivery)
                 listenToCurrentFiles(numMecanografico, currentDelivery)
-            }
-            .addOnFailureListener {
+            },
+            onError = {
                 uiState.value = uiState.value.copy(currentDeliveryNumber = 1, isLoading = false)
             }
+        )
     }
 
     private fun listenToCurrentFiles(numMecanografico: String, deliveryNumber: Int) {
-        db.collection("apoiados").document(numMecanografico)
-            .collection("Submissoes")
-            .whereEqualTo("numeroEntrega", deliveryNumber)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null || snapshot == null) {
-                    uiState.value = uiState.value.copy(isLoading = false)
-                    return@addSnapshotListener
-                }
-
-                val files = snapshot.documents.mapNotNull { doc ->
-                    try {
-                        UploadedFile(
-                            id = doc.id,
-                            typeId = doc.getString("typeId") ?: "",
-                            typeTitle = doc.getString("typeTitle") ?: "Desconhecido",
-                            fileName = doc.getString("fileName") ?: "Sem nome",
-                            storagePath = doc.getString("storagePath") ?: "",
-                            date = doc.getLong("date") ?: 0L,
-                            customDescription = doc.getString("customDescription"),
-                            numeroEntrega = doc.getLong("numeroEntrega")?.toInt() ?: 1,
-                            submetido = doc.getBoolean("submetido") ?: false
-                        )
-                    } catch (e: Exception) { null }
-                }.sortedByDescending { it.date }
-
+        filesListener?.remove()
+        filesListener = documentsRepository.listenSubmissionFiles(
+            apoiadoId = numMecanografico,
+            deliveryNumber = deliveryNumber,
+            onSuccess = { files ->
                 uiState.value = uiState.value.copy(uploadedFiles = files, isLoading = false)
+            },
+            onError = {
+                uiState.value = uiState.value.copy(isLoading = false)
             }
+        )
     }
 
     fun hasAllMandatoryFiles(): Boolean {
@@ -128,88 +108,80 @@ class DocumentSubmissionViewModel : ViewModel() {
     }
 
     fun uploadDocument(context: Context, uri: Uri, docType: DocumentItem, customDescription: String? = null) {
-        val user = auth.currentUser ?: return
+        val uid = authRepository.currentUserId().orEmpty()
+        if (uid.isBlank()) return
         uiState.value = uiState.value.copy(uploadProgress = true, error = null)
 
-        db.collection("apoiados").whereEqualTo("uid", user.uid).get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val numMecanografico = documents.documents[0].id
-                    performUpload(context, uri, docType, numMecanografico, customDescription)
+        apoiadoRepository.fetchApoiadoIdByUid(
+            uid = uid,
+            onSuccess = { apoiadoId ->
+                if (apoiadoId.isNullOrBlank()) {
+                    uiState.value = uiState.value.copy(uploadProgress = false)
+                    return@fetchApoiadoIdByUid
                 }
+                performUpload(context, uri, docType, apoiadoId, customDescription)
+            },
+            onError = {
+                uiState.value = uiState.value.copy(uploadProgress = false)
             }
+        )
     }
 
     private fun performUpload(context: Context, uri: Uri, docItem: DocumentItem, numMecanografico: String, customDesc: String?) {
         val originalName = getFileName(context, uri) ?: "doc_${System.currentTimeMillis()}"
-        val uniqueName = "${UUID.randomUUID()}_$originalName"
         val currentDelivery = uiState.value.currentDeliveryNumber
-
-        val storageRef = storage.reference.child("$numMecanografico/Entrega$currentDelivery/${docItem.id}/$uniqueName")
-
-        storageRef.putFile(uri)
-            .addOnSuccessListener {
-                val path = storageRef.path
-                val displayTitle = if (!customDesc.isNullOrEmpty()) customDesc else docItem.title
-
-                val fileData = hashMapOf(
-                    "typeId" to docItem.id,
-                    "typeTitle" to displayTitle,
-                    "customDescription" to customDesc,
-                    "fileName" to originalName,
-                    "storagePath" to path,
-                    "date" to System.currentTimeMillis(),
-                    "numeroEntrega" to currentDelivery,
-                    "submetido" to false // Rascunho até finalizar
-                )
-
-                db.collection("apoiados").document(numMecanografico)
-                    .collection("Submissoes")
-                    .add(fileData)
-                    .addOnSuccessListener {
-                        uiState.value = uiState.value.copy(uploadProgress = false)
-                    }
+        documentsRepository.uploadDocument(
+            apoiadoId = numMecanografico,
+            deliveryNumber = currentDelivery,
+            docTypeId = docItem.id,
+            docTypeTitle = docItem.title,
+            originalName = originalName,
+            uri = uri,
+            customDescription = customDesc,
+            onSuccess = {
+                uiState.value = uiState.value.copy(uploadProgress = false)
+            },
+            onError = { message ->
+                uiState.value = uiState.value.copy(uploadProgress = false, error = "Erro Upload: $message")
             }
-            .addOnFailureListener { e ->
-                uiState.value = uiState.value.copy(uploadProgress = false, error = "Erro Upload: ${e.message}")
-            }
+        )
     }
 
     // FINALIZAR: Fecha a entrega e notifica o funcionário
     fun finalizeSubmission(onSuccess: () -> Unit) {
-        val user = auth.currentUser ?: return
         val currentDelivery = uiState.value.currentDeliveryNumber
 
         uiState.value = uiState.value.copy(isLoading = true)
 
-        db.collection("apoiados").whereEqualTo("uid", user.uid).get()
-            .addOnSuccessListener { documents ->
-                if (!documents.isEmpty) {
-                    val docId = documents.documents[0].id
-                    val submissoesRef = db.collection("apoiados").document(docId).collection("Submissoes")
+        val uid = authRepository.currentUserId().orEmpty()
+        if (uid.isBlank()) {
+            uiState.value = uiState.value.copy(isLoading = false)
+            return
+        }
 
-                    submissoesRef.whereEqualTo("numeroEntrega", currentDelivery).get()
-                        .addOnSuccessListener { batchSnapshot ->
-                            val batch = db.batch()
-
-                            // Marca todos os ficheiros como submetidos
-                            for (doc in batchSnapshot.documents) {
-                                batch.update(doc.reference, "submetido", true)
-                                batch.update(doc.reference, "dataSubmissao", Date())
-                            }
-
-                            // Atualiza estado do utilizador para "Analise"
-                            val userRef = db.collection("apoiados").document(docId)
-                            batch.update(userRef, "faltaDocumentos", false)
-                            batch.update(userRef, "estadoConta", "Analise")
-
-                            batch.commit().addOnSuccessListener {
-                                uiState.value = uiState.value.copy(isLoading = false, submissionSuccess = true)
-                                onSuccess()
-                            }
-                        }
+        apoiadoRepository.fetchApoiadoIdByUid(
+            uid = uid,
+            onSuccess = { docId ->
+                if (docId.isNullOrBlank()) {
+                    uiState.value = uiState.value.copy(isLoading = false)
+                    return@fetchApoiadoIdByUid
                 }
+                documentsRepository.finalizeSubmission(
+                    apoiadoId = docId,
+                    deliveryNumber = currentDelivery,
+                    onSuccess = {
+                        uiState.value = uiState.value.copy(isLoading = false, submissionSuccess = true)
+                        onSuccess()
+                    },
+                    onError = {
+                        uiState.value = uiState.value.copy(isLoading = false)
+                    }
+                )
+            },
+            onError = {
+                uiState.value = uiState.value.copy(isLoading = false)
             }
+        )
     }
 
     private fun getFileName(context: Context, uri: Uri): String? {
@@ -232,8 +204,12 @@ class DocumentSubmissionViewModel : ViewModel() {
     }
 
     fun getFileUrl(storagePath: String, onResult: (Uri?) -> Unit) {
-        storage.reference.child(storagePath).downloadUrl
-            .addOnSuccessListener { uri -> onResult(uri) }
-            .addOnFailureListener { onResult(null) }
+        documentsRepository.getFileUrl(storagePath, onResult)
+    }
+
+    override fun onCleared() {
+        filesListener?.remove()
+        filesListener = null
+        super.onCleared()
     }
 }

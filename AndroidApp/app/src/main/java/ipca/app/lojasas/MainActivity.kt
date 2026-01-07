@@ -17,15 +17,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.core.navigation.AppNavGraph
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
-import ipca.app.lojasas.R
+import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.ui.components.AppHeader
 import ipca.app.lojasas.ui.components.Footer
 import ipca.app.lojasas.ui.components.FooterType
@@ -35,8 +33,17 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var authRepository: AuthRepository
+
+    @Inject
+    lateinit var userRoleRepository: UserRoleRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -78,6 +85,21 @@ class MainActivity : ComponentActivity() {
                     Screen.FuncionarioHome -> HeaderConfig(title = stringResource(R.string.header_calendar))
                     Screen.StockProducts -> HeaderConfig(title = stringResource(R.string.header_stock))
                     Screen.MenuFuncionario -> HeaderConfig(title = stringResource(R.string.header_menu))
+                    Screen.AdminManual -> HeaderConfig(
+                        title = stringResource(R.string.header_manual),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.Historico -> HeaderConfig(
+                        title = stringResource(R.string.header_historico),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
+                    Screen.BeneficiarioManual -> HeaderConfig(
+                        title = stringResource(R.string.header_manual),
+                        showBack = true,
+                        onBack = { navController.popBackStack() }
+                    )
                     Screen.UrgentRequests -> HeaderConfig(
                         title = stringResource(R.string.header_urgent_requests),
                         showBack = true,
@@ -188,8 +210,7 @@ class MainActivity : ComponentActivity() {
 
 
             LaunchedEffect(Unit) {
-                val user = Firebase.auth.currentUser
-                val email = user?.email
+                val email = authRepository.currentUserEmail()
                 if (email != null) {
                     // OTIMIZAÇÃO: Verifica cache primeiro
                     val prefs = this@MainActivity.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
@@ -210,7 +231,7 @@ class MainActivity : ComponentActivity() {
                     // Mas para velocidade, se temos cache, o código acima já navegou.
                     // Se NÃO temos cache, executamos o fetch:
                     if (cachedRoleStr == null) {
-                        UserRoleRepository.fetchUserRoleByEmail(
+                        userRoleRepository.fetchUserRoleByEmail(
                             email = email,
                             onSuccess = { role ->
                                 // Salva na cache para a próxima vez

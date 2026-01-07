@@ -28,17 +28,18 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
-import ipca.app.lojasas.ui.login.GreenIPCA
+
 
 @Composable
 fun CreateProfileView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: CreateProfileViewModel = viewModel()
+    val viewModel: CreateProfileViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val focusManager = LocalFocusManager.current
@@ -55,7 +56,7 @@ fun CreateProfileView(
                         navController.popBackStack()
                     }
                 },
-                containerColor = GreenIPCA,
+                containerColor = GreenSas,
                 contentColor = Color.White,
                 modifier = Modifier.size(64.dp)
             ) {
@@ -248,7 +249,7 @@ fun FormInput(value: String, onValueChange: (String) -> Unit, placeholder: Strin
 @Composable
 fun RoleRadioButton(selected: Boolean, text: String, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onClick() }) {
-        RadioButton(selected = selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = GreenIPCA))
+        RadioButton(selected = selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = GreenSas))
         Text(text = text, fontSize = 16.sp, color = Color.Black)
     }
 }

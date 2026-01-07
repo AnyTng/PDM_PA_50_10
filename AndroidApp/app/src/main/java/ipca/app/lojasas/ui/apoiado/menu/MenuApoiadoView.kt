@@ -14,9 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import ipca.app.lojasas.core.navigation.Screen
@@ -26,7 +25,7 @@ fun MenuApoiadoView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: MenuApoiadoViewModel = viewModel()
+    val viewModel: MenuApoiadoViewModel = hiltViewModel()
     val isApproved by viewModel.isApproved
     val isBlock by viewModel.isBlock
 
@@ -89,7 +88,19 @@ fun MenuApoiadoView(
                     MenuApoiadoRow(title = "Documentos Entregues",enabled = !isBlock) { navController.navigate(Screen.SubmittedDocuments.route) }
                 }
             }
-
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    MenuApoiadoRow(title = "Manual de Utilização do Beneficiario") {
+                        navController.navigate(Screen.BeneficiarioManual.route)
+                    }
+                    MenuApoiadoDivider()
+                }
+            }
             // --- BOTÃO TERMINAR SESSÃO ---
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -99,7 +110,7 @@ fun MenuApoiadoView(
                     .fillMaxWidth()
                     .clickable {
                         try {
-                            FirebaseAuth.getInstance().signOut()
+                            viewModel.signOut()
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

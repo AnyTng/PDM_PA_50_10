@@ -35,7 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
@@ -51,7 +51,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 fun ProductDetailsView(
     navController: NavController,
     nomeProduto: String,
-    viewModel: ProductDetailsViewModel = viewModel()
+    viewModel: ProductDetailsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
 

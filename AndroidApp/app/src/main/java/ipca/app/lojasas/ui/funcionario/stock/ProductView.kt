@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.ProductStatus
@@ -35,7 +35,7 @@ import java.util.Locale
 fun ProductView(
     navController: NavController,
     productId: String,
-    viewModel: ProductViewModel = viewModel()
+    viewModel: ProductViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
 
@@ -80,7 +80,7 @@ fun ProductView(
                         tamanhoValor = prod.tamanhoValor,   // <-- Double? (ou Double)
                         tamanhoUnidade = prod.tamanhoUnidade,
                         validade = prod.validade,
-                        campanha = prod.campanha,
+                        campanha = state.campaignLabel ?: prod.campanha,
                         parceiroExternoNome = prod.parceiroExternoNome,
                         doado = prod.doado,
                         codBarras = prod.codBarras,

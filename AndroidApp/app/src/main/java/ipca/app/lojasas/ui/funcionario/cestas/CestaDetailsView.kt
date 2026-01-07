@@ -42,10 +42,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PictureAsPdf
 import ipca.app.lojasas.R
+import ipca.app.lojasas.data.cestas.CestaDetails
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.ui.theme.GreenSas
@@ -62,7 +63,7 @@ private val GreyBg = Color(0xFFF2F2F2)
 @Composable
 fun CestaDetailsView(
     cestaId: String,
-    viewModel: CestaDetailsViewModel = viewModel()
+    viewModel: CestaDetailsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val dateFmt = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }

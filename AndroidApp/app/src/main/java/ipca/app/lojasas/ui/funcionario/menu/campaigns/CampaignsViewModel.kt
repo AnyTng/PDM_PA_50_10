@@ -2,10 +2,11 @@ package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import java.util.Date
+import javax.inject.Inject
 
 data class CampaignsState(
     val futureCampaigns: List<Campaign> = emptyList(), // Novas campanhas agendadas
@@ -15,11 +16,12 @@ data class CampaignsState(
     val error: String? = null
 )
 
-class CampaignsViewModel : ViewModel() {
+@HiltViewModel
+class CampaignsViewModel @Inject constructor(
+    private val repo: CampaignRepository
+) : ViewModel() {
     var uiState = mutableStateOf(CampaignsState())
         private set
-
-    private val repo = CampaignRepository()
 
     init {
         loadCampaigns()
@@ -61,19 +63,6 @@ class CampaignsViewModel : ViewModel() {
 
     // --- NOVA FUNÇÃO ---
     fun deleteCampaign(campaign: Campaign, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        // --- ADIÇÃO: Log para debug e validação ---
-        android.util.Log.d("CampaignDelete", "A tentar apagar campanha: ${campaign.nomeCampanha} com ID: '${campaign.id}'")
-
-        if (campaign.id.isEmpty()) {
-            onError("Erro: O ID da campanha está vazio. Verifique o Repository.")
-            return
-        }
-        // ------------------------------------------
-
-        FirebaseFirestore.getInstance().collection("campanha")
-            .document(campaign.id)
-            .delete()
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onError(e.message ?: "Erro ao apagar") }
+        repo.deleteCampaign(campaign, onSuccess, onError)
     }
 }

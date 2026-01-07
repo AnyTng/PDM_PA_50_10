@@ -3,6 +3,7 @@ package ipca.app.lojasas.ui.funcionario.cestas
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,29 +50,33 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.cestas.CestaItem
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
+import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.text.Normalizer
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val GreenSas = Color(0xFF094E33)
+
 private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable
 fun CestasListView(
     navController: NavController,
-    viewModel: CestasListViewModel = viewModel()
+    viewModel: CestasListViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val context = LocalContext.current
     val dateFmt = rememberDateFormatter()
+    val filtersScrollState = rememberScrollState()
 
     var showEstadoMenu by remember { mutableStateOf(false) }
     var showOrigemMenu by remember { mutableStateOf(false) }
@@ -147,14 +153,18 @@ fun CestasListView(
                                 textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
                                 singleLine = true,
                                 decorationBox = { innerTextField ->
-                                    if (state.searchQuery.isEmpty()) {
-                                        Text(
-                                            "Pesquisar numero mecanografico...",
-                                            color = Color.Gray,
-                                            fontSize = 14.sp
-                                        )
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        if (state.searchQuery.isEmpty()) {
+                                            Text(
+                                                "Pesquisar numero mecanografico...",
+                                                color = Color.Gray,
+                                                fontSize = 14.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                        innerTextField()
                                     }
-                                    innerTextField()
                                 }
                             )
                         }
@@ -166,14 +176,57 @@ fun CestasListView(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .horizontalScroll(filtersScrollState),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Box {
+                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
+                                    TextButton(onClick = { showYearMenu = true }) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                "Ano: ${state.selectedYear}",
+                                                color = yearColor,
+                                                fontSize = 12.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = yearColor)
+                                        }
+                                    }
+                                    DropdownMenu(
+                                        expanded = showYearMenu,
+                                        onDismissRequest = { showYearMenu = false }
+                                    ) {
+                                        state.availableYears.forEach { year ->
+                                            DropdownMenuItem(
+                                                text = { Text(year) },
+                                                onClick = {
+                                                    viewModel.onYearSelected(year)
+                                                    showYearMenu = false
+                                                },
+                                                trailingIcon = {
+                                                    if (state.selectedYear == year) {
+                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
                                 Box {
                                     val estadoColor = if (state.selectedEstado != ESTADO_TODOS) GreenSas else Color.Gray
                                     TextButton(onClick = { showEstadoMenu = true }) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text("Estado: ${state.selectedEstado}", color = estadoColor, fontSize = 12.sp)
+                                            Text(
+                                                "Estado: ${state.selectedEstado}",
+                                                color = estadoColor,
+                                                fontSize = 12.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
                                             Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = estadoColor)
                                         }
                                     }
@@ -202,7 +255,13 @@ fun CestasListView(
                                     val origemColor = if (state.selectedOrigem != ORIGEM_TODOS) GreenSas else Color.Gray
                                     TextButton(onClick = { showOrigemMenu = true }) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text("Origem: ${state.selectedOrigem}", color = origemColor, fontSize = 12.sp)
+                                            Text(
+                                                "Origem: ${state.selectedOrigem}",
+                                                color = origemColor,
+                                                fontSize = 12.sp,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
                                             Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = origemColor)
                                         }
                                     }
@@ -226,34 +285,7 @@ fun CestasListView(
                                         }
                                     }
                                 }
-                                Box {
-                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
-                                    TextButton(onClick = { showYearMenu = true }) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text("Ano: ${state.selectedYear}", color = yearColor, fontSize = 12.sp)
-                                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = yearColor)
-                                        }
-                                    }
-                                    DropdownMenu(
-                                        expanded = showYearMenu,
-                                        onDismissRequest = { showYearMenu = false }
-                                    ) {
-                                        state.availableYears.forEach { year ->
-                                            DropdownMenuItem(
-                                                text = { Text(year) },
-                                                onClick = {
-                                                    viewModel.onYearSelected(year)
-                                                    showYearMenu = false
-                                                },
-                                                trailingIcon = {
-                                                    if (state.selectedYear == year) {
-                                                        Icon(Icons.Default.Check, null, tint = GreenSas)
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
+
                             }
 
                             IconButton(onClick = { viewModel.exportToCSV(context) }) {

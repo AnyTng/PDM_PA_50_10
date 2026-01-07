@@ -3,6 +3,8 @@ package ipca.app.lojasas.data
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import ipca.app.lojasas.core.navigation.Screen
+import javax.inject.Inject
+import javax.inject.Singleton
 
 enum class UserRole {
     FUNCIONARIO,
@@ -10,15 +12,16 @@ enum class UserRole {
     ADMIN // Adicionado o novo papel
 }
 
-object UserRoleRepository {
+@Singleton
+class UserRoleRepository @Inject constructor(
+    private val firestore: FirebaseFirestore
+) {
 
-    private const val TAG = "UserRoleRepository"
-    private const val FUNCIONARIOS_COLLECTION = "funcionarios"
-    private const val APOIADOS_COLLECTION = "apoiados"
-    private const val FUNCIONARIO_EMAIL_FIELD = "email"
-    private const val APOIADO_EMAIL_FIELD = "emailApoiado"
-
-    private val firestore by lazy { FirebaseFirestore.getInstance() }
+    private  val TAG = "UserRoleRepository"
+    private  val FUNCIONARIOS_COLLECTION = "funcionarios"
+    private  val APOIADOS_COLLECTION = "apoiados"
+    private val FUNCIONARIO_EMAIL_FIELD = "email"
+    private  val APOIADO_EMAIL_FIELD = "emailApoiado"
 
     fun fetchUserRoleByEmail(
         email: String,
@@ -74,6 +77,6 @@ object UserRoleRepository {
 // Define para onde cada utilizador vai após o login
 fun UserRole.destination(): String = when (this) {
     UserRole.FUNCIONARIO -> Screen.FuncionarioHome.route
-    UserRole.ADMIN -> Screen.FuncionarioHome.route // Admin também vai para a home (calendário), mas terá menu diferente
+    UserRole.ADMIN -> Screen.FuncionarioHome.route // Admin também vai para a home, mas terá menu diferente
     UserRole.APOIADO -> Screen.ApoiadoHome.route
 }

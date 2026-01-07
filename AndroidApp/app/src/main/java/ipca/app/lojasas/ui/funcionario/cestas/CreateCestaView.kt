@@ -51,9 +51,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.cestas.ApoiadoOption
 import ipca.app.lojasas.data.products.Product
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -69,7 +70,7 @@ fun CreateCestaView(
     fromUrgent: Boolean,
     pedidoId: String?,
     apoiadoId: String?,
-    viewModel: CreateCestaViewModel = viewModel()
+    viewModel: CreateCestaViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
     val context = LocalContext.current

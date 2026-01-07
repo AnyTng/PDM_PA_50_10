@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
@@ -70,6 +72,10 @@ dependencies {
     //
     implementation("androidx.navigation:navigation-compose:2.9.6")
 
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
 
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
 
@@ -83,4 +89,8 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.google.firebase:firebase-messaging")
 
+}
+
+kapt {
+    correctErrorTypes = true
 }

@@ -45,10 +45,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
-import com.google.firebase.auth.FirebaseAuth
+import ipca.app.lojasas.data.cestas.ApoiadoCesta
+import ipca.app.lojasas.data.requests.UrgentRequest
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
 import ipca.app.lojasas.ui.theme.IntroFontFamily
@@ -93,14 +94,13 @@ private data class ProfileStatusUi(
 
 @Composable
 fun ApoiadoHomeScreen(
-    navController: NavController,
-    userId: String
+    navController: NavController
 ) {
-    val viewModel: ApoiadoViewModel = viewModel()
+    val viewModel: ApoiadoViewModel = hiltViewModel()
     val state by viewModel.uiState
 
     // Garante refresh quando a navegação chega aqui
-    LaunchedEffect(userId) {
+    LaunchedEffect(Unit) {
         viewModel.checkStatus()
     }
 
@@ -128,7 +128,10 @@ fun ApoiadoHomeScreen(
 
     // 3) Conta Bloqueada (não mostra cestas/pedidos)
     if (state.estadoConta.equals("Bloqueado", ignoreCase = true)) {
-        BlockedAccountScreen(navController)
+        BlockedAccountScreen(
+            navController = navController,
+            onLogout = { viewModel.signOut() }
+        )
         return
     }
 
@@ -419,7 +422,7 @@ private fun CardActionButton(
 
 @Composable
 private fun CestaHomeCard(
-    cesta: Cesta,
+    cesta: ApoiadoCesta,
     style: CestaCardStyle
 ) {
     val (title, background, textColor, accentColor) = when (style) {
@@ -502,6 +505,17 @@ private fun CestaHomeCard(
                 fontSize = 14.sp,
                 color = textColor
             )
+
+            if (style == CestaCardStyle.PENDENTE) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Caso não possa levantar a cesta, reagende via email, sas@ipc.pt",
+                    fontFamily = IntroFontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 12.sp,
+                    color = textColor.copy(alpha = 0.95f)
+                )
+            }
 
             if (style == CestaCardStyle.NAO_LEVANTADA) {
                 Spacer(modifier = Modifier.height(6.dp))
@@ -685,7 +699,7 @@ private fun EmptyStateCheck() {
 
 @Composable
 private fun CestaDetailsDialog(
-    cesta: Cesta,
+    cesta: ApoiadoCesta,
     onDismiss: () -> Unit
 ) {
     val fmtFull = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
@@ -830,7 +844,10 @@ private fun PausedCard() {
 }
 
 @Composable
-fun BlockedAccountScreen(navController: NavController) {
+fun BlockedAccountScreen(
+    navController: NavController,
+    onLogout: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -862,7 +879,7 @@ fun BlockedAccountScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
-                FirebaseAuth.getInstance().signOut()
+                onLogout()
                 navController.navigate(Screen.Login.route) { popUpTo(0) }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black)

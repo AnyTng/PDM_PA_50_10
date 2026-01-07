@@ -7,6 +7,9 @@ sealed class Screen(val route: String) {
     object ApoiadoHome : Screen("apoiadoHome")
     object FuncionarioHome : Screen("funcionarioHome")
     object MenuFuncionario : Screen("menu")
+    object AdminManual : Screen("adminManual")
+    object BeneficiarioManual : Screen("beneficiarioManual")
+    object Historico : Screen("historico")
     object UrgentRequests : Screen("urgentRequests")
     object CestasList : Screen("cestasList")
     object CestaDetails : Screen("cestaDetails/{cestaId}") {
@@ -37,9 +40,9 @@ sealed class Screen(val route: String) {
     }
     object CampaignCreate : Screen("campaignCreate")
     object CollaboratorsList : Screen("collaboratorsList")
-    object CampaignResults : Screen("campaignResults/{campaignName}") {
-        fun createRoute(campaignName: String): String {
-            return "campaignResults/${Uri.encode(campaignName)}"
+    object CampaignResults : Screen("campaignResults/{campaignId}") {
+        fun createRoute(campaignId: String): String {
+            return "campaignResults/${Uri.encode(campaignId)}"
         }
     }
     object CompleteData : Screen("completeData/{docId}") {
@@ -73,6 +76,9 @@ sealed class Screen(val route: String) {
             ApoiadoHome,
             FuncionarioHome,
             MenuFuncionario,
+            AdminManual,
+            BeneficiarioManual,
+            Historico,
             UrgentRequests,
             CestasList,
             CestaDetails,
