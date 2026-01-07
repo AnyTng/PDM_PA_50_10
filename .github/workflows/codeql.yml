@@ -22,7 +22,7 @@ on:
   pull_request:
     branches: [ "main", "Dev" ]
     paths:
-      - 'App/**'
+      - 'AndroidApp/**'
 
       - '.github/workflows/codeql.yml' 
 
