@@ -11,7 +11,6 @@ import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
 import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
 import ipca.app.lojasas.ui.funcionario.stock.ProductSortOption
-import ipca.app.lojasas.ui.funcionario.stock.identity
 import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import java.util.Date
 import java.util.Locale
@@ -226,14 +225,11 @@ private fun sizeInBaseUnits(product: Product): Double? {
 
 private fun groupIdenticalProducts(products: List<Product>): List<ProductGroupUi> {
     return products
-        .groupBy { it.identity() }
-        .values
-        .map { groupProducts ->
-            val representative = groupProducts.first()
+        .map { product ->
             ProductGroupUi(
-                product = representative,
-                quantity = groupProducts.size,
-                productIds = groupProducts.map { it.id }
+                product = product,
+                quantity = 1,
+                productIds = listOf(product.id)
             )
         }
         .sortedWith(

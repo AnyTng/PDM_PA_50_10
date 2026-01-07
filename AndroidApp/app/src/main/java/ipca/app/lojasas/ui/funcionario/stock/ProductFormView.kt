@@ -371,7 +371,9 @@ fun StockCampaignSelector(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    val displayText = campaigns.find { it.id == selectedId }?.nomeCampanha
+    val resolvedCampaign = campaigns.firstOrNull { it.id == selectedId }
+        ?: campaigns.firstOrNull { it.nomeCampanha.equals(selectedId, ignoreCase = true) }
+    val displayText = resolvedCampaign?.nomeCampanha
         ?: if (selectedId.isNotBlank()) "ID: $selectedId" else ""
 
     Box(modifier = modifier.fillMaxWidth()) {

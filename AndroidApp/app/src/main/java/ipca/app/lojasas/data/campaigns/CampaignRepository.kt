@@ -5,7 +5,6 @@ import com.google.firebase.firestore.Query
 import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.toProductOrNull
-import java.util.Calendar
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,16 +25,7 @@ class CampaignRepository @Inject constructor(
                     return@addSnapshotListener
                 }
                 val campaigns = value?.documents?.mapNotNull { doc ->
-                    try {
-                        Campaign(
-                            id = doc.id,
-                            nomeCampanha = doc.getString("nomeCampanha") ?: "",
-                            descCampanha = doc.getString("descCampanha") ?: "",
-                            dataInicio = doc.getTimestamp("dataInicio")?.toDate() ?: Date(),
-                            dataFim = doc.getTimestamp("dataFim")?.toDate() ?: Date(),
-                            tipo = doc.getString("tipo") ?: ""
-                        )
-                    } catch (e: Exception) { null }
+                    doc.toCampaignOrNull()
                 } ?: emptyList()
                 onSuccess(campaigns)
             }
@@ -116,19 +106,53 @@ class CampaignRepository @Inject constructor(
                     onSuccess(null)
                     return@addOnSuccessListener
                 }
-                val campaign = try {
-                    Campaign(
-                        id = doc.id,
-                        nomeCampanha = doc.getString("nomeCampanha") ?: "",
-                        descCampanha = doc.getString("descCampanha") ?: "",
-                        dataInicio = doc.getTimestamp("dataInicio")?.toDate() ?: Date(),
-                        dataFim = doc.getTimestamp("dataFim")?.toDate() ?: Date(),
-                        tipo = doc.getString("tipo") ?: ""
-                    )
-                } catch (e: Exception) {
-                    null
+                onSuccess(doc.toCampaignOrNull())
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun getCampaignByIdOrName(
+        campaignValue: String,
+        onSuccess: (Campaign?) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = campaignValue.trim()
+        if (normalized.isBlank()) {
+            onSuccess(null)
+            return
+        }
+
+        db.collection("campanha")
+            .document(normalized)
+            .get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    onSuccess(doc.toCampaignOrNull())
+                    return@addOnSuccessListener
                 }
-                onSuccess(campaign)
+
+                db.collection("campanha")
+                    .whereEqualTo("nomeCampanha", normalized)
+                    .limit(1)
+                    .get()
+                    .addOnSuccessListener { result ->
+                        val byNomeCampanha = result.documents.firstOrNull()?.toCampaignOrNull()
+                        if (byNomeCampanha != null) {
+                            onSuccess(byNomeCampanha)
+                            return@addOnSuccessListener
+                        }
+
+                        db.collection("campanha")
+                            .whereEqualTo("nome", normalized)
+                            .limit(1)
+                            .get()
+                            .addOnSuccessListener { fallback ->
+                                val campaign = fallback.documents.firstOrNull()?.toCampaignOrNull()
+                                onSuccess(campaign)
+                            }
+                            .addOnFailureListener { onError(it) }
+                    }
+                    .addOnFailureListener { onError(it) }
             }
             .addOnFailureListener { onError(it) }
     }
@@ -169,5 +193,30 @@ class CampaignRepository @Inject constructor(
                 onSuccess(products)
             }
             .addOnFailureListener { onError(it) }
+    }
+}
+
+private fun com.google.firebase.firestore.DocumentSnapshot.getTrimmedString(
+    vararg fields: String
+): String? {
+    for (field in fields) {
+        val value = getString(field)?.trim()
+        if (!value.isNullOrBlank()) return value
+    }
+    return null
+}
+
+private fun com.google.firebase.firestore.DocumentSnapshot.toCampaignOrNull(): Campaign? {
+    return try {
+        Campaign(
+            id = id,
+            nomeCampanha = getTrimmedString("nomeCampanha", "nome", "nome_campanha", "nomeCamp") ?: "",
+            descCampanha = getTrimmedString("descCampanha", "descricao", "desc") ?: "",
+            dataInicio = getTimestamp("dataInicio")?.toDate() ?: Date(),
+            dataFim = getTimestamp("dataFim")?.toDate() ?: Date(),
+            tipo = getString("tipo")?.trim().orEmpty()
+        )
+    } catch (e: Exception) {
+        null
     }
 }

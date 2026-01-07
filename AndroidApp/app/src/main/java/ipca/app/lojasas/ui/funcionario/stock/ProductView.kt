@@ -80,7 +80,7 @@ fun ProductView(
                         tamanhoValor = prod.tamanhoValor,   // <-- Double? (ou Double)
                         tamanhoUnidade = prod.tamanhoUnidade,
                         validade = prod.validade,
-                        campanha = prod.campanha,
+                        campanha = state.campaignLabel ?: prod.campanha,
                         parceiroExternoNome = prod.parceiroExternoNome,
                         doado = prod.doado,
                         codBarras = prod.codBarras,

@@ -34,7 +34,7 @@ fun ApoiadoProfileView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: ProfileViewModel = hiltViewModel()
+    val viewModel: ApoiadoProfileViewModel = hiltViewModel()
     val state by viewModel.uiState
     val scrollState = rememberScrollState()
     val context = LocalContext.current

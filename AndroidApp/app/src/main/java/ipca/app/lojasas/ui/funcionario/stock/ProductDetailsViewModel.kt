@@ -70,11 +70,15 @@ class ProductDetailsViewModel @Inject constructor(
     private var allGroups: List<ProductGroupUi> = emptyList()
     private var currentNomeProduto: String? = null
     private var campaignsById: Map<String, Campaign> = emptyMap()
+    private var campaignsByName: Map<String, Campaign> = emptyMap()
 
     init {
         campaignRepository.listenCampaigns(
             onSuccess = { campaigns ->
                 campaignsById = campaigns.associateBy { it.id }
+                campaignsByName = campaigns.associateBy {
+                    it.nomeCampanha.trim().lowercase(Locale.getDefault())
+                }
                 updateAvailableFilters()
             },
             onError = { }
@@ -164,7 +168,7 @@ class ProductDetailsViewModel @Inject constructor(
         }
         campaignIds
             .map { id ->
-                val label = campaignsById[id]?.nomeCampanha?.trim().takeUnless { it.isNullOrBlank() } ?: id
+                val label = resolveCampaignLabel(id)
                 CampaignFilterOption(id, label)
             }
             .sortedBy { it.label.lowercase(Locale.getDefault()) }
@@ -191,6 +195,19 @@ class ProductDetailsViewModel @Inject constructor(
             availableCampaigns = campaignOptions,
             selectedCampaign = resolvedCampaign
         )
+    }
+
+    private fun resolveCampaignLabel(value: String): String {
+        val normalized = value.trim()
+        if (normalized.isBlank()) return normalized
+
+        val byId = campaignsById[normalized]?.nomeCampanha?.trim()
+        if (!byId.isNullOrBlank()) return byId
+
+        val byName = campaignsByName[normalized.lowercase(Locale.getDefault())]?.nomeCampanha?.trim()
+        if (!byName.isNullOrBlank()) return byName
+
+        return normalized
     }
 
     private fun applyFilter() {
@@ -300,14 +317,11 @@ private fun sizeInBaseUnits(product: Product): Double? {
 
 private fun groupIdenticalProducts(products: List<Product>): List<ProductGroupUi> {
     return products
-        .groupBy { it.identity() }
-        .values
-        .map { groupProducts ->
-            val representative = groupProducts.first()
+        .map { product ->
             ProductGroupUi(
-                product = representative,
-                quantity = groupProducts.size,
-                productIds = groupProducts.map { it.id }
+                product = product,
+                quantity = 1,
+                productIds = listOf(product.id)
             )
         }
         .sortedWith(

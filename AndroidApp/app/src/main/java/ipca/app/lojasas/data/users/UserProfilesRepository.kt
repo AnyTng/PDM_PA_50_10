@@ -85,6 +85,61 @@ class UserProfilesRepository @Inject constructor(
             .addOnFailureListener { onError(it) }
     }
 
+    fun fetchFuncionarioProfileByUid(
+        uid: String,
+        onSuccess: (UserProfile?) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = uid.trim()
+        if (normalized.isBlank()) {
+            onSuccess(null)
+            return
+        }
+
+        firestore.collection("funcionarios")
+            .whereEqualTo("uid", normalized)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { docs ->
+                val doc = docs.documents.firstOrNull()
+                if (doc == null) {
+                    onSuccess(null)
+                    return@addOnSuccessListener
+                }
+                val roleString = doc.getString("role") ?: ""
+                val isAdmin = roleString.equals("Admin", ignoreCase = true)
+                val role = if (isAdmin) UserRole.ADMIN else UserRole.FUNCIONARIO
+                onSuccess(mapProfile(doc, role, isAdmin))
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun fetchApoiadoProfileByUid(
+        uid: String,
+        onSuccess: (UserProfile?) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = uid.trim()
+        if (normalized.isBlank()) {
+            onSuccess(null)
+            return
+        }
+
+        firestore.collection("apoiados")
+            .whereEqualTo("uid", normalized)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { docs ->
+                val doc = docs.documents.firstOrNull()
+                if (doc == null) {
+                    onSuccess(null)
+                    return@addOnSuccessListener
+                }
+                onSuccess(mapProfile(doc, UserRole.APOIADO, false))
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
     fun updateProfile(
         role: UserRole,
         docId: String,

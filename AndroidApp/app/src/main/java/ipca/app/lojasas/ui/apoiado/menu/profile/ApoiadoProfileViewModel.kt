@@ -1,4 +1,4 @@
-package ipca.app.lojasas.ui.funcionario.menu.profile
+package ipca.app.lojasas.ui.apoiado.menu.profile
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -8,43 +8,12 @@ import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.data.users.UserProfile
 import ipca.app.lojasas.data.users.UserProfilesRepository
+import ipca.app.lojasas.ui.funcionario.menu.profile.ProfileState
 import ipca.app.lojasas.utils.Validators
-import java.util.Date
 import javax.inject.Inject
 
-data class ProfileState(
-    var numMecanografico: String = "",
-    var nome: String = "",
-    var contacto: String = "",
-    var email: String = "",
-    var documentNumber: String = "",
-    var documentType: String = "NIF",
-    var morada: String = "",
-    var codPostal: String = "",
-    var role: UserRole? = null,
-
-    // --- CONTROLO DE ADMIN ---
-    var isAdmin: Boolean = false,
-
-    // --- CAMPOS DO FORMULARIO ---
-    var nacionalidade: String = "",
-    var dataNascimento: Date? = null,
-    var relacaoIPCA: String = "",
-    var curso: String = "",
-    var graoEnsino: String = "",
-    var apoioEmergencia: Boolean = false,
-    var bolsaEstudos: Boolean = false,
-    var valorBolsa: String = "",
-    var necessidades: List<String> = emptyList(),
-    var validadeConta: Date? = null,
-
-    var isLoading: Boolean = true,
-    var error: String? = null,
-    var success: Boolean = false
-)
-
 @HiltViewModel
-class ProfileViewModel @Inject constructor(
+class ApoiadoProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val profilesRepository: UserProfilesRepository
 ) : ViewModel() {
@@ -66,12 +35,12 @@ class ProfileViewModel @Inject constructor(
 
         uiState.value = uiState.value.copy(isLoading = true, error = null)
 
-        profilesRepository.fetchProfileByUid(
+        profilesRepository.fetchApoiadoProfileByUid(
             uid = uid,
             onSuccess = { profile ->
                 if (profile == null) {
                     uiState.value = uiState.value.copy(isLoading = false, error = "Perfil não encontrado.")
-                    return@fetchProfileByUid
+                    return@fetchApoiadoProfileByUid
                 }
                 applyProfile(profile)
             },
@@ -111,8 +80,8 @@ class ProfileViewModel @Inject constructor(
 
     fun saveProfile(onSuccess: () -> Unit) {
         val state = uiState.value
-        val role = state.role
-        if (role == null || state.numMecanografico.isEmpty()) {
+        val role = state.role ?: UserRole.APOIADO
+        if (state.numMecanografico.isEmpty()) {
             uiState.value = state.copy(error = "Perfil não encontrado.")
             return
         }
@@ -160,9 +129,8 @@ class ProfileViewModel @Inject constructor(
             docId = state.numMecanografico,
             updates = updates,
             onSuccess = {
-                val entity = if (role == UserRole.FUNCIONARIO || role == UserRole.ADMIN) "funcionario" else "apoiado"
                 val details = if (nome.isNotBlank()) "Nome: $nome" else null
-                AuditLogger.logAction("Atualizou perfil", entity, state.numMecanografico, details)
+                AuditLogger.logAction("Atualizou perfil", "apoiado", state.numMecanografico, details)
                 uiState.value = uiState.value.copy(isLoading = false, success = true)
                 onSuccess()
             },
@@ -174,13 +142,8 @@ class ProfileViewModel @Inject constructor(
 
     fun deleteAccount(onSuccess: () -> Unit) {
         val state = uiState.value
-        val role = state.role
-        if (role == null || state.numMecanografico.isEmpty()) return
-
-        if (state.isAdmin) {
-            uiState.value = state.copy(error = "Administradores não podem apagar a própria conta.")
-            return
-        }
+        val role = state.role ?: UserRole.APOIADO
+        if (state.numMecanografico.isEmpty()) return
 
         uiState.value = state.copy(isLoading = true)
 
@@ -190,8 +153,7 @@ class ProfileViewModel @Inject constructor(
             onSuccess = {
                 authRepository.deleteCurrentUser(
                     onSuccess = {
-                        val entity = if (role == UserRole.FUNCIONARIO || role == UserRole.ADMIN) "funcionario" else "apoiado"
-                        AuditLogger.logAction("Apagou conta", entity, state.numMecanografico)
+                        AuditLogger.logAction("Apagou conta", "apoiado", state.numMecanografico)
                         uiState.value = state.copy(isLoading = false)
                         onSuccess()
                     },

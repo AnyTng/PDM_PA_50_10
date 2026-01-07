@@ -13,6 +13,7 @@ import ipca.app.lojasas.data.products.ProductUpsert
 import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -90,6 +91,7 @@ class ProductFormViewModel @Inject constructor(
 
     private var initializedKey: String? = null
     private var lastBarcodeLookup: String? = null
+    private var allCampaigns: List<Campaign> = emptyList()
 
     init {
         loadCategories()
@@ -99,8 +101,8 @@ class ProductFormViewModel @Inject constructor(
     private fun fetchCampaigns() {
         campaignRepository.listenCampaigns(
             onSuccess = { campaigns ->
-                val filtered = filterValidCampaigns(campaigns)
-                _uiState.value = _uiState.value.copy(availableCampaigns = filtered)
+                allCampaigns = campaigns
+                updateAvailableCampaigns()
             },
             onError = {
                 println("Erro ao carregar campanhas: $it")
@@ -124,6 +126,31 @@ class ProductFormViewModel @Inject constructor(
 
             hasStarted && isNotExpiredLongAgo
         }
+    }
+
+    private fun updateAvailableCampaigns() {
+        val state = _uiState.value
+        val filtered = filterValidCampaigns(allCampaigns)
+        val currentValue = state.form.campanha.trim()
+        val resolvedCampaign = resolveCampaignByIdOrName(currentValue)
+        val normalizedId = resolvedCampaign?.id ?: currentValue
+
+        val merged = if (resolvedCampaign != null && filtered.none { it.id == resolvedCampaign.id }) {
+            filtered + resolvedCampaign
+        } else {
+            filtered
+        }
+
+        val updatedForm = if (normalizedId != currentValue) {
+            state.form.copy(campanha = normalizedId)
+        } else {
+            state.form
+        }
+
+        _uiState.value = state.copy(
+            form = updatedForm,
+            availableCampaigns = merged
+        )
     }
 
     fun start(productId: String?, prefillNomeProduto: String?) {
@@ -179,6 +206,7 @@ class ProductFormViewModel @Inject constructor(
                         tamanhoUnidade = product.tamanhoUnidade?.takeIf { it.isNotBlank() } ?: "gr"
                     )
                 )
+                updateAvailableCampaigns()
             },
             onError = { e ->
                 _uiState.value = _uiState.value.copy(
@@ -386,6 +414,19 @@ class ProductFormViewModel @Inject constructor(
         return product.tamanhoValor?.let {
             if (it % 1.0 == 0.0) it.toInt().toString() else it.toString()
         }.orEmpty()
+    }
+
+    private fun resolveCampaignByIdOrName(value: String): Campaign? {
+        val normalized = value.trim()
+        if (normalized.isBlank()) return null
+
+        val byId = allCampaigns.firstOrNull { it.id == normalized }
+        if (byId != null) return byId
+
+        val lower = normalized.lowercase(Locale.getDefault())
+        return allCampaigns.firstOrNull { campaign ->
+            campaign.nomeCampanha.trim().lowercase(Locale.getDefault()) == lower
+        }
     }
 
     private fun alertDateFrom(validade: Date?): Date? {
