@@ -55,7 +55,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
@@ -74,7 +74,7 @@ fun LoginView(
     navController: NavController = rememberNavController(),
     modifier: Modifier = Modifier
 ) {
-    val viewModel: LoginViewModel = viewModel()
+    val viewModel: LoginViewModel = hiltViewModel()
     val uiState by viewModel.uiState
     val focusManager = LocalFocusManager.current
     val passwordFocusRequester = remember { FocusRequester() }
