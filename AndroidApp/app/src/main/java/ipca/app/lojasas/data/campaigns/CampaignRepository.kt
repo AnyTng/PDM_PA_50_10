@@ -73,10 +73,46 @@ class CampaignRepository {
             .addOnFailureListener { onError(it.message ?: "Erro ao atualizar") }
     }
 
+    fun getCampaignById(
+        campaignId: String,
+        onSuccess: (Campaign?) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = campaignId.trim()
+        if (normalized.isBlank()) {
+            onSuccess(null)
+            return
+        }
+
+        db.collection("campanha")
+            .document(normalized)
+            .get()
+            .addOnSuccessListener { doc ->
+                if (!doc.exists()) {
+                    onSuccess(null)
+                    return@addOnSuccessListener
+                }
+                val campaign = try {
+                    Campaign(
+                        id = doc.id,
+                        nomeCampanha = doc.getString("nomeCampanha") ?: "",
+                        descCampanha = doc.getString("descCampanha") ?: "",
+                        dataInicio = doc.getTimestamp("dataInicio")?.toDate() ?: Date(),
+                        dataFim = doc.getTimestamp("dataFim")?.toDate() ?: Date(),
+                        tipo = doc.getString("tipo") ?: ""
+                    )
+                } catch (e: Exception) {
+                    null
+                }
+                onSuccess(campaign)
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
     // Calcular Estatísticas (Produtos associados à campanha)
-    fun getCampaignStats(campaignName: String, onSuccess: (CampaignStats) -> Unit) {
+    fun getCampaignStats(campaignId: String, onSuccess: (CampaignStats) -> Unit) {
         db.collection("produtos")
-            .whereEqualTo("campanha", campaignName)
+            .whereEqualTo("campanha", campaignId)
             .get()
             .addOnSuccessListener { result ->
                 val products = result.documents.mapNotNull { it.toProductOrNull() }
@@ -97,12 +133,12 @@ class CampaignRepository {
     }
 
     fun getCampaignProducts(
-        campaignName: String,
+        campaignId: String,
         onSuccess: (List<Product>) -> Unit,
         onError: (Exception) -> Unit
     ) {
         db.collection("produtos")
-            .whereEqualTo("campanha", campaignName)
+            .whereEqualTo("campanha", campaignId)
             .get()
             .addOnSuccessListener { result ->
                 val products = result.documents.mapNotNull { it.toProductOrNull() }

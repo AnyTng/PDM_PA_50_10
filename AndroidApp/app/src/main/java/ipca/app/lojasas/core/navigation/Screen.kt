@@ -40,9 +40,9 @@ sealed class Screen(val route: String) {
     }
     object CampaignCreate : Screen("campaignCreate")
     object CollaboratorsList : Screen("collaboratorsList")
-    object CampaignResults : Screen("campaignResults/{campaignName}") {
-        fun createRoute(campaignName: String): String {
-            return "campaignResults/${Uri.encode(campaignName)}"
+    object CampaignResults : Screen("campaignResults/{campaignId}") {
+        fun createRoute(campaignId: String): String {
+            return "campaignResults/${Uri.encode(campaignId)}"
         }
     }
     object CompleteData : Screen("completeData/{docId}") {

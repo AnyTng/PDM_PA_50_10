@@ -128,10 +128,12 @@ fun AppNavGraph(
 
         composable(
             route = Screen.CampaignResults.route,
-            arguments = listOf(navArgument("campaignName") { type = NavType.StringType })
+            arguments = listOf(navArgument("campaignId") { type = NavType.StringType })
         ) { backStackEntry ->
-            val name = backStackEntry.arguments?.getString("campaignName") ?: ""
-            CampaignResultsView(navController = navController, campaignName = name)
+            val campaignId = backStackEntry.arguments?.getString("campaignId")
+                ?.let { Uri.decode(it) }
+                .orEmpty()
+            CampaignResultsView(navController = navController, campaignId = campaignId)
         }
 
         composable(Screen.CompleteData.route) { backStackEntry ->

@@ -44,22 +44,37 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 @Composable
-fun CampaignResultsView(navController: NavController, campaignName: String) {
+fun CampaignResultsView(navController: NavController, campaignId: String) {
     var stats by remember { mutableStateOf<CampaignStats?>(null) }
     var products by remember { mutableStateOf<List<Product>>(emptyList()) }
     var isLoadingProducts by remember { mutableStateOf(true) }
     var productsError by remember { mutableStateOf<String?>(null) }
+    var campaignName by remember(campaignId) { mutableStateOf("") }
     val repo = remember { CampaignRepository() }
     val context = LocalContext.current
 
-    LaunchedEffect(campaignName) {
+    LaunchedEffect(campaignId) {
+        val normalizedId = campaignId.trim()
         stats = null
         products = emptyList()
         isLoadingProducts = true
         productsError = null
-        repo.getCampaignStats(campaignName) { stats = it }
+        campaignName = ""
+        if (normalizedId.isBlank()) {
+            isLoadingProducts = false
+            stats = CampaignStats(0, emptyMap(), emptyMap())
+            return@LaunchedEffect
+        }
+        repo.getCampaignById(
+            campaignId = normalizedId,
+            onSuccess = { campaign ->
+                campaignName = campaign?.nomeCampanha?.trim().orEmpty()
+            },
+            onError = { _ -> }
+        )
+        repo.getCampaignStats(normalizedId) { stats = it }
         repo.getCampaignProducts(
-            campaignName = campaignName,
+            campaignId = normalizedId,
             onSuccess = { list ->
                 products = list
                 isLoadingProducts = false
@@ -72,8 +87,9 @@ fun CampaignResultsView(navController: NavController, campaignName: String) {
     }
 
     val s = stats
+    val displayName = campaignName.takeIf { it.isNotBlank() } ?: campaignId
     CampaignResultsContent(
-        campaignName = campaignName,
+        campaignName = displayName,
         isLoading = (s == null),
         totalProducts = s?.totalProducts ?: 0,
         categoryPercentages = s?.categoryPercentages ?: emptyMap(),
@@ -94,7 +110,7 @@ fun CampaignResultsView(navController: NavController, campaignName: String) {
                     Toast.makeText(context, "Erro ao carregar produtos.", Toast.LENGTH_SHORT).show()
                 }
                 else -> {
-                    exportCampaignResultsPdf(context, campaignName, current, products)
+                    exportCampaignResultsPdf(context, displayName, current, products)
                 }
             }
         }

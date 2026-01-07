@@ -21,7 +21,7 @@ import java.net.URLEncoder
 private const val ADMIN_MANUAL_URL =
     "https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_administrador.pdf?alt=media&token=50be5a82-c7ef-441a-aeb8-f96d9fa415a7"
 private const val COLAB_MANUAL_URL =
-    "https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_beneficiario.pdf?alt=media&token=57ac4cd0-e695-40b3-96b9-49d3df529966"
+    "https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_colaborador.pdf?alt=media&token=307cecb1-8ebf-4bad-9090-b46f7480170f"
 
 @Composable
 fun ManualView() {

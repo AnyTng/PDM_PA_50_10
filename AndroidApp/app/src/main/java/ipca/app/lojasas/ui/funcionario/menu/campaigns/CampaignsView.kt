@@ -93,7 +93,7 @@ fun CampaignsView(navController: NavController) {
             )
         },
         onResults = { campaign ->
-            navController.navigate(Screen.CampaignResults.createRoute(campaign.nomeCampanha))
+            navController.navigate(Screen.CampaignResults.createRoute(campaign.id))
         }
     )
 
