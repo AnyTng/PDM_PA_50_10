@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
-import com.google.firebase.auth.FirebaseAuth
 import ipca.app.lojasas.data.cestas.ApoiadoCesta
 import ipca.app.lojasas.data.requests.UrgentRequest
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
@@ -95,14 +94,13 @@ private data class ProfileStatusUi(
 
 @Composable
 fun ApoiadoHomeScreen(
-    navController: NavController,
-    userId: String
+    navController: NavController
 ) {
     val viewModel: ApoiadoViewModel = hiltViewModel()
     val state by viewModel.uiState
 
     // Garante refresh quando a navegação chega aqui
-    LaunchedEffect(userId) {
+    LaunchedEffect(Unit) {
         viewModel.checkStatus()
     }
 
@@ -130,7 +128,10 @@ fun ApoiadoHomeScreen(
 
     // 3) Conta Bloqueada (não mostra cestas/pedidos)
     if (state.estadoConta.equals("Bloqueado", ignoreCase = true)) {
-        BlockedAccountScreen(navController)
+        BlockedAccountScreen(
+            navController = navController,
+            onLogout = { viewModel.signOut() }
+        )
         return
     }
 
@@ -843,7 +844,10 @@ private fun PausedCard() {
 }
 
 @Composable
-fun BlockedAccountScreen(navController: NavController) {
+fun BlockedAccountScreen(
+    navController: NavController,
+    onLogout: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -875,7 +879,7 @@ fun BlockedAccountScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(32.dp))
         Button(
             onClick = {
-                FirebaseAuth.getInstance().signOut()
+                onLogout()
                 navController.navigate(Screen.Login.route) { popUpTo(0) }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Black)

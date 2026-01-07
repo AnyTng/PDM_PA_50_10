@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import ipca.app.lojasas.core.navigation.Screen
@@ -111,7 +110,7 @@ fun MenuApoiadoView(
                     .fillMaxWidth()
                     .clickable {
                         try {
-                            FirebaseAuth.getInstance().signOut()
+                            viewModel.signOut()
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

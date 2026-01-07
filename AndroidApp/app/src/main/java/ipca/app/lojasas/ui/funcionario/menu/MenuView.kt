@@ -16,9 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import ipca.app.lojasas.core.navigation.Screen
 
 @Composable
@@ -26,26 +25,9 @@ fun MenuView(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    val viewModel: MenuFuncionarioViewModel = hiltViewModel()
+    val isAdmin by viewModel.isAdmin
     val backgroundColor = Color(0xFFF2F2F2)
-
-    // Estado para saber se é Admin
-    var isAdmin by remember { mutableStateOf(false) }
-
-    // Verificar permissões ao iniciar
-    LaunchedEffect(Unit) {
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) {
-            FirebaseFirestore.getInstance().collection("funcionarios")
-                .whereEqualTo("uid", user.uid)
-                .get()
-                .addOnSuccessListener { docs ->
-                    if (!docs.isEmpty) {
-                        val role = docs.documents[0].getString("role")
-                        isAdmin = role.equals("Admin", ignoreCase = true)
-                    }
-                }
-        }
-    }
 
     MenuViewContent(
         isAdmin = isAdmin,
@@ -53,7 +35,7 @@ fun MenuView(
         onNavigate = { route -> navController.navigate(route) },
         onLogout = {
             try {
-                FirebaseAuth.getInstance().signOut()
+                viewModel.signOut()
             } catch (e: Exception) {
                 e.printStackTrace()
             }

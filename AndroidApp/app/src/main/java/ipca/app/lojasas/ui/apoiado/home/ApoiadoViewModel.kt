@@ -227,6 +227,10 @@ class ApoiadoViewModel @Inject constructor(
         )
     }
 
+    fun signOut() {
+        authRepository.signOut()
+    }
+
     fun resetToTryAgain(onSuccess: () -> Unit) {
         val state = uiState.value
         if (state.docId.isNotEmpty()) {

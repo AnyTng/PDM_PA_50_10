@@ -50,4 +50,8 @@ class MenuApoiadoViewModel @Inject constructor(
         statusListener = null
         super.onCleared()
     }
+
+    fun signOut() {
+        authRepository.signOut()
+    }
 }

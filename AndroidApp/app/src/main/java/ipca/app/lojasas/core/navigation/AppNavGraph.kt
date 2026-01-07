@@ -3,16 +3,16 @@ package ipca.app.lojasas.core.navigation
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
+import ipca.app.lojasas.ui.apoiado.home.ApoiadoViewModel
 import ipca.app.lojasas.ui.apoiado.menu.ManualBeneficiarioView
 import ipca.app.lojasas.ui.apoiado.menu.MenuApoiadoView
 import ipca.app.lojasas.ui.apoiado.menu.document.DocumentSubmissionView
@@ -57,10 +57,7 @@ fun AppNavGraph(
     ) {
         composable(Screen.Login.route) { LoginView(navController = navController) }
         composable(Screen.ApoiadoHome.route) {
-            ApoiadoHomeScreen(
-                navController = navController,
-                userId = Firebase.auth.currentUser?.uid ?: ""
-            )
+            ApoiadoHomeScreen(navController = navController)
         }
         composable(Screen.FuncionarioHome.route) { CalendarView(navController = navController) }
         composable(Screen.MenuFuncionario.route) { MenuView(navController = navController) }
@@ -104,7 +101,13 @@ fun AppNavGraph(
         composable(Screen.ProfileFuncionario.route) { ProfileView(navController = navController) }
         composable(Screen.ProfileApoiado.route) { ApoiadoProfileView(navController = navController) }
         composable(Screen.ValidateAccounts.route) { ValidateAccountsView(navController = navController) }
-        composable(Screen.AccountBlocked.route) { BlockedAccountScreen(navController = navController) }
+        composable(Screen.AccountBlocked.route) {
+            val viewModel: ApoiadoViewModel = hiltViewModel()
+            BlockedAccountScreen(
+                navController = navController,
+                onLogout = { viewModel.signOut() }
+            )
+        }
         composable(Screen.SubmittedDocuments.route) { SubmittedDocumentsView(navController = navController) }
         composable(Screen.Campaigns.route) { CampaignsView(navController = navController) }
         composable(Screen.CreateApoiado.route) { CreateApoiadoView(navController = navController) }

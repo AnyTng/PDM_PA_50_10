@@ -32,6 +32,28 @@ class FuncionarioRepository @Inject constructor(
             .addOnFailureListener { onError(it) }
     }
 
+    fun fetchIsAdminByUid(
+        uid: String,
+        onSuccess: (Boolean) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = uid.trim()
+        if (normalized.isBlank()) {
+            onSuccess(false)
+            return
+        }
+
+        firestore.collection("funcionarios")
+            .whereEqualTo("uid", normalized)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val role = snapshot.documents.firstOrNull()?.getString("role").orEmpty()
+                onSuccess(role.equals("Admin", ignoreCase = true))
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
     fun listenCollaborators(
         onSuccess: (List<CollaboratorItem>) -> Unit,
         onError: (Exception) -> Unit

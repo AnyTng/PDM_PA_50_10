@@ -133,6 +133,10 @@ class AuthRepository @Inject constructor(
             .addOnFailureListener { onError(it) }
     }
 
+    fun signOut() {
+        auth.signOut()
+    }
+
     fun currentUserEmail(): String? = auth.currentUser?.email?.trim()
 
     fun currentUserId(): String? = auth.currentUser?.uid
