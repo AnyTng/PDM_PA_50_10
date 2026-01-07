@@ -3,7 +3,8 @@ package ipca.app.lojasas.ui.funcionario.stock
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.campaigns.CampaignRepository
 import ipca.app.lojasas.data.products.Product
@@ -13,6 +14,7 @@ import ipca.app.lojasas.data.products.ProductsRepository
 import java.util.Calendar
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
@@ -73,9 +75,11 @@ sealed interface ProductFormEffect {
     data class NavigateAfterDelete(val nomeProduto: String, val hasMore: Boolean) : ProductFormEffect
 }
 
-class ProductFormViewModel(
-    private val repository: ProductsRepository = ProductsRepository(),
-    private val campaignRepository: CampaignRepository = CampaignRepository()
+@HiltViewModel
+class ProductFormViewModel @Inject constructor(
+    private val repository: ProductsRepository,
+    private val campaignRepository: CampaignRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProductFormUiState())
@@ -318,7 +322,7 @@ class ProductFormViewModel(
             descProduto = form.descProduto.trim(),
             estadoProduto = ProductStatus.normalizeFirestoreValue(form.estadoProduto)
                 ?: ProductStatus.AVAILABLE.firestoreValue,
-            idFunc = FirebaseAuth.getInstance().currentUser?.uid
+            idFunc = authRepository.currentUserId()
         )
 
         _uiState.value = current.copy(isSaving = true, error = null)

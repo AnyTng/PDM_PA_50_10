@@ -57,13 +57,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
+import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.text.Normalizer
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val GreenSas = Color(0xFF094E33)
+
 private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable

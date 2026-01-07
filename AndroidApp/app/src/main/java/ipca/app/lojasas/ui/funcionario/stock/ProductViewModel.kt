@@ -4,8 +4,10 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.ListenerRegistration
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
+import javax.inject.Inject
 
 data class ProductViewUiState(
     val isLoading: Boolean = true,
@@ -16,8 +18,9 @@ data class ProductViewUiState(
     val isUpdatingBarcode: Boolean = false
 )
 
-class ProductViewModel(
-    private val repository: ProductsRepository = ProductsRepository()
+@HiltViewModel
+class ProductViewModel @Inject constructor(
+    private val repository: ProductsRepository
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProductViewUiState())

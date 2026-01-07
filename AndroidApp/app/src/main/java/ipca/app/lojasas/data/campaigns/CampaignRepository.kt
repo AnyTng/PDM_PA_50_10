@@ -7,9 +7,14 @@ import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.toProductOrNull
 import java.util.Calendar
 import java.util.Date
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class CampaignRepository {
-    private val db = FirebaseFirestore.getInstance()
+@Singleton
+class CampaignRepository @Inject constructor(
+    private val db: FirebaseFirestore
+) {
+    constructor() : this(FirebaseFirestore.getInstance())
 
     // Busca todas as campanhas
     fun listenCampaigns(onSuccess: (List<Campaign>) -> Unit, onError: (String) -> Unit) {

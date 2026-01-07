@@ -4,10 +4,14 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.products.ProductStatus
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ExpiredDonationsRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+@Singleton
+class ExpiredDonationsRepository @Inject constructor(
+    private val firestore: FirebaseFirestore
 ) {
+    constructor() : this(FirebaseFirestore.getInstance())
     private val donationsCollection = firestore.collection("DoadosForaValidade")
     private val productsCollection = firestore.collection("produtos")
 

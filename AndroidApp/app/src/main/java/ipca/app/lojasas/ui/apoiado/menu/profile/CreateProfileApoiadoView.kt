@@ -36,8 +36,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.UserRole
+import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.ui.theme.IntroFontFamily
-import ipca.app.lojasas.ui.login.GreenIPCA
+
 
 @Composable
 fun CreateProfileApoiadoView(
@@ -62,7 +63,7 @@ fun CreateProfileApoiadoView(
                         }
                     }
                 },
-                containerColor = GreenIPCA,
+                containerColor = GreenSas,
                 contentColor = Color.White,
                 shape = CircleShape,
                 modifier = Modifier.size(64.dp)
@@ -107,7 +108,7 @@ fun CreateProfileApoiadoView(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
-                        tint = GreenIPCA,
+                        tint = GreenSas,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -116,7 +117,7 @@ fun CreateProfileApoiadoView(
                     text = "Criar Conta",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = GreenIPCA,
+                    color = GreenSas,
                     fontFamily = IntroFontFamily
                 )
             }
@@ -315,7 +316,7 @@ fun RoleRadioButton(
         RadioButton(
             selected = selected,
             onClick = onClick,
-            colors = RadioButtonDefaults.colors(selectedColor = GreenIPCA)
+            colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
         )
         Text(text = text, fontSize = 16.sp, color = Color.Black)
     }

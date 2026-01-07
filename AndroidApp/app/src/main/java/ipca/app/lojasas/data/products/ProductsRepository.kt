@@ -4,11 +4,15 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import ipca.app.lojasas.data.AuditLogger
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.text.get
 
-class ProductsRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+@Singleton
+class ProductsRepository @Inject constructor(
+    private val firestore: FirebaseFirestore
 ) {
+    constructor() : this(FirebaseFirestore.getInstance())
     private val collection = firestore.collection("produtos")
 
     fun listenAllProducts(

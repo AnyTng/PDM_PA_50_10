@@ -40,4 +40,6 @@ class AuthRepository @Inject constructor(
     }
 
     fun currentUserEmail(): String? = auth.currentUser?.email?.trim()
+
+    fun currentUserId(): String? = auth.currentUser?.uid
 }

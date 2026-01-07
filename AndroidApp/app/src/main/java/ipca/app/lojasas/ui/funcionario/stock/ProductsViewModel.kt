@@ -7,6 +7,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.ListenerRegistration
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductsRepository
 import ipca.app.lojasas.ui.funcionario.stock.components.StockGroupUi
@@ -17,6 +18,7 @@ import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 data class ProductsUiState(
     val isLoading: Boolean = true,
@@ -38,8 +40,9 @@ enum class StockSortOption {
 
 const val CATEGORY_ALL = "Todas as categorias"
 
-class ProductsViewModel(
-    private val repository: ProductsRepository = ProductsRepository()
+@HiltViewModel
+class ProductsViewModel @Inject constructor(
+    private val repository: ProductsRepository
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ProductsUiState())

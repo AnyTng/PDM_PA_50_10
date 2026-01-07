@@ -3,7 +3,8 @@ package ipca.app.lojasas.ui.funcionario.stock.expired
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.lifecycle.HiltViewModel
+import ipca.app.lojasas.data.auth.AuthRepository
 import com.google.firebase.firestore.ListenerRegistration
 import ipca.app.lojasas.data.donations.ExpiredDonationsRepository
 import ipca.app.lojasas.data.products.Product
@@ -14,6 +15,7 @@ import ipca.app.lojasas.ui.funcionario.stock.identity
 import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 data class ExpiredProductsUiState(
     val isLoading: Boolean = true,
@@ -26,9 +28,11 @@ data class ExpiredProductsUiState(
     val donationError: String? = null
 )
 
-class ExpiredProductsViewModel(
-    private val repository: ProductsRepository = ProductsRepository(),
-    private val donationsRepository: ExpiredDonationsRepository = ExpiredDonationsRepository()
+@HiltViewModel
+class ExpiredProductsViewModel @Inject constructor(
+    private val repository: ProductsRepository,
+    private val donationsRepository: ExpiredDonationsRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = mutableStateOf(ExpiredProductsUiState())
@@ -94,7 +98,7 @@ class ExpiredProductsViewModel(
             _uiState.value = state.copy(donationError = "Selecione produtos para doar.")
             return
         }
-        val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+        val userId = authRepository.currentUserId().orEmpty()
         if (userId.isBlank()) {
             _uiState.value = state.copy(donationError = "Sem utilizador autenticado.")
             return

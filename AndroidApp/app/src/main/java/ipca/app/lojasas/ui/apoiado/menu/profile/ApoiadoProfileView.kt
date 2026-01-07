@@ -25,7 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.menu.profile.*
-import ipca.app.lojasas.ui.login.GreenIPCA
+import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -57,7 +57,7 @@ fun ApoiadoProfileView(
                             navController.popBackStack()
                         }
                     },
-                    containerColor = GreenIPCA,
+                    containerColor = GreenSas,
                     contentColor = Color.White,
                     shape = CircleShape,
                     modifier = Modifier.size(64.dp)
@@ -74,7 +74,7 @@ fun ApoiadoProfileView(
 
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = GreenIPCA)
+                CircularProgressIndicator(color = GreenSas)
             }
         } else {
             Column(

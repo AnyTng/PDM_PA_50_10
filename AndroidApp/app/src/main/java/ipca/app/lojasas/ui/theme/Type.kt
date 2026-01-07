@@ -39,7 +39,5 @@ val Typography = Typography(
 val IntroFontFamily = FontFamily(
     Font(R.font.introregularalt, FontWeight.Normal),
     Font(R.font.introboldalt, FontWeight.Bold)
-    // Adicione os outros pesos conforme necessário
 )
 
-val GreenSas = Color(0xFF094E33)
