@@ -136,7 +136,7 @@ fun ApoiadoDetailDialog(
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 // Header
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Detalhes Completo", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSas)
+                    Text("Detalhes Completos", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSas)
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Fechar") }
                 }
                 HorizontalDivider(color = GreenSas, thickness = 2.dp, modifier = Modifier.padding(vertical = 8.dp))
