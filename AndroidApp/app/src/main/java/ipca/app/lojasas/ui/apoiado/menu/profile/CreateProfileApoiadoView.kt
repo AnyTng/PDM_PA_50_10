@@ -135,7 +135,7 @@ fun CreateProfileApoiadoView(
                 FormInput(
                     value = state.numMecanografico,
                     onValueChange = { viewModel.onNumMecanograficoChange(it) },
-                    placeholder = "Nº Mecanográfico (ex: f12345)",
+                    placeholder = "Nº Mecanográfico (ex: a12345)",
                     keyboardType = KeyboardType.Text,
                     // 3. Configuração de Next
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })

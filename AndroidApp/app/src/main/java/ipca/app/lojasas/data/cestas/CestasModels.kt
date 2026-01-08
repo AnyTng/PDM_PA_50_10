@@ -41,7 +41,8 @@ data class ApoiadoCesta(
     val numeroItens: Int = 0,
     val faltas: Int = 0,
     val origem: String? = null,
-    val pedidoUrgenteId: String? = null
+    val pedidoUrgenteId: String? = null,
+    val produtoIds: List<String> = emptyList()
 )
 
 data class ApoiadoInfo(

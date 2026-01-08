@@ -1,6 +1,7 @@
 package ipca.app.lojasas.ui.funcionario.calendar
 
 import ipca.app.lojasas.ui.theme.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,10 +14,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,6 +32,9 @@ import ipca.app.lojasas.data.calendar.EventType
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.launch
 
 @Composable
@@ -257,25 +264,177 @@ fun MandatoryPasswordChangeDialog(
     var oldPass by remember { mutableStateOf("") }
     var newPass by remember { mutableStateOf("") }
     var confirmPass by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
+    var oldVisible by remember { mutableStateOf(false) }
+    var newVisible by remember { mutableStateOf(false) }
+    var confirmVisible by remember { mutableStateOf(false) }
 
-    AlertDialog(
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = GreenSas,
+        unfocusedBorderColor = DividerGreenLight,
+        focusedLabelColor = GreenSas,
+        unfocusedLabelColor = GreyColor,
+        cursorColor = GreenSas,
+        focusedTrailingIconColor = GreenSas,
+        unfocusedTrailingIconColor = GreyColor
+    )
+
+    fun submit() {
+        localError = when {
+            oldPass.isBlank() || newPass.isBlank() || confirmPass.isBlank() -> "Preencha todos os campos."
+            newPass != confirmPass -> "As novas senhas não coincidem."
+            newPass.length < 6 -> "A nova senha deve ter pelo menos 6 caracteres."
+            else -> null
+        }
+        if (localError == null) {
+            onConfirm(oldPass, newPass)
+        }
+    }
+
+    val displayError = localError ?: errorMessage
+
+    Dialog(
         onDismissRequest = { },
-        title = { Text("Atualização de Segurança") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("É obrigatório alterar a sua palavra-passe.")
-                if (errorMessage != null) Text(errorMessage, color = RedColor, fontSize = 12.sp)
-                OutlinedTextField(value = oldPass, onValueChange = { oldPass = it }, label = { Text("Senha Atual") }, visualTransformation = PasswordVisualTransformation())
-                OutlinedTextField(value = newPass, onValueChange = { newPass = it }, label = { Text("Nova Senha") }, visualTransformation = PasswordVisualTransformation())
-                OutlinedTextField(value = confirmPass, onValueChange = { confirmPass = it }, label = { Text("Repetir Senha") }, visualTransformation = PasswordVisualTransformation())
-            }
-        },
-        confirmButton = {
-            Button(onClick = { if (newPass == confirmPass && newPass.isNotEmpty()) onConfirm(oldPass, newPass) }) {
-                Text("Alterar")
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 560.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+            border = BorderStroke(1.dp, DividerGreenLight)
+        ) {
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                        .background(GreenSas)
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Atualização de Segurança",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = WhiteColor
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "É obrigatório alterar a sua palavra-passe.",
+                            fontSize = 12.sp,
+                            color = WhiteColor.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = DividerGreenLight)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (displayError != null) {
+                        Text(displayError, color = RedColor, fontSize = 12.sp)
+                    }
+
+                    OutlinedTextField(
+                        value = oldPass,
+                        onValueChange = {
+                            oldPass = it
+                            localError = null
+                        },
+                        label = { Text("Senha Atual") },
+                        visualTransformation = if (oldVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { oldVisible = !oldVisible }) {
+                                Icon(
+                                    imageVector = if (oldVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        enabled = !isLoading,
+                        colors = fieldColors
+                    )
+                    OutlinedTextField(
+                        value = newPass,
+                        onValueChange = {
+                            newPass = it
+                            localError = null
+                        },
+                        label = { Text("Nova Senha") },
+                        visualTransformation = if (newVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { newVisible = !newVisible }) {
+                                Icon(
+                                    imageVector = if (newVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        enabled = !isLoading,
+                        colors = fieldColors
+                    )
+                    OutlinedTextField(
+                        value = confirmPass,
+                        onValueChange = {
+                            confirmPass = it
+                            localError = null
+                        },
+                        label = { Text("Repetir Senha") },
+                        visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                                Icon(
+                                    imageVector = if (confirmVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        enabled = !isLoading,
+                        colors = fieldColors
+                    )
+                }
+
+                HorizontalDivider(color = DividerGreenLight)
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = { submit() },
+                        enabled = !isLoading,
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .size(16.dp),
+                                color = WhiteColor,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                        Text("Alterar", color = WhiteColor)
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 @Composable

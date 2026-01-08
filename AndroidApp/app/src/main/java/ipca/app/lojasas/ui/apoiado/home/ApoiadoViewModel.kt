@@ -17,6 +17,13 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
+data class CestaProdutosUi(
+    val isLoading: Boolean = false,
+    val produtos: List<String> = emptyList(),
+    val error: String? = null,
+    val missingCount: Int = 0
+)
+
 data class ApoiadoState(
     // --- Campos Originais (Necessários para a App funcionar) ---
     val dadosIncompletos: Boolean = false,
@@ -40,7 +47,8 @@ data class ApoiadoState(
     val cestasPendentes: List<ApoiadoCesta> = emptyList(),
     val cestasRealizadas: List<ApoiadoCesta> = emptyList(),
     val cestasNaoLevantadas: List<ApoiadoCesta> = emptyList(),
-    val cestasCanceladas: List<ApoiadoCesta> = emptyList()
+    val cestasCanceladas: List<ApoiadoCesta> = emptyList(),
+    val produtosByCesta: Map<String, CestaProdutosUi> = emptyMap()
 )
 
 @HiltViewModel
@@ -202,6 +210,45 @@ class ApoiadoViewModel @Inject constructor(
                 Log.e("ApoiadoHome", "Erro ao ler cestas", e)
             }
         )
+    }
+
+    fun loadProdutosForCesta(cestaId: String, produtoIds: List<String>) {
+        val normalizedId = cestaId.trim()
+        if (normalizedId.isBlank()) return
+
+        val current = uiState.value
+        val existing = current.produtosByCesta[normalizedId]
+        if (existing != null && (existing.isLoading || existing.produtos.isNotEmpty() || existing.error != null)) {
+            return
+        }
+
+        if (produtoIds.isEmpty()) {
+            uiState.value = current.copy(
+                produtosByCesta = current.produtosByCesta + (normalizedId to CestaProdutosUi())
+            )
+            return
+        }
+
+        uiState.value = current.copy(
+            produtosByCesta = current.produtosByCesta + (normalizedId to CestaProdutosUi(isLoading = true))
+        )
+
+        cestasRepository.fetchProdutosByIds(produtoIds) { products, missingIds, errorMessage ->
+            val labels = products.map { product ->
+                val base = product.nomeProduto.ifBlank { product.id }
+                val marca = product.marca?.takeIf { it.isNotBlank() }
+                if (marca != null) "$base - $marca" else base
+            }
+            val updated = CestaProdutosUi(
+                isLoading = false,
+                produtos = labels,
+                error = errorMessage,
+                missingCount = missingIds.size
+            )
+            uiState.value = uiState.value.copy(
+                produtosByCesta = uiState.value.produtosByCesta + (normalizedId to updated)
+            )
+        }
     }
 
     // --- FUNÇÕES ORIGINAIS MANTIDAS ---

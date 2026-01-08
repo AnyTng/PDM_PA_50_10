@@ -130,15 +130,20 @@ class CestasRepository @Inject constructor(
 
             val list = snapshot?.documents.orEmpty().map { doc ->
                 val rawProdutos = (doc.get("produtos") as? List<*>) ?: emptyList<Any?>()
+                val produtoIds = rawProdutos
+                    .mapNotNull { it as? String }
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
                 ApoiadoCesta(
                     id = doc.id,
                     dataRecolha = snapshotDate(doc, "dataRecolha"),
                     dataAgendada = snapshotDate(doc, "dataAgendada"),
                     estadoCesta = doc.getString("estadoCesta")?.trim().orEmpty(),
-                    numeroItens = rawProdutos.size,
+                    numeroItens = produtoIds.size,
                     faltas = (doc.getLong("faltas") ?: 0L).toInt(),
                     origem = doc.getString("origem"),
-                    pedidoUrgenteId = doc.getString("pedidoUrgenteId")
+                    pedidoUrgenteId = doc.getString("pedidoUrgenteId"),
+                    produtoIds = produtoIds
                 )
             }
             onSuccess(list)

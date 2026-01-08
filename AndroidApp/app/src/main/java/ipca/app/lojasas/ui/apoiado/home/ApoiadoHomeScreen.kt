@@ -211,7 +211,9 @@ fun ApoiadoHomeScreen(
             items(state.cestasPendentes, key = { it.id }) { cesta ->
                 CestaHomeCard(
                     cesta = cesta,
-                    style = CestaCardStyle.PENDENTE
+                    style = CestaCardStyle.PENDENTE,
+                    produtosState = state.produtosByCesta[cesta.id],
+                    onLoadProdutos = { viewModel.loadProdutosForCesta(cesta.id, cesta.produtoIds) }
                 )
             }
         }
@@ -250,7 +252,9 @@ fun ApoiadoHomeScreen(
             items(state.cestasCanceladas, key = { it.id }) { cesta ->
                 CestaHomeCard(
                     cesta = cesta,
-                    style = CestaCardStyle.CANCELADA
+                    style = CestaCardStyle.CANCELADA,
+                    produtosState = state.produtosByCesta[cesta.id],
+                    onLoadProdutos = { viewModel.loadProdutosForCesta(cesta.id, cesta.produtoIds) }
                 )
             }
         }
@@ -260,7 +264,9 @@ fun ApoiadoHomeScreen(
             items(state.cestasNaoLevantadas, key = { it.id }) { cesta ->
                 CestaHomeCard(
                     cesta = cesta,
-                    style = CestaCardStyle.NAO_LEVANTADA
+                    style = CestaCardStyle.NAO_LEVANTADA,
+                    produtosState = state.produtosByCesta[cesta.id],
+                    onLoadProdutos = { viewModel.loadProdutosForCesta(cesta.id, cesta.produtoIds) }
                 )
             }
         }
@@ -270,7 +276,9 @@ fun ApoiadoHomeScreen(
             items(state.cestasRealizadas, key = { it.id }) { cesta ->
                 CestaHomeCard(
                     cesta = cesta,
-                    style = CestaCardStyle.CONCLUIDA
+                    style = CestaCardStyle.CONCLUIDA,
+                    produtosState = state.produtosByCesta[cesta.id],
+                    onLoadProdutos = { viewModel.loadProdutosForCesta(cesta.id, cesta.produtoIds) }
                 )
             }
         }
@@ -290,9 +298,10 @@ private fun HomeHeader(
     statusUi: ProfileStatusUi,
     onVerPerfil: () -> Unit
 ) {
+    val displayName = firstTwoNames(nome).ifBlank { "(nome)" }
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Olá, ${nome.ifBlank { "(nome)" }}",
+            text = "Olá, $displayName",
             fontFamily = IntroFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,
@@ -350,6 +359,11 @@ private fun HomeHeader(
             }
         }
     }
+}
+
+private fun firstTwoNames(nome: String): String {
+    val parts = nome.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+    return parts.take(2).joinToString(" ")
 }
 
 @Composable
@@ -420,7 +434,9 @@ private fun CardActionButton(
 @Composable
 private fun CestaHomeCard(
     cesta: ApoiadoCesta,
-    style: CestaCardStyle
+    style: CestaCardStyle,
+    produtosState: CestaProdutosUi?,
+    onLoadProdutos: () -> Unit
 ) {
     val (title, background, textColor, accentColor) = when (style) {
         CestaCardStyle.PENDENTE -> Quadruple(
@@ -454,8 +470,12 @@ private fun CestaHomeCard(
     var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
+        LaunchedEffect(cesta.id) {
+            onLoadProdutos()
+        }
         CestaDetailsDialog(
             cesta = cesta,
+            produtosState = produtosState,
             onDismiss = { showDialog = false }
         )
     }
@@ -697,6 +717,7 @@ private fun EmptyStateCheck() {
 @Composable
 private fun CestaDetailsDialog(
     cesta: ApoiadoCesta,
+    produtosState: CestaProdutosUi?,
     onDismiss: () -> Unit
 ) {
     val fmtFull = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
@@ -721,6 +742,53 @@ private fun CestaDetailsDialog(
             }
             if (cesta.faltas > 0) {
                 ApoiadoDialogRow("Faltas", cesta.faltas.toString())
+            }
+        }
+
+        ApoiadoDialogSection(title = "Produtos") {
+            val produtosUi = produtosState
+            val showLoading = produtosUi?.isLoading == true || (produtosUi == null && cesta.produtoIds.isNotEmpty())
+            when {
+                showLoading -> {
+                    Text("A carregar produtos...", fontSize = 12.sp, color = GreyColor)
+                }
+                produtosUi != null && produtosUi.produtos.isNotEmpty() -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        produtosUi.produtos.forEach { produto ->
+                            Text(
+                                text = "- $produto",
+                                fontSize = 13.sp,
+                                color = TextDark
+                            )
+                        }
+                    }
+                }
+                produtosUi?.error != null -> {
+                    Text(
+                        text = produtosUi.error ?: "Erro ao carregar produtos.",
+                        fontSize = 12.sp,
+                        color = RedColor
+                    )
+                }
+                else -> {
+                    Text("Sem produtos.", fontSize = 12.sp, color = GreyColor)
+                }
+            }
+
+            if (produtosUi != null && !produtosUi.isLoading && produtosUi.missingCount > 0) {
+                Text(
+                    text = "Produtos não encontrados: ${produtosUi.missingCount}",
+                    fontSize = 12.sp,
+                    color = RedColor
+                )
+            }
+
+            if (produtosUi != null && !produtosUi.isLoading && produtosUi.error != null && produtosUi.produtos.isNotEmpty()) {
+                Text(
+                    text = produtosUi.error ?: "Erro ao carregar produtos.",
+                    fontSize = 12.sp,
+                    color = RedColor
+                )
             }
         }
 

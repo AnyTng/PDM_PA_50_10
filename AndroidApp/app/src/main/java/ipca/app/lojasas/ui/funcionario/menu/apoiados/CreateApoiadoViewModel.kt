@@ -127,7 +127,7 @@ class CreateApoiadoViewModel @Inject constructor(
         }
 
         if (!Validators.isValidMecanografico(numMec)) {
-            uiState.value = s.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: f12345).")
+            uiState.value = s.copy(error = "O Nº Mecanográfico deve começar com uma letra seguida de números (ex: a12345).")
             return
         }
 
