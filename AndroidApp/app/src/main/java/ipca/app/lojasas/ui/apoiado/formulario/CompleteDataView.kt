@@ -207,16 +207,20 @@ fun CompleteDataView(
             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(state.dataNascimento)
         } else ""
 
-        OutlinedTextField(
-            value = dateText,
-            onValueChange = {},
-            label = { Text("Data de Nascimento *") },
-            readOnly = true,
-            trailingIcon = {
-                Icon(Icons.Default.DateRange, contentDescription = null, Modifier.clickable { datePickerDialog.show() })
-            },
+        Box(
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            OutlinedTextField(
+                value = dateText,
+                onValueChange = {},
+                label = { Text("Data de Nascimento *") },
+                readOnly = true,
+                trailingIcon = {
+                    // Removemos o clickable daqui, pois a Box vai tratar de tudo
+                    Icon(Icons.Default.DateRange, contentDescription = null)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
         if (state.dataNascimento != null && !Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)) {
             Text(
@@ -360,5 +364,6 @@ fun CompleteDataView(
             else Text("Guardar Dados")
         }
         Spacer(modifier = Modifier.height(50.dp))
+        }
     }
 }

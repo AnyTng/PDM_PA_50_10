@@ -165,8 +165,9 @@ fun ApoiadoProfileView(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // --- OPÇÕES DE CONTA ---
-                ProfileOptionCard(text = "Alterar Senha", textColor = BlackColor) { showPasswordDialog = true }
-                //ProfileOptionCard(text = "Apagar Conta", textColor = RedColor) { showDeleteDialog = true }
+                ProfileOptionCard(text = "Alterar Senha", textColor = Color.Black) { showPasswordDialog = true }
+                /* Apoiados nao devem apagar as contas */
+                //ProfileOptionCard(text = "Apagar Conta", textColor = Color.Red) { showDeleteDialog = true }
 
                 Spacer(modifier = Modifier.height(80.dp))
             }
