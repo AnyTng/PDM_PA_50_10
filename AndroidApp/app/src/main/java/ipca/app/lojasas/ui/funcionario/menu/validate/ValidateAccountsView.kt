@@ -3,6 +3,7 @@ package ipca.app.lojasas.ui.funcionario.menu.validate
 import ipca.app.lojasas.ui.theme.*
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -129,135 +130,287 @@ fun ApoiadoDetailDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.9f).padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = WhiteColor)
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.92f)
+                .padding(16.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+            border = BorderStroke(1.dp, DividerGreenLight)
         ) {
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                // Header
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Detalhes Completos", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSas)
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Fechar") }
-                }
-                HorizontalDivider(color = DividerGreenLight, thickness = 2.dp, modifier = Modifier.padding(vertical = 8.dp))
+            Column(modifier = Modifier.fillMaxSize()) {
+                VerdictDialogHeader(
+                    title = "Veredito do Beneficiário",
+                    subtitle = "${details.nome} • ${details.id}",
+                    onDismiss = onDismiss
+                )
 
-                // Scroll Content
-                Column(
-                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // SECÇÃO 1: DADOS PESSOAIS
-                    Text("Identificação", fontWeight = FontWeight.Bold, color = GreenSas, fontSize = 16.sp)
-                    DetailRow("Nome", details.nome)
-                    DetailRow("Nº Mecanográfico", details.id)
-                    DetailRow("Nacionalidade", details.nacionalidade)
-                    DetailRow("Data de Nascimento", details.dataNascimento?.let { dateFormatter.format(it) } ?: "N/A")
+                Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                    VerdictSummaryCard(details = details)
+                    Spacer(Modifier.height(12.dp))
 
-                    // --- ALTERAÇÃO: Usa o tipo dinâmico (NIF ou Passaporte) ---
-                    DetailRow(details.documentType, details.documentNumber)
-
-                    Spacer(Modifier.height(8.dp))
-
-                    // SECÇÃO 2: CONTACTOS
-                    Text("Contactos & Morada", fontWeight = FontWeight.Bold, color = GreenSas, fontSize = 16.sp)
-                    DetailRow("Email", details.email)
-                    DetailRow("Telemóvel", details.contacto)
-                    DetailRow("Morada", details.morada)
-
-                    Spacer(Modifier.height(8.dp))
-
-                    // SECÇÃO 3: DADOS SÓCIO-ECONÓMICOS
-                    Text("Situação Sócio-Económica", fontWeight = FontWeight.Bold, color = GreenSas, fontSize = 16.sp)
-                    DetailRow("Relação IPCA", details.tipo)
-
-                    if (details.tipo == "Estudante") {
-                        DetailRow("Curso", details.curso ?: "N/A")
-                        DetailRow("Grau", details.grauEnsino ?: "N/A")
-                        DetailRow("Bolsa de Estudos?", if(details.bolsaEstudos) "Sim" else "Não")
-                        if (details.bolsaEstudos) {
-                            DetailRow("Valor Bolsa", "${details.valorBolsa} €")
+                    Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        DetailSection(title = "Identificação") {
+                            DetailRow("Nome", details.nome)
+                            DetailRow("Nº Mecanográfico", details.id)
+                            DetailRow("Nacionalidade", details.nacionalidade)
+                            DetailRow("Data de Nascimento", details.dataNascimento?.let { dateFormatter.format(it) } ?: "N/A")
+                            DetailRow(details.documentType, details.documentNumber)
                         }
-                    }
 
-                    DetailRow("Apoio Emergência Social?", if(details.apoioEmergencia) "Sim (Prioritário)" else "Não")
+                        DetailSection(title = "Contactos & Morada") {
+                            DetailRow("Email", details.email)
+                            DetailRow("Telemóvel", details.contacto)
+                            DetailRow("Morada", details.morada)
+                        }
 
-                    // Necessidades
-                    if (details.necessidades.isNotEmpty()) {
-                        DetailRow("Necessidades Declaradas", details.necessidades.joinToString(", "))
-                    } else {
-                        DetailRow("Necessidades", "Nenhuma selecionada")
-                    }
+                        DetailSection(title = "Situação Sócio-Económica") {
+                            DetailRow("Relação IPCA", details.tipo)
 
-                    Spacer(Modifier.height(16.dp))
-
-                    // SECÇÃO 4: DOCUMENTOS
-                    Text("Documentos Submetidos", fontWeight = FontWeight.Bold, color = GreenSas, fontSize = 18.sp)
-                    if (documents.isEmpty()) {
-                        Text("Nenhum documento encontrado.", color = GreyColor, modifier = Modifier.padding(vertical = 8.dp))
-                    } else {
-                        documents.forEach { doc ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { onOpenFile(doc.url) }.padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.Description, contentDescription = null, tint = GreenSas)
-                                Spacer(Modifier.width(8.dp))
-                                Column {
-                                    Row {
-                                        Text(doc.typeTitle, fontWeight = FontWeight.Bold)
-                                        Spacer(Modifier.width(4.dp))
-                                        Text("(Entrega ${doc.entrega})", fontSize = 12.sp, color = GreenSas)
-                                    }
-                                    Text(doc.fileName, fontSize = 12.sp, color = GreyColor)
+                            if (details.tipo == "Estudante") {
+                                DetailRow("Curso", details.curso ?: "N/A")
+                                DetailRow("Grau", details.grauEnsino ?: "N/A")
+                                DetailRow("Bolsa de Estudos?", if (details.bolsaEstudos) "Sim" else "Não")
+                                if (details.bolsaEstudos) {
+                                    DetailRow("Valor Bolsa", "${details.valorBolsa} €")
                                 }
                             }
-                            HorizontalDivider(color = DividerGreenLight)
+
+                            DetailRow(
+                                "Apoio Emergência Social?",
+                                if (details.apoioEmergencia) "Sim (Prioritário)" else "Não"
+                            )
+
+                            if (details.necessidades.isNotEmpty()) {
+                                DetailRow("Necessidades Declaradas", details.necessidades.joinToString(", "))
+                            } else {
+                                DetailRow("Necessidades", "Nenhuma selecionada")
+                            }
+                        }
+
+                        DetailSection(title = "Documentos Submetidos") {
+                            if (documents.isEmpty()) {
+                                Text(
+                                    "Nenhum documento encontrado.",
+                                    color = GreyColor,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    documents.forEach { doc ->
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onOpenFile(doc.url) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+                                            border = BorderStroke(1.dp, DividerGreenLight),
+                                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Description,
+                                                    contentDescription = null,
+                                                    tint = GreenSas
+                                                )
+                                                Spacer(Modifier.width(10.dp))
+                                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                    Text(doc.typeTitle, fontWeight = FontWeight.Bold)
+                                                    Text(doc.fileName, fontSize = 12.sp, color = GreyColor)
+                                                    VerdictInfoChip(text = "Entrega ${doc.entrega}", color = GreenSas)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-                }
 
-                Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                // Área de Ações
-                if (showDenyInput) {
-                    Text("Motivo da Negação:", fontWeight = FontWeight.Bold)
-                    OutlinedTextField(
-                        value = denyReason,
-                        onValueChange = { denyReason = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Escreva a justificação...", color = GreenSas) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = GreenSas,
-                            unfocusedBorderColor = GreenSas,
-                            focusedLabelColor = GreenSas,
-                            unfocusedLabelColor = GreenSas,
-                            focusedPlaceholderColor = GreenSas,
-                            unfocusedPlaceholderColor = GreenSas,
-                            cursorColor = GreenSas
-                        )
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        TextButton(onClick = { showDenyInput = false }) { Text("Cancelar", color = GreyColor) }
-                        Button(
-                            onClick = { if(denyReason.isNotEmpty()) onDeny(denyReason) },
-                            colors = ButtonDefaults.buttonColors(containerColor = RedColor)
-                        ) { Text("Confirmar Negação") }
-                    }
-
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(onClick = onBlock, colors = ButtonDefaults.buttonColors(containerColor = BlackColor), modifier = Modifier.weight(1f).padding(end = 4.dp), enabled = !isLoading) { Text("Bloquear") }
-                        Button(onClick = { showDenyInput = true }, colors = ButtonDefaults.buttonColors(containerColor = RedColor), modifier = Modifier.weight(1f).padding(horizontal = 4.dp), enabled = !isLoading) { Text("Negar") }
-                        Button(onClick = onApprove, colors = ButtonDefaults.buttonColors(containerColor = GreenSas), modifier = Modifier.weight(1f).padding(start = 4.dp), enabled = !isLoading) { Text("Aprovar") }
+                    if (showDenyInput) {
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+                            border = BorderStroke(1.dp, DividerGreenLight),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+                                Text("Motivo da Negação", fontWeight = FontWeight.Bold, color = TextDark)
+                                Spacer(Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = denyReason,
+                                    onValueChange = { denyReason = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = { Text("Escreva a justificação...", color = GreyColor) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = GreenSas,
+                                        unfocusedBorderColor = DividerGreenLight,
+                                        focusedLabelColor = GreenSas,
+                                        unfocusedLabelColor = GreenSas,
+                                        focusedPlaceholderColor = GreyColor,
+                                        unfocusedPlaceholderColor = GreyColor,
+                                        cursorColor = GreenSas,
+                                        focusedContainerColor = WhiteColor,
+                                        unfocusedContainerColor = WhiteColor
+                                    )
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    TextButton(
+                                        onClick = { showDenyInput = false },
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("Cancelar", color = GreyColor)
+                                    }
+                                    Button(
+                                        onClick = { if (denyReason.isNotEmpty()) onDeny(denyReason) },
+                                        enabled = denyReason.isNotEmpty() && !isLoading,
+                                        colors = ButtonDefaults.buttonColors(containerColor = RedColor),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) { Text("Confirmar") }
+                                }
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = onBlock,
+                                colors = ButtonDefaults.buttonColors(containerColor = BlackColor),
+                                modifier = Modifier.weight(1f),
+                                enabled = !isLoading,
+                                shape = RoundedCornerShape(10.dp)
+                            ) { Text("Bloquear") }
+                            Button(
+                                onClick = { showDenyInput = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = RedColor),
+                                modifier = Modifier.weight(1f),
+                                enabled = !isLoading,
+                                shape = RoundedCornerShape(10.dp)
+                            ) { Text("Negar") }
+                            Button(
+                                onClick = onApprove,
+                                colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
+                                modifier = Modifier.weight(1f),
+                                enabled = !isLoading,
+                                shape = RoundedCornerShape(10.dp)
+                            ) { Text("Aprovar") }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun VerdictDialogHeader(
+    title: String,
+    subtitle: String,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(GreenSas)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = WhiteColor)
+                Spacer(Modifier.height(4.dp))
+                Text(subtitle, fontSize = 12.sp, color = WhiteColor.copy(alpha = 0.85f))
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = "Fechar", tint = WhiteColor)
+            }
+        }
+    }
+}
+
+@Composable
+private fun VerdictSummaryCard(details: ApoiadoDetails) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+        border = BorderStroke(1.dp, DividerGreenLight),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(details.nome, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = TextDark)
+                Text("Nº Mecanográfico: ${details.id}", fontSize = 12.sp, color = GreyColor)
+                Text(details.email, fontSize = 12.sp, color = GreyColor)
+            }
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                VerdictInfoChip(text = "Pendente", color = WarningOrange)
+                if (details.dadosIncompletos) {
+                    VerdictInfoChip(text = "Dados incompletos", color = WarningOrangeDark)
+                }
+                if (details.apoioEmergencia) {
+                    VerdictInfoChip(text = "Prioritário", color = StatusOrange)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VerdictInfoChip(text: String, color: Color) {
+    Card(
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.3f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun DetailSection(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
+        border = BorderStroke(1.dp, DividerGreenLight),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(12.dp)) {
+            Text(title, fontWeight = FontWeight.Bold, color = GreenSas, fontSize = 15.sp)
+            HorizontalDivider(color = DividerGreenLight, modifier = Modifier.padding(vertical = 8.dp))
+            content()
         }
     }
 }
