@@ -499,7 +499,7 @@ private fun CestaHomeCard(
             if (style == CestaCardStyle.PENDENTE) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Caso não possa levantar a cesta, reagende via email, sas@ipc.pt",
+                    text = "Caso não possa levantar a cesta, reagende via email, sas@ipca.pt",
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Medium,
                     fontSize = 12.sp,
