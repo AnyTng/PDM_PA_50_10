@@ -32,6 +32,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.cestas.ApoiadoInfo
 import ipca.app.lojasas.data.cestas.ApoiadoOption
 import ipca.app.lojasas.data.products.Product
 import java.text.SimpleDateFormat
@@ -74,6 +76,7 @@ fun CreateCestaView(
     val state by viewModel.uiState
     val context = LocalContext.current
     val dateFmt = rememberDateFormatter()
+    val infoDateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     // Inicialização (carregar produtos, apoiados, etc.)
     LaunchedEffect(fromUrgent, pedidoId, apoiadoId) {
@@ -140,7 +143,18 @@ fun CreateCestaView(
                     onClick = { if (!state.fromUrgent) showApoiadoPicker = true }
                 )
 
-                Spacer(Modifier.height(16.dp))
+                if (state.apoiadoSelecionado != null) {
+                    Spacer(Modifier.height(10.dp))
+                    ApoiadoInfoCard(
+                        info = state.apoiadoInfo,
+                        isLoading = state.isLoadingApoiadoInfo,
+                        error = state.apoiadoInfoError,
+                        dateFormatter = infoDateFmt
+                    )
+                    Spacer(Modifier.height(16.dp))
+                } else {
+                    Spacer(Modifier.height(16.dp))
+                }
 
                 SectionTitle("O quê?")
                 ProdutosSelecionadosList(
@@ -340,6 +354,72 @@ private fun BeneficiarioSelector(value: String, enabled: Boolean, onClick: () ->
             Text(value, color = if (enabled) GreenSas else GreyColor, fontWeight = FontWeight.SemiBold)
             Icon(imageVector = Icons.Default.Add, contentDescription = "Selecionar", tint = GreenSas)
         }
+    }
+}
+
+@Composable
+private fun ApoiadoInfoCard(
+    info: ApoiadoInfo?,
+    isLoading: Boolean,
+    error: String?,
+    dateFormatter: SimpleDateFormat
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, GreenSas.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Dados do apoiado",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = GreenSas
+            )
+            HorizontalDivider(color = GreenSas.copy(alpha = 0.2f))
+            when {
+                isLoading -> {
+                    Text("A carregar dados do apoiado...", fontSize = 12.sp, color = GreyColor)
+                }
+                error != null -> {
+                    Text(error, fontSize = 12.sp, color = RedColor)
+                }
+                info != null -> {
+                    val necessidades = info.necessidades
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+                        .joinToString(", ")
+                        .ifBlank { "Sem necessidades registadas" }
+                    val ultimo = info.ultimoLevantamento?.let { dateFormatter.format(it) } ?: "—"
+                    val validade = info.validadeConta?.let { dateFormatter.format(it) } ?: "—"
+
+                    InfoRow("Nome", info.nome)
+                    InfoRow("Email", info.email)
+                    InfoRow("Telemóvel", info.contacto)
+                    InfoRow("Produtos que precisa", necessidades)
+                    InfoRow("Data da última cesta", ultimo)
+                    InfoRow("Validade da conta", validade)
+                }
+                else -> {
+                    Text("Dados do apoiado indisponíveis.", fontSize = 12.sp, color = GreyColor)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Column {
+        Text(label, fontSize = 12.sp, color = GreyColor)
+        Text(value.ifBlank { "—" }, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
 }
 

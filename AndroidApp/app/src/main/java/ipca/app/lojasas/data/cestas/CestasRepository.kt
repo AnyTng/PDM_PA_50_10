@@ -700,6 +700,14 @@ class CestasRepository @Inject constructor(
             .mapNotNull { it?.trim() }
             .filter { it.isNotBlank() }
         val morada = if (moradaParts.isEmpty()) "-" else moradaParts.joinToString(", ")
+        val necessidades = (snapshot.get("necessidade") as? List<*>)
+            ?.mapNotNull { it as? String }
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            ?: emptyList()
+        val ultimoLevantamento = snapshot.getTimestamp("ultimoLevantamento")?.toDate()
+            ?: (snapshot.get("ultimoLevantamento") as? Date)
+        val validadeConta = apoiadoValidUntil(snapshot)
 
         return ApoiadoInfo(
             id = snapshot.id,
@@ -710,7 +718,10 @@ class CestasRepository @Inject constructor(
             contacto = snapshot.getString("contacto")?.trim().orEmpty(),
             documento = documento,
             morada = morada,
-            nacionalidade = snapshot.getString("nacionalidade")?.trim().orEmpty()
+            nacionalidade = snapshot.getString("nacionalidade")?.trim().orEmpty(),
+            necessidades = necessidades,
+            ultimoLevantamento = ultimoLevantamento,
+            validadeConta = validadeConta
         )
     }
 

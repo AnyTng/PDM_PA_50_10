@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.cestas.ApoiadoInfo
 import ipca.app.lojasas.data.cestas.ApoiadoOption
 import ipca.app.lojasas.data.cestas.CestasRepository
 import ipca.app.lojasas.data.products.Product
@@ -26,6 +27,9 @@ data class CreateCestaState(
     // Beneficiário
     val apoiadoSelecionado: ApoiadoOption? = null,
     val apoiados: List<ApoiadoOption> = emptyList(),
+    val apoiadoInfo: ApoiadoInfo? = null,
+    val apoiadoInfoError: String? = null,
+    val isLoadingApoiadoInfo: Boolean = false,
 
     // Produtos
     val produtos: List<Product> = emptyList(),
@@ -60,11 +64,14 @@ class CreateCestaViewModel @Inject constructor(
 
     private var produtosListener: ListenerHandle? = null
     private var apoiadosListener: ListenerHandle? = null
+    private var apoiadoInfoListener: ListenerHandle? = null
+    private var currentApoiadoInfoId: String? = null
 
     override fun onCleared() {
         super.onCleared()
         produtosListener?.remove()
         apoiadosListener?.remove()
+        apoiadoInfoListener?.remove()
     }
 
     /**
@@ -156,6 +163,9 @@ class CreateCestaViewModel @Inject constructor(
             onSuccess = { option ->
                 if (option != null) {
                     uiState.value = uiState.value.copy(apoiadoSelecionado = option)
+                    observeApoiadoInfo(option.id)
+                } else {
+                    observeApoiadoInfo(apoiadoId)
                 }
             },
             onError = { e ->
@@ -166,6 +176,36 @@ class CreateCestaViewModel @Inject constructor(
 
     fun selecionarApoiado(option: ApoiadoOption) {
         uiState.value = uiState.value.copy(apoiadoSelecionado = option)
+        observeApoiadoInfo(option.id)
+    }
+
+    private fun observeApoiadoInfo(apoiadoId: String) {
+        val normalized = apoiadoId.trim()
+        if (normalized.isBlank() || currentApoiadoInfoId == normalized) return
+        currentApoiadoInfoId = normalized
+        apoiadoInfoListener?.remove()
+        uiState.value = uiState.value.copy(
+            apoiadoInfo = null,
+            apoiadoInfoError = null,
+            isLoadingApoiadoInfo = true
+        )
+        apoiadoInfoListener = repository.listenApoiadoInfo(
+            apoiadoId = normalized,
+            onSuccess = { info ->
+                uiState.value = uiState.value.copy(
+                    apoiadoInfo = info,
+                    apoiadoInfoError = if (info == null) "Apoiado não encontrado." else null,
+                    isLoadingApoiadoInfo = false
+                )
+            },
+            onError = { e ->
+                uiState.value = uiState.value.copy(
+                    apoiadoInfo = null,
+                    apoiadoInfoError = e.message ?: "Erro ao carregar apoiado.",
+                    isLoadingApoiadoInfo = false
+                )
+            }
+        )
     }
 
     fun setObs(value: String) {

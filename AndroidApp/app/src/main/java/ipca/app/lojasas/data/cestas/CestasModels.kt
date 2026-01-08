@@ -51,7 +51,10 @@ data class ApoiadoInfo(
     val contacto: String,
     val documento: String,
     val morada: String,
-    val nacionalidade: String
+    val nacionalidade: String,
+    val necessidades: List<String> = emptyList(),
+    val ultimoLevantamento: Date? = null,
+    val validadeConta: Date? = null
 )
 
 data class ApoiadoOption(
