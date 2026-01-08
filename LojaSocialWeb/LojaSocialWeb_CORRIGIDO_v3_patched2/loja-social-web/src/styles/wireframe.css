@@ -1,0 +1,372 @@
+/* =========================
+   PAGE + TOKENS
+========================= */
+.ls-embed{
+  --ipca-green: #00583c;
+  --ipca-green-2: #0a7a55;
+  --text: #0f172a;
+  --muted: #64748b;
+  --line: rgba(15, 23, 42, .10);
+  --card: #ffffff;
+  --soft: #f4f7f6;
+
+  /* sombra suave (como está agora) */
+  --shadow: 0 0 20px rgba(2, 6, 23, .068);
+  --shadow-sm: 0 10px 10px rgba(2, 6, 23, .08);
+
+  --radius: 10px;
+  --radius-sm: 10px;
+  --ring: 0 0 0 4px rgba(0, 88, 60, .12);
+
+  display: block;
+  position: relative;
+  z-index: 0;
+  width: 100%;
+}
+
+.ls-embed .leaflet-container{ z-index: 0; }
+
+/* =========================
+   PAGE LAYOUT
+========================= */
+.wf-page{
+  background: transparent;
+  min-height: auto;
+  padding: 16px 0 28px;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.wf-container{
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* =========================
+   HEADER
+========================= */
+.wf-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+.wf-title{
+  font-weight: 900;
+  letter-spacing: .6px;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+.wf-header-line{
+  height: 3px;
+  flex:1;
+  background: var(--ipca-green);
+  border-radius: 999px;
+}
+
+/* =========================
+   CARDS (TOP / LEFT / RIGHT / BOTTOM)
+========================= */
+.wf-top{
+  width: 100%;
+  display:flex;
+  justify-content:center;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+/* look moderno */
+.wf-top,
+.wf-left,
+.wf-right,
+.wf-bottom{
+  background: rgba(255, 255, 255, .82);
+  border: 1px solid rgba(15, 23, 42, .10);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.wf-top:hover,
+.wf-left:hover,
+.wf-right:hover,
+.wf-bottom:hover{
+  transform: translateY(-2px);
+  border-color: rgba(0, 88, 60, .25);
+}
+
+/* não estragar o dashboard */
+#dashboard, .ipca-card{
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* =========================
+   GRID (2 COLS)
+========================= */
+.wf-middle{
+  width: 100%;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+
+/* conteúdo interno dos cards */
+.wf-left, .wf-right{
+  width: 100%;
+  min-height: 320px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+/* títulos das secções */
+.wf-h2{
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ipca-green);
+}
+.wf-h2::after{
+  content: "";
+  display: block;
+  margin-top: 8px;
+  height: 2px;
+  width: 54px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ipca-green), rgba(0, 88, 60, .20));
+}
+
+/* =========================
+   VENHA DOAR (INFO + MAPA)
+========================= */
+.vd-wrap{
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.vd-info{
+  margin-top: 10px;
+  display:grid;
+  gap: 14px;
+}
+
+.vd-row .vd-label{
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+  opacity: .85;
+}
+
+/* caixas do venha doar */
+.vd-row .vd-value{
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+
+  /* igualar altura às caixas do form */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.vd-map{
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.vd-map .leaflet-container{
+  height: 220px;
+  width: 100%;
+}
+
+/* =========================
+   FORM (AGENDAR DOAÇÃO)
+========================= */
+
+/* espaço entre título e inputs */
+.wf-right .don-form{ margin-top: 10px; }
+
+/* layout do form */
+.ls-embed .don-form{
+  width: 100%;
+  max-width: none; /* ocupar todo o card */
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 5px;
+}
+
+/* labels estilo "Venha Doar" */
+.ls-embed .don-label{
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+  opacity: .85;
+}
+
+/* caixas do form (iguais às do venha doar) */
+.ls-embed .don-field input,
+.ls-embed .don-field select,
+.ls-embed .don-field textarea{
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: box-shadow .15s ease, border-color .15s ease;
+
+  /* igualar altura às caixas do venha doar */
+  min-height: 44px;
+}
+
+.ls-embed .don-field textarea{
+  min-height: 96px; /* textarea maior */
+}
+
+.ls-embed .don-field input:focus,
+.ls-embed .don-field select:focus,
+.ls-embed .don-field textarea:focus{
+  border-color: rgba(0, 88, 60, .45);
+  box-shadow: var(--ring);
+}
+
+/* data + hora */
+.ls-embed .don-row{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* botão: centrado e com espaço */
+.ls-embed .don-form button{
+  width: 70%;
+  max-width: 320px;
+  display: block;
+  margin: 18px auto 0; /* mais baixo e centrado */
+  border: 1px solid var(--ipca-green);
+  border-radius: var(--radius-sm);
+  padding: 15px 12px;
+  background: linear-gradient(180deg, var(--ipca-green-2), var(--ipca-green));
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 88, 60, .18);
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+.ls-embed .don-form button:hover{ filter: brightness(.98); }
+.ls-embed .don-form button:active{ transform: translateY(1px); box-shadow: 0 6px 16px rgba(0, 88, 60, .16); }
+
+/* =========================
+   DASHBOARD TOGGLE
+========================= */
+.ls-embed .wf-mini-btn{
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.9);
+  backdrop-filter: blur(6px);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.ls-embed .wf-mini-btn:hover{ transform: translateY(-1px); }
+.ls-embed .wf-mini-btn[aria-pressed="true"]{
+  border-color: var(--ipca-green);
+  color: var(--ipca-green);
+  font-weight: 700;
+}
+
+/* =========================
+   BOTTOM (NEWSLETTER)
+========================= */
+.wf-bottom{
+  width: 100%;
+  margin-top: 22px;
+  padding: 16px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (min-width: 1400px){
+  .wf-page{ padding-left: 80px; padding-right: 80px; }
+}
+
+@media (max-width: 900px){
+  .wf-page{ padding: 16px 16px 32px; }
+  .wf-middle{ grid-template-columns: 1fr; gap: 18px; }
+  .vd-map{ height: 260px; }
+  .vd-map .leaflet-container{ height: 260px; }
+}
+
+@media (max-width: 520px){
+  .ls-embed .don-row{ grid-template-columns: 1fr; }
+  .ls-embed .don-form button{ width: 100%; max-width: none; }
+}
+
+.ls-embed .wf-middle{
+  align-items: stretch; 
+}
+
+.ls-embed .wf-left,
+.ls-embed .wf-right{
+  display: flex;
+  flex-direction: column;
+}
+
+
+.ls-embed .wf-left .vd-wrap{
+  flex: 1;
+}
+
+.ls-embed .wf-right .don-form{
+  flex: 1;
+}
+
+.ls-embed .wf-left,
+.ls-embed .wf-right{
+  padding-bottom: 22px; /* 18/22/24 */
+}
+
+.ls-embed  .vd-wrap{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ls-embed .wf-left .vd-wrap{
+  align-items: stretch;
+}
+
+.ls-embed .wf-left .vd-info,
+.ls-embed .wf-left .vd-row,
+.ls-embed .wf-left .vd-row .vd-value{
+  width: 100%;
+}
+
+.ls-embed .wf-left .vd-map{
+  margin-top: 20px;          
+}

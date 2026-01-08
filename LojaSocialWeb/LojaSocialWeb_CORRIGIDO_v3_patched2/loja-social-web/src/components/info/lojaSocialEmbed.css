@@ -1,0 +1,66 @@
+/* Só aplica quando estás a renderizar dentro do HTML do SAS */
+body.sas-embed #loja-social-react{
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  padding-bottom: 80px; /* espaço para não bater no footer do SAS */
+}
+
+/* remove “página” do wireframe dentro do SAS */
+body.sas-embed #loja-social-react .wf-page{
+  background: transparent !important;
+  min-height: auto !important;
+  padding: 0 !important;
+}
+
+/* container não pode ser 1200px dentro do content do SAS */
+body.sas-embed #loja-social-react .wf-container{
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+/* tira a linha/título "LOJA SOCIAL IPCA" se estiver a duplicar */
+body.sas-embed #loja-social-react .wf-header{
+  display: none !important;
+}
+
+/* dá um topo mais compacto */
+body.sas-embed #loja-social-react .wf-top{
+  padding: 10px 0 18px !important;
+}
+
+/* 2 colunas mais “apertadas” para caber bonito */
+body.sas-embed #loja-social-react .wf-middle{
+  gap: 28px !important;
+  grid-template-columns: 1fr 2px 1fr !important;
+  align-items: start !important;
+}
+
+/* mapa e form alinhados e não gigantes */
+body.sas-embed #loja-social-react .vd-map{
+  height: 300px !important;
+}
+
+body.sas-embed #loja-social-react .wf-form{
+  min-height: 300px !important;
+}
+
+/* garante que o newsletter não cola ao fundo */
+body.sas-embed #loja-social-react .wf-bottom{
+  margin-top: 22px !important;
+}
+
+/* ---- GRÁFICO REDONDO CONTROLADO ----
+   funciona bem com Chart.js (canvas) se tiver wrapper .dash-chart */
+body.sas-embed #loja-social-react .dash-chart{
+  width: min(520px, 100%);
+  height: 520px;
+  margin: 0 auto;
+}
+
+body.sas-embed #loja-social-react .dash-chart canvas{
+  width: 100% !important;
+  height: 100% !important;
+}

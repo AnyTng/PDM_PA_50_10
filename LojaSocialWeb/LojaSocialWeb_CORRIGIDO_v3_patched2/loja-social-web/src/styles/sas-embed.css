@@ -1,0 +1,35 @@
+/* Só afeta a página loja-social-sas.html */
+html[data-loja-social-embed="1"] {
+  font-size: 16px !important; /* evita scaling por rem */
+}
+
+/* Área onde o React é montado */
+html[data-loja-social-embed="1"] #loja-social-react {
+  width: 100%;
+  padding: 32px 0 56px;
+}
+
+/* Wrapper do React (o que metemos no main.jsx) */
+html[data-loja-social-embed="1"] #loja-social-react .ls-fixed {
+  /* ocupa mais e fica “site-like” */
+  width: min(1180px, 100%);
+  margin: 0 auto;
+
+  /* dá “presença” e evita ficar minúsculo */
+  transform: scale(1.1);
+  transform-origin: top center;
+}
+
+/* Em ecrãs pequenos, não faz zoom para não rebentar layout */
+@media (max-width: 1200px) {
+  html[data-loja-social-embed="1"] #loja-social-react .ls-fixed {
+    transform: none;
+  }
+}
+
+/* Leaflet: força tamanho do mapa para não ficar mini */
+html[data-loja-social-embed="1"] #loja-social-react .leaflet-container {
+  height: 360px;
+  width: 100%;
+}
+

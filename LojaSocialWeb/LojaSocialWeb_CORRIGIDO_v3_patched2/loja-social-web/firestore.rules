@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Permitir criação de pedidos de doação (frontend público)
+    match /doacoes/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly([
+                      'nome','email','telefone','categoria','data','hora','mensagem','estado','createdAt'
+                    ]);
+      allow read, update, delete: if false;
+    }
+
+    // Para a extensão Firebase "Trigger Email" (firestore-send-email)
+    match /mail/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['to','message','createdAt'])
+                    && request.resource.data.message.keys().hasOnly(['subject','text']);
+      allow read, update, delete: if false;
+    }
+
+    // Bloqueia tudo o resto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
