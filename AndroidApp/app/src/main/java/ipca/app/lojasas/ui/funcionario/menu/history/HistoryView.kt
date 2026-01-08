@@ -298,7 +298,7 @@ private fun HistoryCard(entry: HistoryEntry, whenText: String) {
                 )
             }
 
-            HorizontalDivider(color = GreenSas.copy(alpha = 0.2f))
+            HorizontalDivider(color = DividerGreenLight)
 
             Text(
                 text = "Por: $actorName",

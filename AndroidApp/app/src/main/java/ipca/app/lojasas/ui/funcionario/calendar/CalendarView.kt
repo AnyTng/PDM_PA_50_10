@@ -107,7 +107,7 @@ fun CalendarView(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
+            HorizontalDivider(color = DividerGreenLight)
             Spacer(modifier = Modifier.height(8.dp))
 
             // --- LISTA ---

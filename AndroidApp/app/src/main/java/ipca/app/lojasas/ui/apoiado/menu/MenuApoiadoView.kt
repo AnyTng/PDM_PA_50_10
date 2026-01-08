@@ -175,7 +175,7 @@ fun MenuApoiadoRow(
 @Composable
 fun MenuApoiadoDivider() {
     HorizontalDivider(
-        color = DividerLight,
+        color = DividerGreenLight,
         thickness = 1.dp
     )
 }

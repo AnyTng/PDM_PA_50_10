@@ -353,7 +353,7 @@ private fun SectionSeparator(title: String) {
     ) {
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = DividerGrey,
+            color = DividerGreenLight,
             thickness = 1.dp
         )
 
@@ -368,7 +368,7 @@ private fun SectionSeparator(title: String) {
 
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = DividerGrey,
+            color = DividerGreenLight,
             thickness = 1.dp
         )
     }

@@ -95,6 +95,16 @@ fun CompleteDataView(
         }
     }
 
+    val ipcaFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = GreenSas,
+        unfocusedBorderColor = GreenSas,
+        focusedLabelColor = GreenSas,
+        unfocusedLabelColor = GreenSas,
+        focusedPlaceholderColor = GreenSas,
+        unfocusedPlaceholderColor = GreenSas,
+        cursorColor = GreenSas
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -176,11 +186,7 @@ fun CompleteDataView(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNacionalidade)
                     }
                 },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenSas,
-                    focusedLabelColor = GreenSas,
-                    cursorColor = GreenSas
-                )
+                colors = ipcaFieldColors
             )
 
             if (filteredNationalities.isNotEmpty()) {
@@ -207,19 +213,22 @@ fun CompleteDataView(
             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(state.dataNascimento)
         } else ""
 
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = dateText,
                 onValueChange = {},
                 label = { Text("Data de Nascimento *") },
                 readOnly = true,
                 trailingIcon = {
-                    // Removemos o clickable daqui, pois a Box vai tratar de tudo
                     Icon(Icons.Default.DateRange, contentDescription = null)
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ipcaFieldColors
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { datePickerDialog.show() }
             )
         }
         if (state.dataNascimento != null && !Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)) {
@@ -230,7 +239,7 @@ fun CompleteDataView(
             )
         }
 
-        Divider()
+        Divider(color = DividerGreenLight)
 
         // --- RELAÇÃO IPCA ---
         Text("Relação com o IPCA *:", fontWeight = FontWeight.Bold)
@@ -262,7 +271,8 @@ fun CompleteDataView(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                        colors = ipcaFieldColors
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -283,7 +293,7 @@ fun CompleteDataView(
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
-                    Divider(color = LightGreyColor)
+                    Divider(color = DividerGreenLight)
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // Bolsa (AGORA AQUI DENTRO)
@@ -304,14 +314,15 @@ fun CompleteDataView(
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            colors = ipcaFieldColors
                         )
                     }
                 }
             }
         }
 
-        Divider()
+        Divider(color = DividerGreenLight)
 
         // --- APOIO DE EMERGÊNCIA ---
         // (Apoio de emergência mantém-se acessível a todos, conforme lógica original)
@@ -324,7 +335,7 @@ fun CompleteDataView(
             Text("Apoio de Emergência Social?")
         }
 
-        Divider()
+        Divider(color = DividerGreenLight)
 
         // --- NECESSIDADES ---
         Text("Necessidades (Selecione pelo menos uma) *:", fontWeight = FontWeight.Bold)

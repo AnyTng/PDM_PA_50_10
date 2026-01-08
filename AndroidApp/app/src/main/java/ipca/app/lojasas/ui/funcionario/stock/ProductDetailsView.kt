@@ -174,7 +174,10 @@ private fun <T> ProductDetailsViewContent(
                         }
 
                         if (availableCampaigns.isNotEmpty()) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            HorizontalDivider(
+                                color = DividerGreenLight,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
                             DropdownMenuSectionHeader(
                                 title = "Campanha",
                                 expanded = showCampaignSection,
@@ -202,7 +205,10 @@ private fun <T> ProductDetailsViewContent(
                             }
                         }
 
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(
+                            color = DividerGreenLight,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                         DropdownMenuSectionHeader(
                             title = "Estado",
                             expanded = showStatusSection,
@@ -259,7 +265,10 @@ private fun <T> ProductDetailsViewContent(
                             }
                         }
 
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(
+                            color = DividerGreenLight,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                         DropdownMenuSectionHeader(
                             title = "Quantidade",
                             expanded = showSizeSortSection,

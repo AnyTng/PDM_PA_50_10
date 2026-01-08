@@ -228,7 +228,10 @@ private fun ExpiredProductsViewContent(
                             }
                         }
 
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        HorizontalDivider(
+                            color = DividerGreenLight,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                         DropdownMenuSectionHeader(
                             title = "Quantidade",
                             expanded = showSizeSortSection,

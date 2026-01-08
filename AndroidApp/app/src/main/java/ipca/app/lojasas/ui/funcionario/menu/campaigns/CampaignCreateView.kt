@@ -71,6 +71,16 @@ private fun CampaignCreateViewContent(
     onDescChange: (String) -> Unit,
     onSaveClick: () -> Unit
 ) {
+    val ipcaFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = GreenSas,
+        unfocusedBorderColor = GreenSas,
+        focusedLabelColor = GreenSas,
+        unfocusedLabelColor = GreenSas,
+        focusedPlaceholderColor = GreenSas,
+        unfocusedPlaceholderColor = GreenSas,
+        cursorColor = GreenSas
+    )
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
@@ -95,11 +105,12 @@ private fun CampaignCreateViewContent(
                 value = nome,
                 onValueChange = onNomeChange,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Nome da campanha") },
-                shape = RoundedCornerShape(8.dp)
+                placeholder = { Text("Nome da campanha", color = GreenSas) },
+                shape = RoundedCornerShape(8.dp),
+                colors = ipcaFieldColors
             )
 
-            HorizontalDivider()
+            HorizontalDivider(color = DividerGreenLight)
 
             // Datas
             Text("De quando a quando?", fontWeight = FontWeight.Bold, fontSize = 18.sp)
@@ -108,7 +119,7 @@ private fun CampaignCreateViewContent(
                 DateButton("Fim", dataFim, onClick = onDataFimClick)
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = DividerGreenLight)
 
             // Descrição
             Text("Descrição", fontWeight = FontWeight.Bold, fontSize = 18.sp)
@@ -118,8 +129,9 @@ private fun CampaignCreateViewContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                placeholder = { Text("Escreve aqui") },
-                shape = RoundedCornerShape(8.dp)
+                placeholder = { Text("Escreve aqui", color = GreenSas) },
+                shape = RoundedCornerShape(8.dp),
+                colors = ipcaFieldColors
             )
         }
     }

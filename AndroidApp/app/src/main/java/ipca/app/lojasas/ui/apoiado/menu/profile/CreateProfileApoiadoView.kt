@@ -255,7 +255,7 @@ fun FormSection(
         HorizontalDivider(
             modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
             thickness = 1.dp,
-            color = GreyColor
+            color = DividerGreenLight
         )
         content()
     }
@@ -289,12 +289,12 @@ fun FormInput(
                     .fillMaxWidth()
                     .height(50.dp)
                     .background(WhiteColor, RoundedCornerShape(8.dp))
-                    .border(1.dp, GreyColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                    .border(1.dp, GreenSas, RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
-                    Text(text = placeholder, color = GreyColor, fontSize = 16.sp)
+                    Text(text = placeholder, color = GreenSas, fontSize = 16.sp)
                 }
                 innerTextField()
             }

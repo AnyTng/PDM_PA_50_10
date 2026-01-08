@@ -205,7 +205,7 @@ fun ApoiadosListView(
                         Spacer(Modifier.width(8.dp))
                         Text("Exportar PDF", color = WhiteColor)
                     }
-                    HorizontalDivider(color = GreenSas, modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(color = DividerGreenLight, modifier = Modifier.padding(vertical = 8.dp))
 
                     Column(Modifier.weight(1f, fill = false)) {
                         Text(user.nome, fontSize = 18.sp, fontWeight = FontWeight.Bold)

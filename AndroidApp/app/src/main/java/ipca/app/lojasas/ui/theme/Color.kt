@@ -7,7 +7,7 @@ import androidx.core.graphics.toColorInt
 /**
  * Fonte única para todas as cores **custom** do projeto.
  *
- * ⚠️ Regra do projeto: **não** declarar `Color(0x...)` fora deste ficheiro.
+ * declaramos todas as neste ficheiro....boaa
  */
 
 // -----------------------------------------------------------------------------
@@ -63,7 +63,7 @@ val UnspecifiedColor = Color.Unspecified
 // Inputs
 // -----------------------------------------------------------------------------
 val InputBackground = Color(0x0DC6DBD3)
-val InputBorder = Color(0x808B8B8B)
+val InputBorder = GreenSas.copy(alpha = 0.5f)
 
 // -----------------------------------------------------------------------------
 // Backgrounds / Surfaces
@@ -81,6 +81,7 @@ val ErrorBg = Color(0xFFFFEBEE)
 // -----------------------------------------------------------------------------
 // Dividers
 // -----------------------------------------------------------------------------
+val DividerGreenLight = Color(0xFFD2EADF)
 val DividerGrey = Color(0xFFD9D9D9)
 val DividerLight = Color(0xFFE0E0E0)
 val DividerLighter = Color(0xFFE6E6E6)

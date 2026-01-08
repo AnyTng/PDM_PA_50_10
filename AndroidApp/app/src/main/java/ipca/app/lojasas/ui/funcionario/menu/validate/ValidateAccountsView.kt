@@ -139,7 +139,7 @@ fun ApoiadoDetailDialog(
                     Text("Detalhes Completos", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSas)
                     IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Fechar") }
                 }
-                HorizontalDivider(color = GreenSas, thickness = 2.dp, modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(color = DividerGreenLight, thickness = 2.dp, modifier = Modifier.padding(vertical = 8.dp))
 
                 // Scroll Content
                 Column(
@@ -211,7 +211,7 @@ fun ApoiadoDetailDialog(
                                     Text(doc.fileName, fontSize = 12.sp, color = GreyColor)
                                 }
                             }
-                            HorizontalDivider()
+                            HorizontalDivider(color = DividerGreenLight)
                         }
                     }
                 }
@@ -225,7 +225,16 @@ fun ApoiadoDetailDialog(
                         value = denyReason,
                         onValueChange = { denyReason = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Escreva a justificação...") }
+                        placeholder = { Text("Escreva a justificação...", color = GreenSas) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenSas,
+                            unfocusedBorderColor = GreenSas,
+                            focusedLabelColor = GreenSas,
+                            unfocusedLabelColor = GreenSas,
+                            focusedPlaceholderColor = GreenSas,
+                            unfocusedPlaceholderColor = GreenSas,
+                            cursorColor = GreenSas
+                        )
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),

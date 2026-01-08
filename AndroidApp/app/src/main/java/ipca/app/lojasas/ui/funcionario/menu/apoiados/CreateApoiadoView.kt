@@ -141,7 +141,12 @@ fun CreateApoiadoView(
                                 Icon(if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff, null)
                             }
                         },
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = GreenSas, focusedLabelColor = GreenSas)
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenSas,
+                            unfocusedBorderColor = GreenSas,
+                            focusedLabelColor = GreenSas,
+                            cursorColor = GreenSas
+                        )
                     )
                 }
 
@@ -184,9 +189,9 @@ fun CreateApoiadoView(
                             enabled = false,
                             colors = OutlinedTextFieldDefaults.colors(
                                 disabledTextColor = BlackColor,
-                                disabledBorderColor = GreyColor,
-                                disabledLabelColor = BlackColor,
-                                disabledTrailingIconColor = GreyColor
+                                disabledBorderColor = GreenSas,
+                                disabledLabelColor = GreenSas,
+                                disabledTrailingIconColor = GreenSas
                             )
                         )
                         Box(
@@ -196,7 +201,7 @@ fun CreateApoiadoView(
                         )
                     }
 
-                    Divider(Modifier.padding(vertical = 8.dp))
+                    Divider(modifier = Modifier.padding(vertical = 8.dp), color = DividerGreenLight)
 
                     CustomTextField(value = state.contacto, onValueChange = { viewModel.onContactoChange(it) }, label = "Telemóvel", keyboardType = KeyboardType.Phone)
                     CustomTextField(value = state.morada, onValueChange = { viewModel.onMoradaChange(it) }, label = "Morada Completa")
@@ -249,7 +254,7 @@ fun CreateApoiadoView(
                     }
                     //Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = GreyColor)
 
-                    Divider(Modifier.padding(vertical = 8.dp))
+                    Divider(modifier = Modifier.padding(vertical = 8.dp), color = DividerGreenLight)
                     Text("Tipos de Cabaz:", fontWeight = FontWeight.Bold)
                     val options = listOf("Produtos Alimentares", "Produtos de Higiene", "Produtos de Limpeza")
                     options.forEach { item ->
@@ -314,7 +319,7 @@ fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = GreenSas)
-            HorizontalDivider(color = GreenSas.copy(alpha = 0.3f))
+            HorizontalDivider(color = DividerGreenLight)
             content()
         }
     }
@@ -337,6 +342,7 @@ fun CustomTextField(
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = GreenSas,
+            unfocusedBorderColor = GreenSas,
             focusedLabelColor = GreenSas,
             cursorColor = GreenSas
         )

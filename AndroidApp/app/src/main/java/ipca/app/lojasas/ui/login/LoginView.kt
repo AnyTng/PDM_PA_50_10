@@ -26,6 +26,7 @@ import androidx.compose.material3.Button // Adicionado
 import androidx.compose.material3.ButtonDefaults // Adicionado
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField // Adicionado
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton // Adicionado
 import androidx.compose.runtime.Composable
@@ -301,7 +302,13 @@ fun LoginView(
                             label = { Text("Email") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = GreenSas,
+                                unfocusedBorderColor = GreenSas,
+                                focusedLabelColor = GreenSas,
+                                cursorColor = GreenSas
+                            )
                         )
                     }
                 },
@@ -393,7 +400,7 @@ fun CustomFigmaInput(
                 if (value.isEmpty() && !isFocused) {
                     Text(
                         text = placeholder,
-                        style = TextStyle(color = GreyColor, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
+                        style = TextStyle(color = GreenSas, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
                         )
                     )
                 }

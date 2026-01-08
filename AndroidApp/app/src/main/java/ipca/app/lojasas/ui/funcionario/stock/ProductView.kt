@@ -160,7 +160,7 @@ private fun ProductViewContent(
                     }
                 }
 
-                Divider(color = LightGreyColor.copy(alpha = 0.5f))
+                Divider(color = DividerGreenLight)
 
                 // 2. Linha 1: Categoria e Tipo
                 Row(
@@ -239,7 +239,7 @@ private fun ProductViewContent(
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                Divider(color = LightGreyColor.copy(alpha = 0.5f))
+                Divider(color = DividerGreenLight)
 
                 // 6. Código de Barras
                 DetailItemHorizontal(

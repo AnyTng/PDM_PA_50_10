@@ -212,7 +212,7 @@ fun MenuRow(
 @Composable
 fun MenuDivider() {
     HorizontalDivider(
-        color = DividerLight,
+        color = DividerGreenLight,
         thickness = 1.dp
     )
 }

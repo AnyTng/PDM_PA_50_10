@@ -36,6 +36,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
@@ -383,7 +384,7 @@ private fun ApoiadoInfoCard(
                 fontSize = 16.sp,
                 color = GreenSas
             )
-            HorizontalDivider(color = GreenSas.copy(alpha = 0.2f))
+            HorizontalDivider(color = DividerGreenLight)
             when {
                 isLoading -> {
                     Text("A carregar dados do apoiado...", fontSize = 12.sp, color = GreyColor)
@@ -498,6 +499,16 @@ private fun ApoiadoPickerDialog(
     onDismiss: () -> Unit,
     onSelect: (ApoiadoOption) -> Unit
 ) {
+    val ipcaFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = GreenSas,
+        unfocusedBorderColor = GreenSas,
+        focusedLabelColor = GreenSas,
+        unfocusedLabelColor = GreenSas,
+        focusedPlaceholderColor = GreenSas,
+        unfocusedPlaceholderColor = GreenSas,
+        cursorColor = GreenSas
+    )
+
     var query by remember { mutableStateOf("") }
     val filtered = remember(options, query) {
         val q = query.trim().lowercase(Locale.getDefault())
@@ -530,7 +541,8 @@ private fun ApoiadoPickerDialog(
                     onValueChange = { query = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    placeholder = { Text("Pesquisar por nome ou nº mecanográfico") }
+                    placeholder = { Text("Pesquisar por nome ou nº mecanográfico", color = GreenSas) },
+                    colors = ipcaFieldColors
                 )
                 Spacer(Modifier.height(10.dp))
 
@@ -589,6 +601,16 @@ private fun ProdutosPickerDialog(
 ) {
     val dateFmt = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
+    val ipcaFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = GreenSas,
+        unfocusedBorderColor = GreenSas,
+        focusedLabelColor = GreenSas,
+        unfocusedLabelColor = GreenSas,
+        focusedPlaceholderColor = GreenSas,
+        unfocusedPlaceholderColor = GreenSas,
+        cursorColor = GreenSas
+    )
+
     var query by remember { mutableStateOf("") }
     val filteredProdutos = remember(produtos, query) {
         val q = query.trim().lowercase(Locale.getDefault())
@@ -638,7 +660,8 @@ private fun ProdutosPickerDialog(
                     onValueChange = { query = it },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    placeholder = { Text("Pesquisar produto (nome, código, categoria)") }
+                    placeholder = { Text("Pesquisar produto (nome, código, categoria)", color = GreenSas) },
+                    colors = ipcaFieldColors
                 )
                 Spacer(Modifier.height(12.dp))
 

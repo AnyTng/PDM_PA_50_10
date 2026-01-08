@@ -65,12 +65,15 @@ fun CollaboratorsListView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(WhiteColor, RoundedCornerShape(8.dp)),
-                placeholder = { Text("Pesquisar (Nome, ID, Função)") },
+                placeholder = { Text("Pesquisar (Nome, ID, Função)", color = GreenSas) },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = GreenSas,
-                    unfocusedBorderColor = LightGreyColor
+                    unfocusedBorderColor = GreenSas,
+                    focusedPlaceholderColor = GreenSas,
+                    unfocusedPlaceholderColor = GreenSas,
+                    cursorColor = GreenSas
                 )
             )
 
@@ -210,7 +213,7 @@ fun CollaboratorCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            HorizontalDivider(color = LightGreyColor.copy(alpha = 0.5f))
+            HorizontalDivider(color = DividerGreenLight)
             Spacer(Modifier.height(8.dp))
 
             // Ações

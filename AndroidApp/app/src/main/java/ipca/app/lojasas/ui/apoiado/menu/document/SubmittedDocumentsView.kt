@@ -79,7 +79,7 @@ fun SubmittedDocumentsView(
                                 color = GreenSas,
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                             )
-                            HorizontalDivider(color = GreenSas, thickness = 1.dp)
+                            HorizontalDivider(color = DividerGreenLight, thickness = 1.dp)
                         }
 
                         // --- LISTA DE FICHEIROS DA ENTREGA ---

@@ -23,16 +23,19 @@ data class DocumentItem(
     val isMandatory: Boolean = false
 )
 
+private val baseDocTypes = listOf(
+    DocumentItem("despesas", "Despesas Permanentes", "Recibos de habitação, etc.", true),
+    DocumentItem("rendimentos", "Rendimentos", "Recibos de vencimento/pensões.", true),
+    DocumentItem("extratos", "Extratos Bancários", "Extratos dos últimos 3 meses.", true),
+    DocumentItem("internacional", "Estatuto Internacional/PALOP", "Apenas se aplicável.", false),
+    DocumentItem("outros", "Outros Documentos", "Outros comprovativos relevantes.", false)
+)
+
 data class SubmissionState(
-    val docTypes: List<DocumentItem> = listOf(
-        DocumentItem("despesas", "Despesas Permanentes", "Recibos de habitação, etc.", true),
-        DocumentItem("rendimentos", "Rendimentos", "Recibos de vencimento/pensões.", true),
-        DocumentItem("extratos", "Extratos Bancários", "Extratos dos últimos 3 meses.", true),
-        DocumentItem("internacional", "Estatuto Internacional/PALOP", "Apenas se aplicável.", false),
-        DocumentItem("outros", "Outros Documentos", "Outros comprovativos relevantes.", false)
-    ),
+    val docTypes: List<DocumentItem> = baseDocTypes,
     val uploadedFiles: List<UploadedFile> = emptyList(),
     val currentDeliveryNumber: Int = 1,
+    val mandatoryRequired: Boolean = true,
     val isLoading: Boolean = false,
     val error: String? = null,
     val uploadProgress: Boolean = false,
@@ -76,11 +79,21 @@ class DocumentSubmissionViewModel @Inject constructor(
         documentsRepository.fetchDeliveryNumber(
             apoiadoId = numMecanografico,
             onSuccess = { currentDelivery ->
-                uiState.value = uiState.value.copy(currentDeliveryNumber = currentDelivery)
+                val mandatoryRequired = currentDelivery == 1
+                uiState.value = uiState.value.copy(
+                    currentDeliveryNumber = currentDelivery,
+                    mandatoryRequired = mandatoryRequired,
+                    docTypes = applyMandatory(baseDocTypes, mandatoryRequired)
+                )
                 listenToCurrentFiles(numMecanografico, currentDelivery)
             },
             onError = {
-                uiState.value = uiState.value.copy(currentDeliveryNumber = 1, isLoading = false)
+                uiState.value = uiState.value.copy(
+                    currentDeliveryNumber = 1,
+                    mandatoryRequired = true,
+                    docTypes = baseDocTypes,
+                    isLoading = false
+                )
             }
         )
     }
@@ -101,6 +114,7 @@ class DocumentSubmissionViewModel @Inject constructor(
 
     fun hasAllMandatoryFiles(): Boolean {
         val state = uiState.value
+        if (!state.mandatoryRequired) return true
         val mandatoryTypes = state.docTypes.filter { it.isMandatory }.map { it.id }
         return mandatoryTypes.all { mandatoryId ->
             state.uploadedFiles.any { it.typeId == mandatoryId }
@@ -205,6 +219,13 @@ class DocumentSubmissionViewModel @Inject constructor(
 
     fun getFileUrl(storagePath: String, onResult: (Uri?) -> Unit) {
         documentsRepository.getFileUrl(storagePath, onResult)
+    }
+
+    private fun applyMandatory(docTypes: List<DocumentItem>, mandatoryRequired: Boolean): List<DocumentItem> {
+        if (mandatoryRequired) return docTypes
+        return docTypes.map { item ->
+            if (item.isMandatory) item.copy(isMandatory = false) else item
+        }
     }
 
     override fun onCleared() {

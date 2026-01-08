@@ -5,6 +5,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import ipca.app.lojasas.data.common.ListenerHandle
 import ipca.app.lojasas.data.common.asListenerHandle
+import ipca.app.lojasas.utils.AccountValidity
+import java.util.Calendar
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -29,13 +31,54 @@ class ApoiadoDocumentsRepository @Inject constructor(
         }
 
         apoiadosCollection.document(normalized)
-            .collection("JustificacoesNegacao")
             .get()
-            .addOnSuccessListener { snapshot ->
-                val currentDelivery = snapshot.size() + 1
-                onSuccess(currentDelivery)
+            .addOnSuccessListener { doc ->
+                if (!doc.exists()) {
+                    onSuccess(1)
+                    return@addOnSuccessListener
+                }
+
+                val validade = doc.getTimestamp("validadeConta")?.toDate()
+                    ?: (doc.get("validadeConta") as? Date)
+                    ?: doc.getTimestamp("validade")?.toDate()
+                    ?: (doc.get("validade") as? Date)
+
+                if (validade != null && AccountValidity.isExpired(validade)) {
+                    onSuccess(1)
+                    return@addOnSuccessListener
+                }
+
+                val cycleStartMillis = resolveCycleStartMillis(validade)
+                val denialsRef = apoiadosCollection.document(normalized).collection("JustificacoesNegacao")
+                val query = if (cycleStartMillis != null) {
+                    denialsRef.whereGreaterThanOrEqualTo("data", Date(cycleStartMillis))
+                } else {
+                    denialsRef
+                }
+
+                query.get()
+                    .addOnSuccessListener { snapshot ->
+                        val currentDelivery = snapshot.size() + 1
+                        onSuccess(currentDelivery)
+                    }
+                    .addOnFailureListener { onError(it) }
             }
             .addOnFailureListener { onError(it) }
+    }
+
+    private fun resolveCycleStartMillis(validade: Date?): Long? {
+        if (validade == null) return null
+        val year = Calendar.getInstance().apply { time = validade }.get(Calendar.YEAR) - 1
+        val start = Calendar.getInstance().apply {
+            set(Calendar.YEAR, year)
+            set(Calendar.MONTH, Calendar.OCTOBER)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return start.timeInMillis
     }
 
     fun listenSubmissionFiles(

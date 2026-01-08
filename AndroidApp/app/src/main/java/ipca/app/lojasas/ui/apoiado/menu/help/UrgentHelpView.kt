@@ -61,7 +61,13 @@ fun UrgentHelpView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                maxLines = 10
+                maxLines = 10,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GreenSas,
+                    unfocusedBorderColor = GreenSas,
+                    focusedLabelColor = GreenSas,
+                    cursorColor = GreenSas
+                )
             )
 
             if (error != null) {

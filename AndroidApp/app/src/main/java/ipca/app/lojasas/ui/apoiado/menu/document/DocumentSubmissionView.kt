@@ -232,7 +232,10 @@ fun DocumentSubmissionContent(
                                 Text("${state.uploadedFiles.size}", color = WhiteColor)
                             }
                         }
-                        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+                        HorizontalDivider(
+                            color = DividerGreenLight,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                        )
                     }
 
                     if (state.uploadedFiles.isEmpty()) {
@@ -274,7 +277,13 @@ fun DocumentSubmissionContent(
                         value = otherDescriptionText,
                         onValueChange = { otherDescriptionText = it },
                         label = { Text("Nome do documento") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GreenSas,
+                            unfocusedBorderColor = GreenSas,
+                            focusedLabelColor = GreenSas,
+                            cursorColor = GreenSas
+                        )
                     )
                 },
                 confirmButton = {

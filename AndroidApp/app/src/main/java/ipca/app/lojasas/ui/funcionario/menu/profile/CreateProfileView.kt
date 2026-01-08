@@ -218,7 +218,7 @@ fun CreateProfileView(
 fun FormSection(title: String, content: @Composable () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = BlackColor, fontFamily = IntroFontFamily)
-        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 12.dp), thickness = 1.dp, color = GreyColor)
+        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 12.dp), thickness = 1.dp, color = DividerGreenLight)
         content()
     }
 }
@@ -235,10 +235,10 @@ fun FormInput(value: String, onValueChange: (String) -> Unit, placeholder: Strin
         singleLine = true,
         decorationBox = { innerTextField ->
             Box(
-                modifier = Modifier.fillMaxWidth().height(50.dp).background(WhiteColor, RoundedCornerShape(8.dp)).border(1.dp, GreyColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp).background(WhiteColor, RoundedCornerShape(8.dp)).border(1.dp, GreenSas, RoundedCornerShape(8.dp)).padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (value.isEmpty()) Text(text = placeholder, color = GreyColor, fontSize = 16.sp)
+                if (value.isEmpty()) Text(text = placeholder, color = GreenSas, fontSize = 16.sp)
                 innerTextField()
             }
         }

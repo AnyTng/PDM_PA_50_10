@@ -345,7 +345,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
-                    Text(text = placeholder, color = GreyColor, fontSize = 16.sp)
+                    Text(text = placeholder, color = GreenSas, fontSize = 16.sp)
                 }
                 innerTextField()
             }

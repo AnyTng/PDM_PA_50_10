@@ -130,7 +130,7 @@ fun CestaDetailsView(
                                     state.produtos.forEachIndexed { index, produto ->
                                         ProdutoRow(produto = produto)
                                         if (index != state.produtos.lastIndex) {
-                                            HorizontalDivider(color = DividerLighter)
+                                            HorizontalDivider(color = DividerGreenLight)
                                         }
                                     }
                                 }
@@ -238,7 +238,7 @@ private fun DetailsCard(
                 fontSize = 16.sp,
                 color = GreenSas
             )
-            HorizontalDivider(color = GreenSas.copy(alpha = 0.3f))
+            HorizontalDivider(color = DividerGreenLight)
             content()
         }
     }
