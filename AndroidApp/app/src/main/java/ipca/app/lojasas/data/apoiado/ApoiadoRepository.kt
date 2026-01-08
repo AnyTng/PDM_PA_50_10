@@ -20,6 +20,7 @@ class ApoiadoRepository @Inject constructor(
     private val auth: FirebaseAuth
 ) {
     private val apoiadosCollection = firestore.collection("apoiados")
+    private val paisesCollection = firestore.collection("paises")
 
     fun fetchApoiadoProfileByUid(
         uid: String,
@@ -472,14 +473,15 @@ class ApoiadoRepository @Inject constructor(
         onSuccess: (List<String>) -> Unit,
         onError: (Exception) -> Unit
     ) {
-        apoiadosCollection.get()
+        paisesCollection
+            .orderBy("ordem", Query.Direction.ASCENDING)
+            .get()
             .addOnSuccessListener { result ->
                 val list = result.documents
-                    .mapNotNull { it.getString("nacionalidade") }
+                    .mapNotNull { it.getString("nome") }
                     .map { it.trim() }
                     .filter { it.isNotEmpty() }
                     .distinct()
-                    .sorted()
                 onSuccess(list)
             }
             .addOnFailureListener { onError(it) }

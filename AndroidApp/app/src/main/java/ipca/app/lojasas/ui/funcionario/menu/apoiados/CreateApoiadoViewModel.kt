@@ -35,6 +35,7 @@ data class CreateApoiadoState(
     var bolsaEstudos: Boolean = false,
     var valorBolsa: String = "",
     var necessidades: List<String> = emptyList(),
+    var availableNationalities: List<String> = emptyList(),
 
     // Estado da UI
     var isLoading: Boolean = false,
@@ -50,6 +51,10 @@ class CreateApoiadoViewModel @Inject constructor(
 
     var uiState = mutableStateOf(CreateApoiadoState())
         private set
+
+    init {
+        fetchNationalities()
+    }
 
     // --- Setters para a View ---
     // Nota UX: limpamos o erro ao editar para evitar “não acontece nada” em tentativas repetidas.
@@ -85,6 +90,17 @@ class CreateApoiadoViewModel @Inject constructor(
         uiState.value = uiState.value.copy(necessidades = currentList)
     }
 
+    private fun fetchNationalities() {
+        apoiadoRepository.fetchNationalities(
+            onSuccess = { list ->
+                uiState.value = uiState.value.copy(availableNationalities = list)
+            },
+            onError = {
+                uiState.value = uiState.value.copy(error = "Erro ao carregar países.")
+            }
+        )
+    }
+
     fun createApoiado() {
         val s = uiState.value
 
@@ -93,7 +109,7 @@ class CreateApoiadoViewModel @Inject constructor(
         val nome = s.nome.trim()
         val numMec = s.numMecanografico.trim()
         val morada = s.morada.trim()
-        val nacionalidade = s.nacionalidade.trim()
+        val nacionalidadeInput = s.nacionalidade.trim()
 
         if (email.isBlank() || s.password.isBlank() || nome.isBlank() || numMec.isBlank()) {
             uiState.value = s.copy(error = "Preencha os campos obrigatórios (Email, Senha, Nome, Nº Mec.).")
@@ -125,8 +141,20 @@ class CreateApoiadoViewModel @Inject constructor(
             return
         }
 
-        if (nacionalidade.isBlank()) {
+        if (nacionalidadeInput.isBlank()) {
             uiState.value = s.copy(error = "A nacionalidade é obrigatória.")
+            return
+        }
+        val matchedNationality = s.availableNationalities.firstOrNull {
+            it.equals(nacionalidadeInput, ignoreCase = true)
+        }
+        if (matchedNationality == null) {
+            val message = if (s.availableNationalities.isEmpty()) {
+                "Lista de países indisponível. Tente novamente."
+            } else {
+                "Selecione uma nacionalidade da lista."
+            }
+            uiState.value = s.copy(error = message)
             return
         }
 
@@ -193,7 +221,7 @@ class CreateApoiadoViewModel @Inject constructor(
             numMecanografico = numMec,
             contacto = contactoNorm,
             documentNumber = normalizedDocNumber,
-            nacionalidade = nacionalidade,
+            nacionalidade = matchedNationality,
             morada = morada,
             codPostal = codPostalNorm,
             valorBolsa = s.valorBolsa.trim()

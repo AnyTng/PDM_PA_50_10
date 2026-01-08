@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateApoiadoView(
     navController: NavController,
@@ -45,6 +46,7 @@ fun CreateApoiadoView(
     val state by viewModel.uiState
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var expandedNacionalidade by remember { mutableStateOf(false) }
 
     // --- ESTADO DO POP-UP DE AVISO ---
     // Começa a true para aparecer logo ao abrir
@@ -75,6 +77,11 @@ fun CreateApoiadoView(
     }
     LaunchedEffect(state.error) {
         state.error?.let { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
+    }
+
+    val filteredNationalities = state.availableNationalities.filter {
+        it.contains(state.nacionalidade, ignoreCase = true) &&
+            !it.equals(state.nacionalidade, ignoreCase = true)
     }
 
     // --- DIALOG DE AVISO ---
@@ -173,7 +180,51 @@ fun CreateApoiadoView(
                         )
                     }
 
-                    CustomTextField(value = state.nacionalidade, onValueChange = { viewModel.onNacionalidadeChange(it) }, label = "Nacionalidade")
+                    ExposedDropdownMenuBox(
+                        expanded = expandedNacionalidade,
+                        onExpandedChange = { expandedNacionalidade = !expandedNacionalidade }
+                    ) {
+                        OutlinedTextField(
+                            value = state.nacionalidade,
+                            onValueChange = {
+                                viewModel.onNacionalidadeChange(it)
+                                expandedNacionalidade = true
+                            },
+                            label = { Text("Nacionalidade") },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            trailingIcon = {
+                                if (filteredNationalities.isNotEmpty()) {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedNacionalidade)
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = GreenSas,
+                                unfocusedBorderColor = GreenSas,
+                                focusedLabelColor = GreenSas,
+                                cursorColor = GreenSas
+                            )
+                        )
+
+                        if (filteredNationalities.isNotEmpty()) {
+                            ExposedDropdownMenu(
+                                expanded = expandedNacionalidade,
+                                onDismissRequest = { expandedNacionalidade = false },
+                                modifier = Modifier.background(WhiteColor)
+                            ) {
+                                filteredNationalities.forEach { nation ->
+                                    DropdownMenuItem(
+                                        text = { Text(text = nation) },
+                                        onClick = {
+                                            viewModel.onNacionalidadeChange(nation)
+                                            expandedNacionalidade = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
 
                     // --- DATA DE NASCIMENTO ---
                     val dateText = state.dataNascimento?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it) } ?: ""

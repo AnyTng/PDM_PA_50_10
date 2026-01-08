@@ -80,7 +80,9 @@ class CompleteDataViewModel @Inject constructor(
             onSuccess = { list ->
                 uiState.value = uiState.value.copy(availableNationalities = list)
             },
-            onError = { }
+            onError = {
+                uiState.value = uiState.value.copy(error = "Erro ao carregar países.")
+            }
         )
     }
 
@@ -106,8 +108,21 @@ class CompleteDataViewModel @Inject constructor(
         val state = uiState.value
 
         // --- Validações (defesa extra no ViewModel) ---
-        if (state.nacionalidade.isBlank()) {
+        val nacionalidadeInput = state.nacionalidade.trim()
+        if (nacionalidadeInput.isBlank()) {
             uiState.value = state.copy(error = "A nacionalidade é obrigatória.")
+            return
+        }
+        val matchedNationality = state.availableNationalities.firstOrNull {
+            it.equals(nacionalidadeInput, ignoreCase = true)
+        }
+        if (matchedNationality == null) {
+            val message = if (state.availableNationalities.isEmpty()) {
+                "Lista de países indisponível. Tente novamente."
+            } else {
+                "Selecione uma nacionalidade da lista."
+            }
+            uiState.value = state.copy(error = message)
             return
         }
         val birth = state.dataNascimento
@@ -146,7 +161,8 @@ class CompleteDataViewModel @Inject constructor(
             }
         }
 
-        uiState.value = state.copy(isLoading = true, error = null)
+        val normalizedState = state.copy(nacionalidade = matchedNationality)
+        uiState.value = normalizedState.copy(isLoading = true, error = null)
 
         val precisaDocumentos = !state.apoioEmergencia
 
@@ -154,11 +170,11 @@ class CompleteDataViewModel @Inject constructor(
         val validadeConta = AccountValidity.nextSeptembem30()
 
         val updateMap = hashMapOf<String, Any>(
-            "relacaoIPCA" to state.relacaoIPCA,
-            "apoioEmergenciaSocial" to state.apoioEmergencia,
-            "bolsaEstudos" to state.bolsaEstudos,
-            "nacionalidade" to state.nacionalidade.trim(),
-            "necessidade" to state.necessidades,
+            "relacaoIPCA" to normalizedState.relacaoIPCA,
+            "apoioEmergenciaSocial" to normalizedState.apoioEmergencia,
+            "bolsaEstudos" to normalizedState.bolsaEstudos,
+            "nacionalidade" to normalizedState.nacionalidade,
+            "necessidade" to normalizedState.necessidades,
             "dataNascimento" to Date(birth),
             "estadoConta" to if (precisaDocumentos) "Falta_Documentos" else "Analise",
             "dadosIncompletos" to false,
@@ -176,11 +192,11 @@ class CompleteDataViewModel @Inject constructor(
             docId = docId,
             data = updateMap,
             onSuccess = {
-                uiState.value = state.copy(isLoading = false)
+                uiState.value = normalizedState.copy(isLoading = false)
                 onSuccess()
             },
             onError = { e ->
-                uiState.value = state.copy(isLoading = false, error = "Erro ao guardar: ${e.message}")
+                uiState.value = normalizedState.copy(isLoading = false, error = "Erro ao guardar: ${e.message}")
             }
         )
     }
