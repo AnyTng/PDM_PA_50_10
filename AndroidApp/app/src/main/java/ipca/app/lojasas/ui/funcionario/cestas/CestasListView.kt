@@ -3,30 +3,40 @@ package ipca.app.lojasas.ui.funcionario.cestas
 import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +48,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -59,6 +70,9 @@ import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.cestas.CestaItem
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
+import java.time.Duration
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.text.SimpleDateFormat
 import java.text.Normalizer
 import java.util.Calendar
@@ -82,7 +96,6 @@ fun CestasListView(
     var showYearMenu by remember { mutableStateOf(false) }
 
     // Diálogos
-    var cestaParaReagendarEntrega by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaFaltaReagendar by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaTerceiraFalta by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaCancelar by remember { mutableStateOf<CestaItem?>(null) }
@@ -371,64 +384,131 @@ fun CestasListView(
     if (cestaParaAcoes != null) {
         val cesta = cestaParaAcoes!!
         val isOverdue = cesta.isOverdue()
+        val dataRef = cesta.dataReferencia()
+        val estadoLabel = cesta.estadoLabel()
+        val statusLabel = resolveCestaStatusLabel(cesta)
+        val isUrgent = cesta.origem?.trim()?.equals("Urgente", ignoreCase = true) == true
+        val origemLabel = cesta.origem?.trim().orEmpty().ifBlank { "Sem origem" }
+        val faltasLabel = if (cesta.faltas > 0) "Faltas: ${cesta.faltas}" else null
+        val dataLabel = dataRef?.let { dateFmt.format(it) } ?: "Sem data definida"
         AlertDialog(
             onDismissRequest = { cestaParaAcoes = null },
-            title = { Text("Ações Disponiveis") },
+            title = {
+                Text(
+                    text = "Ações disponíveis",
+                    fontWeight = FontWeight.Bold,
+                    color = GreenSas
+                )
+            },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Button(
-                        onClick = {
-                            cestaParaAcoes = null
-                            cestaParaCancelar = cesta
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = SurfaceLight,
+                        border = BorderStroke(1.dp, DividerGreenLight)
                     ) {
-                        Text("Cancelar")
-                    }
-                    Button(
-                        onClick = {
-                            cestaParaAcoes = null
-                            viewModel.marcarEntregue(cesta)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                    ) {
-                        Text("Entregar")
-                    }
-                    Button(
-                        onClick = {
-                            cestaParaAcoes = null
-                            cestaParaReagendarEntrega = cesta
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                    ) {
-                        Text("Reagendar")
-                    }
-                    Button(
-                        onClick = {
-                            cestaParaAcoes = null
-                            // Na 3ª falta não permite escolher dia
-                            if (cesta.faltas >= 2) {
-                                cestaParaTerceiraFalta = cesta
-                            } else {
-                                cestaParaFaltaReagendar = cesta
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Apoiado: ${cesta.apoiadoId}",
+                                fontWeight = FontWeight.Bold,
+                                color = TextDark
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Estado: $estadoLabel",
+                                    fontSize = 12.sp,
+                                    color = GreyColor
+                                )
+                                CestaStatusPill(
+                                    label = statusLabel,
+                                    color = resolveCestaAccentColor(cesta, isOverdue)
+                                )
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = isOverdue,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ButtonGrey,
-                            disabledContainerColor = DisabledGrey
-                        )
+                            Text(
+                                text = "Entrega: $dataLabel",
+                                fontSize = 12.sp,
+                                color = GreyColor
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Faltou")
+                        if (isUrgent) {
+                            CestaTag(label = "Origem: Pedido urgente", color = ReservedOrange)
+                        } else if (origemLabel.isNotBlank()) {
+                            CestaTag(label = "Origem: $origemLabel", color = GreenSas)
+                        }
+                        if (isOverdue) {
+                            CestaTag(label = "Passou da data agendada", color = ErrorRed)
+                        }
+                        faltasLabel?.let {
+                            CestaTag(label = it, color = WarningAmber)
+                        }
+                    }
+
+                    CestaActionOption(
+                        title = "Cancelar cesta",
+                        subtitle = "Anula esta entrega e remove da agenda.",
+                        icon = Icons.Default.Close,
+                        accent = ErrorRed
+                    ) {
+                        cestaParaAcoes = null
+                        cestaParaCancelar = cesta
+                    }
+                    CestaActionOption(
+                        title = "Marcar como entregue",
+                        subtitle = "Confirma que a cesta foi entregue.",
+                        icon = Icons.Default.Check,
+                        accent = GreenSas
+                    ) {
+                        cestaParaAcoes = null
+                        viewModel.marcarEntregue(cesta)
+                    }
+                    CestaActionOption(
+                        title = "Reagendar entrega",
+                        subtitle = "Define nova data e hora de recolha.",
+                        icon = Icons.Default.Event,
+                        accent = GreenSas
+                    ) {
+                        cestaParaAcoes = null
+                        openDateTimePicker(cesta.dataAgendada ?: cesta.dataRecolha) { novaData ->
+                            viewModel.reagendarEntrega(cesta, novaData)
+                        }
+                    }
+                    CestaActionOption(
+                        title = "Marcar falta",
+                        subtitle = if (cesta.faltas >= 2) {
+                            "3ª falta: passa para 'Não levantou'."
+                        } else {
+                            "Conta como falta e permite reagendar."
+                        },
+                        icon = Icons.Default.Warning,
+                        accent = WarningAmber,
+                        enabled = isOverdue
+                    ) {
+                        cestaParaAcoes = null
+                        if (cesta.faltas >= 2) {
+                            cestaParaTerceiraFalta = cesta
+                        } else {
+                            cestaParaFaltaReagendar = cesta
+                        }
                     }
                     if (!isOverdue) {
                         Text(
-                            text = "So pode marcar falta depois de passar a data agendada.",
-                            fontSize = 12.sp,
+                            text = "Só pode marcar falta após passar a data agendada.",
+                            fontSize = 11.sp,
                             color = GreyColor
                         )
                     }
@@ -436,8 +516,10 @@ fun CestasListView(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { cestaParaAcoes = null }) { Text("Fechar") }
-            }
+                TextButton(onClick = { cestaParaAcoes = null }) { Text("Fechar", color = GreenSas) }
+            },
+            shape = RoundedCornerShape(14.dp),
+            containerColor = WhiteColor
         )
     }
 
@@ -461,38 +543,6 @@ fun CestasListView(
             },
             dismissButton = {
                 TextButton(onClick = { cestaParaCancelar = null }) { Text("Fechar") }
-            }
-        )
-    }
-
-    // Reagendar entrega (SEM contar falta)
-    if (cestaParaReagendarEntrega != null) {
-        val cesta = cestaParaReagendarEntrega!!
-        AlertDialog(
-            onDismissRequest = { cestaParaReagendarEntrega = null },
-            title = { Text("Reagendar entrega") },
-            text = {
-                Column {
-                    Text("Apoiado: ${cesta.apoiadoId}")
-                    Spacer(Modifier.height(6.dp))
-                    Text("Escolha uma nova data/hora.")
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        openDateTimePicker(cesta.dataAgendada ?: cesta.dataRecolha) { novaData ->
-                            viewModel.reagendarEntrega(cesta, novaData)
-                        }
-                        cestaParaReagendarEntrega = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                ) {
-                    Text("Selecionar data")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { cestaParaReagendarEntrega = null }) { Text("Fechar") }
             }
         )
     }
@@ -541,7 +591,7 @@ fun CestasListView(
                 Column {
                     Text("Apoiado: ${cesta.apoiadoId}")
                     Spacer(Modifier.height(8.dp))
-                    Text("Esta é a 3ª falta. A cesta passará para o estado 'Nao_Levantou'.")
+                    Text("Esta é a 3ª falta. A cesta passará para o estado 'Não levantou'.")
                     Spacer(Modifier.height(8.dp))
                     Text("Não é possível selecionar novo dia.")
                 }
@@ -565,6 +615,101 @@ fun CestasListView(
 }
 
 @Composable
+private fun CestaActionOption(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accent: Color,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    val background = if (enabled) SurfaceLight else SurfaceMuted
+    val borderColor = if (enabled) accent.copy(alpha = 0.35f) else DividerGreenLight
+    val iconColor = if (enabled) accent else GreyColor
+    val textColor = if (enabled) TextDark else GreyColor
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
+        shape = RoundedCornerShape(12.dp),
+        color = background,
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = iconColor.copy(alpha = 0.12f),
+                modifier = Modifier.size(34.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = textColor
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = GreyColor
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CestaStatusPill(label: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun CestaTag(label: String, color: Color) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = color
+        )
+    }
+}
+@Composable
 private fun CestaCard(
     cesta: CestaItem,
     dateFmt: SimpleDateFormat,
@@ -573,107 +718,177 @@ private fun CestaCard(
     onVerDetalhes: () -> Unit
 ) {
     val estadoLabel = cesta.estadoLabel()
+    val statusLabel = resolveCestaStatusLabel(cesta)
     val data = cesta.dataReferencia()
     val isOverdue = showActions && cesta.isOverdue()
+    val isUrgent = cesta.origem?.trim()?.equals("Urgente", ignoreCase = true) == true
+    val origemLabel = cesta.origem?.trim().orEmpty().ifBlank { "Sem origem" }
+    val accentColor = resolveCestaAccentColor(cesta, isOverdue)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = WhiteColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, DividerGreenLight)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(6.dp)
+                    .fillMaxHeight()
+                    .background(accentColor)
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)
             ) {
-                Text(
-                    text = "Apoiado: ${cesta.apoiadoId}",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = GreenSas
-                )
-                Text(
-                    text = estadoLabel,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    color = if (estadoLabel == "Nao levantou") ErrorRed else GreyColor
-                )
-            }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Apoiado",
+                            fontSize = 11.sp,
+                            color = GreyColor
+                        )
+                        Text(
+                            text = cesta.apoiadoId,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = GreenSas
+                        )
+                    }
+                    CestaStatusPill(label = statusLabel, color = accentColor)
+                }
 
-            if (cesta.origem?.equals("Urgente", ignoreCase = true) == true) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "Origem: Pedido Urgente",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ReservedOrange
-                )
-            }
-
-            data?.let {
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Entrega: ${dateFmt.format(it)}",
-                    fontSize = 12.sp,
-                    color = GreyColor
-                )
-            }
 
-            if (isOverdue) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "Passou da data agendada",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = ErrorRed
-                )
-            }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (isUrgent) {
+                        CestaTag(label = "Origem: Pedido urgente", color = ReservedOrange)
+                    } else if (origemLabel.isNotBlank()) {
+                        CestaTag(label = "Origem: $origemLabel", color = GreenSas)
+                    }
+                    if (isOverdue) {
+                        CestaTag(label = "Passou da data agendada", color = ErrorRed)
+                    }
+                    if (cesta.faltas > 0) {
+                        CestaTag(label = "Faltas: ${cesta.faltas}", color = WarningAmber)
+                    }
+                    cesta.tipoApoio?.trim()?.takeIf { it.isNotBlank() }?.let { tipo ->
+                        val label = if (normalizeEstadoKey(tipo) == "unica") "Única" else tipo
+                        CestaTag(label = "Tipo: $label", color = GreenSas)
+                    }
+                }
 
-            if (cesta.faltas > 0) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "Faltas: ${cesta.faltas}",
-                    fontSize = 12.sp,
-                    color = GreyColor
-                )
-            }
+                data?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Entrega: ${dateFmt.format(it)}",
+                        fontSize = 12.sp,
+                        color = GreyColor
+                    )
+                }
 
-            if (showActions) {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(
-                        onClick = onAcoes,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-                    ) {
-                        Text("Ações Disponiveis")
+                    TextButton(onClick = onVerDetalhes) {
+                        Text("Ver detalhes", color = GreyColor)
                     }
-                    Button(
-                        onClick = onVerDetalhes,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
-                    ) {
-                        Text("Ver Detalhes")
+                    if (showActions) {
+                        Spacer(Modifier.width(8.dp))
+                        CestaCardActionButton(
+                            text = "Ações",
+                            color = GreenSas,
+                            onClick = onAcoes
+                        )
                     }
-                }
-            } else {
-                Spacer(Modifier.height(14.dp))
-                Button(
-                    onClick = onVerDetalhes,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
-                ) {
-                    Text("Ver Detalhes")
                 }
             }
         }
     }
+}
+
+@Composable
+private fun CestaCardActionButton(text: String, color: Color, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = color),
+        shape = RoundedCornerShape(10.dp),
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+        modifier = Modifier.height(36.dp)
+    ) {
+        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+private fun resolveCestaAccentColor(cesta: CestaItem, isOverdue: Boolean): Color {
+    val estado = normalizeEstadoKey(cesta.estadoLabel())
+    val isUrgent = cesta.origem?.trim()?.equals("Urgente", ignoreCase = true) == true
+    return when {
+        isOverdue -> ErrorRed
+        estado == "cancelada" -> ErrorRed
+        estado == "nao levantou" -> ErrorRed
+        isUrgent -> ReservedOrange
+        else -> GreenSas
+    }
+}
+
+private fun resolveCestaStatusLabel(cesta: CestaItem, now: Date = Date()): String {
+    val estadoLabel = cesta.estadoLabel()
+    if (!cesta.isAgendada()) return estadoLabel
+    val data = cesta.dataReferencia() ?: return estadoLabel
+    val nowInstant = now.toInstant()
+    val targetInstant = data.toInstant()
+    if (!targetInstant.isAfter(nowInstant)) return estadoLabel
+
+    val zoneId = ZoneId.systemDefault()
+    val today = nowInstant.atZone(zoneId).toLocalDate()
+    val targetDate = targetInstant.atZone(zoneId).toLocalDate()
+
+    return when {
+        targetDate.isEqual(today) -> formatSameDayCountdown(nowInstant, targetInstant)
+        targetDate.isEqual(today.plusDays(1)) -> "Amanhã"
+        targetDate.isAfter(today) -> {
+            val days = ChronoUnit.DAYS.between(today, targetDate)
+            "Daqui a ${formatCount(days, "dia")}"
+        }
+        else -> estadoLabel
+    }
+}
+
+private fun formatSameDayCountdown(nowInstant: java.time.Instant, targetInstant: java.time.Instant): String {
+    val duration = Duration.between(nowInstant, targetInstant)
+    val totalMinutes = duration.toMinutes()
+    if (totalMinutes < 60) {
+        val minutes = totalMinutes.coerceAtLeast(1)
+        return "Daqui a ${formatCount(minutes, "minuto")}"
+    }
+    val hours = duration.toHours().coerceAtLeast(1)
+    return "Daqui a ${formatCount(hours, "hora")}"
+}
+
+private fun formatCount(value: Long, unit: String): String {
+    val plural = if (value == 1L) unit else "${unit}s"
+    return "$value $plural"
 }
 
 private fun CestaItem.isAgendada(): Boolean {
@@ -697,7 +912,7 @@ private fun CestaItem.estadoLabel(): String {
         n == "agendada" -> "Agendada"
         n == "por preparar" || n == "por_preparar" -> "Por preparar"
         n == "em preparar" || n == "em_preparar" -> "Em preparar"
-        n == "nao_levantou" || n == "nao levantou" -> "Nao levantou"
+        n == "nao_levantou" || n == "nao levantou" -> "Não levantou"
         n == "cancelada" -> "Cancelada"
         n.isBlank() -> "-"
         else -> estado

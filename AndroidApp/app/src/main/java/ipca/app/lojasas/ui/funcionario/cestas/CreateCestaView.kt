@@ -78,6 +78,15 @@ fun CreateCestaView(
     val context = LocalContext.current
     val dateFmt = rememberDateFormatter()
     val infoDateFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val ipcaFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = GreenSas,
+        unfocusedBorderColor = GreenSas,
+        focusedLabelColor = GreenSas,
+        unfocusedLabelColor = GreenSas,
+        focusedPlaceholderColor = GreenSas,
+        unfocusedPlaceholderColor = GreenSas,
+        cursorColor = GreenSas
+    )
 
     // Inicialização (carregar produtos, apoiados, etc.)
     LaunchedEffect(fromUrgent, pedidoId, apoiadoId) {
@@ -269,7 +278,8 @@ fun CreateCestaView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(14.dp),
-                        placeholder = { Text("") }
+                        placeholder = { Text("", color = GreenSas) },
+                        colors = ipcaFieldColors
                     )
                 }
 
