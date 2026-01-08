@@ -225,7 +225,7 @@ fun CreateProfileApoiadoView(
                 FormInput(
                     value = state.codPostal,
                     onValueChange = { viewModel.onCodPostalChange(it) },
-                    placeholder = "Codigo Postal (Ex: 1234-567)",
+                    placeholder = "Código Postal (Ex: 1234-567)",
                     imeAction = ImeAction.Done,
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
