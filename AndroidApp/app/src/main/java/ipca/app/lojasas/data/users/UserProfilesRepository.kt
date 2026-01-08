@@ -11,6 +11,37 @@ import javax.inject.Singleton
 class UserProfilesRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
+    fun isNumMecanograficoAvailable(
+        numMecanografico: String,
+        onResult: (Boolean) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = numMecanografico.trim()
+        if (normalized.isBlank()) {
+            onError(IllegalArgumentException("Missing numMecanografico"))
+            return
+        }
+
+        firestore.collection("funcionarios")
+            .document(normalized)
+            .get()
+            .addOnSuccessListener { funcionarioDoc ->
+                if (funcionarioDoc.exists()) {
+                    onResult(false)
+                    return@addOnSuccessListener
+                }
+
+                firestore.collection("apoiados")
+                    .document(normalized)
+                    .get()
+                    .addOnSuccessListener { apoiadoDoc ->
+                        onResult(!apoiadoDoc.exists())
+                    }
+                    .addOnFailureListener { onError(it) }
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
     fun createProfile(
         input: UserProfileInput,
         onSuccess: () -> Unit,

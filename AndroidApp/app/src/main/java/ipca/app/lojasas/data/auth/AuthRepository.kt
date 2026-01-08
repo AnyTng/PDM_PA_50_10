@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.functions.FirebaseFunctions
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -11,6 +12,7 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepository @Inject constructor(
     private val auth: FirebaseAuth,
+    private val functions: FirebaseFunctions,
     @ApplicationContext private val appContext: Context
 ) {
     fun signIn(
@@ -132,6 +134,24 @@ class AuthRepository @Inject constructor(
         }
 
         user.delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onError(it) }
+    }
+
+    fun deleteUserByUid(
+        uid: String,
+        onSuccess: () -> Unit,
+        onError: (Exception?) -> Unit
+    ) {
+        val normalized = uid.trim()
+        if (normalized.isBlank()) {
+            onError(IllegalArgumentException("Missing user id"))
+            return
+        }
+
+        functions
+            .getHttpsCallable("deleteAuthUser")
+            .call(mapOf("uid" to normalized))
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }
     }

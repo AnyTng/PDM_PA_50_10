@@ -7,6 +7,7 @@ import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.data.funcionario.FuncionarioProfileInput
 import ipca.app.lojasas.data.funcionario.FuncionarioRepository
+import ipca.app.lojasas.data.users.UserProfilesRepository
 import ipca.app.lojasas.utils.Validators
 import javax.inject.Inject
 
@@ -29,7 +30,8 @@ data class CreateProfileState(
 @HiltViewModel
 class CreateProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val funcionarioRepository: FuncionarioRepository
+    private val funcionarioRepository: FuncionarioRepository,
+    private val profilesRepository: UserProfilesRepository
 ) : ViewModel() {
 
     var uiState = mutableStateOf(CreateProfileState())
@@ -126,52 +128,71 @@ class CreateProfileViewModel @Inject constructor(
 
         uiState.value = normalizedState.copy(isLoading = true, error = null)
 
-        authRepository.createUserInSecondaryApp(
-            email = normalizedState.email,
-            password = normalizedState.password,
-            onSuccess = { uid ->
-                val input = FuncionarioProfileInput(
-                    uid = uid,
-                    numMecanografico = normalizedState.numMecanografico,
-                    nome = normalizedState.nome,
-                    contacto = normalizedState.contacto,
-                    documentNumber = normalizedState.documentNumber,
-                    documentType = normalizedState.documentType,
-                    morada = normalizedState.morada,
-                    codPostal = normalizedState.codPostal,
-                    email = normalizedState.email,
-                    role = normalizedState.selectedRole,
-                    mudarPass = true
-                )
+        profilesRepository.isNumMecanograficoAvailable(
+            numMecanografico = normalizedState.numMecanografico,
+            onResult = { available ->
+                if (!available) {
+                    uiState.value = normalizedState.copy(
+                        isLoading = false,
+                        error = "Já existe um utilizador com esse Nº Mecanográfico."
+                    )
+                    return@isNumMecanograficoAvailable
+                }
 
-                funcionarioRepository.createFuncionarioProfile(
-                    input = input,
-                    onSuccess = {
-                        val nomeTrim = normalizedState.nome.trim()
-                        val details = buildString {
-                            if (nomeTrim.isNotBlank()) append("Nome: ").append(nomeTrim)
-                            val emailTrim = normalizedState.email.trim()
-                            if (emailTrim.isNotBlank()) {
-                                if (isNotEmpty()) append(" | ")
-                                append("Email: ").append(emailTrim)
-                            }
-                        }.takeIf { it.isNotBlank() }
-                        AuditLogger.logAction(
-                            action = "Criou colaborador",
-                            entity = "funcionario",
-                            entityId = normalizedState.numMecanografico,
-                            details = details
+                authRepository.createUserInSecondaryApp(
+                    email = normalizedState.email,
+                    password = normalizedState.password,
+                    onSuccess = { uid ->
+                        val input = FuncionarioProfileInput(
+                            uid = uid,
+                            numMecanografico = normalizedState.numMecanografico,
+                            nome = normalizedState.nome,
+                            contacto = normalizedState.contacto,
+                            documentNumber = normalizedState.documentNumber,
+                            documentType = normalizedState.documentType,
+                            morada = normalizedState.morada,
+                            codPostal = normalizedState.codPostal,
+                            email = normalizedState.email,
+                            role = normalizedState.selectedRole,
+                            mudarPass = true
                         )
-                        uiState.value = normalizedState.copy(isLoading = false, success = true, error = null)
-                        onSuccess()
+
+                        funcionarioRepository.createFuncionarioProfile(
+                            input = input,
+                            onSuccess = {
+                                val nomeTrim = normalizedState.nome.trim()
+                                val details = buildString {
+                                    if (nomeTrim.isNotBlank()) append("Nome: ").append(nomeTrim)
+                                    val emailTrim = normalizedState.email.trim()
+                                    if (emailTrim.isNotBlank()) {
+                                        if (isNotEmpty()) append(" | ")
+                                        append("Email: ").append(emailTrim)
+                                    }
+                                }.takeIf { it.isNotBlank() }
+                                AuditLogger.logAction(
+                                    action = "Criou colaborador",
+                                    entity = "funcionario",
+                                    entityId = normalizedState.numMecanografico,
+                                    details = details
+                                )
+                                uiState.value = normalizedState.copy(isLoading = false, success = true, error = null)
+                                onSuccess()
+                            },
+                            onError = { e ->
+                                uiState.value = normalizedState.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")
+                            }
+                        )
                     },
                     onError = { e ->
-                        uiState.value = normalizedState.copy(isLoading = false, error = "Erro ao guardar dados: ${e.message}")
+                        uiState.value = normalizedState.copy(isLoading = false, error = e?.message ?: "Erro ao criar conta.")
                     }
                 )
             },
             onError = { e ->
-                uiState.value = normalizedState.copy(isLoading = false, error = e?.message ?: "Erro ao criar conta.")
+                uiState.value = normalizedState.copy(
+                    isLoading = false,
+                    error = "Erro ao validar Nº Mecanográfico: ${e.message}"
+                )
             }
         )
     }

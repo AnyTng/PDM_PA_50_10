@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import android.widget.Toast
 import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -41,6 +42,7 @@ fun ApoiadosListView(
     val context = LocalContext.current
     var showFilterMenu by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+    var itemToDelete by remember { mutableStateOf<ApoiadoItem?>(null) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -220,9 +222,55 @@ fun ApoiadosListView(
                         DetailRow("Nacionalidade", user.nacionalidade)
                         DetailRow("Data Nascimento", user.dataNascimento?.let { dateFormat.format(it) } ?: "-")
                     }
+
+                    if (state.isAdmin) {
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = { itemToDelete = user },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = RedColor)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null, tint = WhiteColor)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Apagar perfil", color = WhiteColor)
+                        }
+                    }
                 }
             }
         }
+    }
+
+    if (itemToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { itemToDelete = null },
+            title = { Text("Apagar Beneficiário") },
+            text = { Text("Tem a certeza que deseja apagar ${itemToDelete?.nome}? Esta ação é irreversível.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val item = itemToDelete
+                        if (item != null) {
+                            viewModel.deleteApoiado(
+                                item = item,
+                                onSuccess = {
+                                    Toast.makeText(context, "Beneficiário removido", Toast.LENGTH_SHORT).show()
+                                    viewModel.selectApoiado(null)
+                                },
+                                onError = { message ->
+                                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }
+                        itemToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = RedColor)
+                ) { Text("Apagar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { itemToDelete = null }) { Text("Cancelar") }
+            },
+            containerColor = WhiteColor
+        )
     }
 }
 

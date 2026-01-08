@@ -3,6 +3,8 @@ package ipca.app.lojasas.data.apoiado
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -110,6 +112,7 @@ class ApoiadoRepository @Inject constructor(
 
                 ApoiadoItem(
                     id = doc.id,
+                    uid = doc.getString("uid")?.trim().orEmpty(),
                     nome = doc.getString("nome") ?: "Sem Nome",
                     email = email,
                     rawStatus = rawStatus,
@@ -195,6 +198,31 @@ class ApoiadoRepository @Inject constructor(
             .set(apoiadoMap)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onError(it) }
+    }
+
+    fun deleteApoiadoProfile(
+        apoiadoId: String,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = apoiadoId.trim()
+        if (normalized.isBlank()) {
+            onError(IllegalArgumentException("Missing apoiadoId"))
+            return
+        }
+
+        val docRef = apoiadosCollection.document(normalized)
+        val subcollections = listOf("Submissoes", "JustificacoesNegacao", "fcmTokens")
+        deleteSubcollections(
+            docRef = docRef,
+            names = subcollections,
+            onSuccess = {
+                docRef.delete()
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { onError(it) }
+            },
+            onError = onError
+        )
     }
 
     fun fetchPendingApoiados(
@@ -556,6 +584,48 @@ class ApoiadoRepository @Inject constructor(
             .get()
             .addOnSuccessListener { snapshot ->
                 onSuccess(snapshot.documents.firstOrNull())
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
+    private fun deleteSubcollections(
+        docRef: DocumentReference,
+        names: List<String>,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        if (names.isEmpty()) {
+            onSuccess()
+            return
+        }
+
+        val current = names.first()
+        deleteCollectionDocs(
+            collection = docRef.collection(current),
+            onSuccess = {
+                deleteSubcollections(docRef, names.drop(1), onSuccess, onError)
+            },
+            onError = onError
+        )
+    }
+
+    private fun deleteCollectionDocs(
+        collection: CollectionReference,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        collection.get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) {
+                    onSuccess()
+                    return@addOnSuccessListener
+                }
+
+                val batch = firestore.batch()
+                snapshot.documents.forEach { batch.delete(it.reference) }
+                batch.commit()
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { onError(it) }
             }
             .addOnFailureListener { onError(it) }
     }

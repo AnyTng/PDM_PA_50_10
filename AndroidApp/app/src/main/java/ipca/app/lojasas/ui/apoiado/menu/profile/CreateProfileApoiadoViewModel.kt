@@ -125,16 +125,35 @@ class CreateProfileApoiadoViewModel @Inject constructor(
 
         uiState.value = normalizedState.copy(isLoading = true, error = null)
 
-        authRepository.createUser(
-            email = normalizedState.email,
-            password = normalizedState.password,
-            onSuccess = { userId ->
-                saveToFirestore(authUid = userId, onSuccess)
+        profilesRepository.isNumMecanograficoAvailable(
+            numMecanografico = normalizedState.numMecanografico,
+            onResult = { available ->
+                if (!available) {
+                    uiState.value = normalizedState.copy(
+                        isLoading = false,
+                        error = "Já existe um utilizador com esse Nº Mecanográfico."
+                    )
+                    return@isNumMecanograficoAvailable
+                }
+
+                authRepository.createUser(
+                    email = normalizedState.email,
+                    password = normalizedState.password,
+                    onSuccess = { userId ->
+                        saveToFirestore(authUid = userId, onSuccess)
+                    },
+                    onError = { e ->
+                        uiState.value = uiState.value.copy(
+                            isLoading = false,
+                            error = e?.message ?: "Erro ao criar conta."
+                        )
+                    }
+                )
             },
             onError = { e ->
-                uiState.value = uiState.value.copy(
+                uiState.value = normalizedState.copy(
                     isLoading = false,
-                    error = e?.message ?: "Erro ao criar conta."
+                    error = "Erro ao validar Nº Mecanográfico: ${e.message}"
                 )
             }
         )

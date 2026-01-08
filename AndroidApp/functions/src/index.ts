@@ -2,11 +2,51 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import { getAuth } from "firebase-admin/auth";
 
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 initializeApp();
+
+export const deleteAuthUser = onCall(
+  { region: "europe-southwest1" },
+  async (request) => {
+    const callerUid = request.auth?.uid;
+    if (!callerUid) {
+      throw new HttpsError("unauthenticated", "Utilizador nao autenticado.");
+    }
+
+    const targetUid = String(request.data?.uid ?? "").trim();
+    if (!targetUid) {
+      throw new HttpsError("invalid-argument", "UID em falta.");
+    }
+
+    const db = getFirestore();
+    const adminSnap = await db
+      .collection("funcionarios")
+      .where("uid", "==", callerUid)
+      .limit(1)
+      .get();
+
+    const role = adminSnap.docs[0]?.get("role") ?? "";
+    if (!String(role).trim().toLowerCase().startsWith("admin")) {
+      throw new HttpsError("permission-denied", "Sem permissoes.");
+    }
+
+    try {
+      await getAuth().deleteUser(targetUid);
+      return { ok: true };
+    } catch (err: any) {
+      const code = String(err?.code ?? "");
+      if (code.includes("auth/user-not-found")) {
+        return { ok: true, alreadyDeleted: true };
+      }
+      throw new HttpsError("internal", "Erro ao apagar autenticacao.");
+    }
+  }
+);
 
 export const notifyExpiringProducts7d = onSchedule(
   { schedule: "0 9 * * *", timeZone: "Europe/Lisbon" }, //como esta é tds os dias as 9 ("0 9 * * *") |para testar a cada minuto usar: "* * * * *"|
@@ -539,4 +579,3 @@ export const notifyApoiadoContaExpirada = onSchedule(
     }
   }
 );
-

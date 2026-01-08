@@ -4,6 +4,7 @@ import java.util.Date
 
 data class ApoiadoItem(
     val id: String,
+    val uid: String = "",
     val nome: String,
     val email: String,
     val rawStatus: String,

@@ -7,6 +7,7 @@ import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.apoiado.ApoiadoCreationInput
 import ipca.app.lojasas.data.apoiado.ApoiadoRepository
 import ipca.app.lojasas.data.auth.AuthRepository
+import ipca.app.lojasas.data.users.UserProfilesRepository
 import ipca.app.lojasas.utils.Validators
 import java.util.Date
 import javax.inject.Inject
@@ -46,7 +47,8 @@ data class CreateApoiadoState(
 @HiltViewModel
 class CreateApoiadoViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val apoiadoRepository: ApoiadoRepository
+    private val apoiadoRepository: ApoiadoRepository,
+    private val profilesRepository: UserProfilesRepository
 ) : ViewModel() {
 
     var uiState = mutableStateOf(CreateApoiadoState())
@@ -229,58 +231,77 @@ class CreateApoiadoViewModel @Inject constructor(
 
         uiState.value = normalizedState.copy(isLoading = true, error = null)
 
-        authRepository.createUserInSecondaryApp(
-            email = normalizedState.email,
-            password = normalizedState.password,
-            onSuccess = { uid ->
-                val input = ApoiadoCreationInput(
-                    uid = uid,
-                    numMecanografico = normalizedState.numMecanografico,
-                    nome = normalizedState.nome,
-                    email = normalizedState.email,
-                    contacto = normalizedState.contacto,
-                    documentNumber = normalizedState.documentNumber,
-                    documentType = normalizedState.documentType,
-                    nacionalidade = normalizedState.nacionalidade,
-                    dataNascimento = Date(normalizedState.dataNascimento!!),
-                    morada = normalizedState.morada,
-                    codPostal = normalizedState.codPostal,
-                    relacaoIPCA = normalizedState.relacaoIPCA,
-                    curso = normalizedState.curso,
-                    graoEnsino = normalizedState.graoEnsino,
-                    apoioEmergencia = normalizedState.apoioEmergencia,
-                    bolsaEstudos = normalizedState.bolsaEstudos,
-                    valorBolsa = normalizedState.valorBolsa,
-                    necessidades = normalizedState.necessidades
-                )
+        profilesRepository.isNumMecanograficoAvailable(
+            numMecanografico = normalizedState.numMecanografico,
+            onResult = { available ->
+                if (!available) {
+                    uiState.value = normalizedState.copy(
+                        isLoading = false,
+                        error = "Já existe um utilizador com esse Nº Mecanográfico."
+                    )
+                    return@isNumMecanograficoAvailable
+                }
 
-                apoiadoRepository.createApoiadoProfile(
-                    input = input,
-                    onSuccess = {
-                        val nome = normalizedState.nome.trim()
-                        val details = buildString {
-                            if (nome.isNotBlank()) append("Nome: ").append(nome)
-                            val email = normalizedState.email.trim()
-                            if (email.isNotBlank()) {
-                                if (isNotEmpty()) append(" | ")
-                                append("Email: ").append(email)
-                            }
-                        }.takeIf { it.isNotBlank() }
-                        AuditLogger.logAction(
-                            action = "Criou beneficiario",
-                            entity = "apoiado",
-                            entityId = normalizedState.numMecanografico,
-                            details = details
+                authRepository.createUserInSecondaryApp(
+                    email = normalizedState.email,
+                    password = normalizedState.password,
+                    onSuccess = { uid ->
+                        val input = ApoiadoCreationInput(
+                            uid = uid,
+                            numMecanografico = normalizedState.numMecanografico,
+                            nome = normalizedState.nome,
+                            email = normalizedState.email,
+                            contacto = normalizedState.contacto,
+                            documentNumber = normalizedState.documentNumber,
+                            documentType = normalizedState.documentType,
+                            nacionalidade = normalizedState.nacionalidade,
+                            dataNascimento = Date(normalizedState.dataNascimento!!),
+                            morada = normalizedState.morada,
+                            codPostal = normalizedState.codPostal,
+                            relacaoIPCA = normalizedState.relacaoIPCA,
+                            curso = normalizedState.curso,
+                            graoEnsino = normalizedState.graoEnsino,
+                            apoioEmergencia = normalizedState.apoioEmergencia,
+                            bolsaEstudos = normalizedState.bolsaEstudos,
+                            valorBolsa = normalizedState.valorBolsa,
+                            necessidades = normalizedState.necessidades
                         )
-                        uiState.value = normalizedState.copy(isLoading = false, isSuccess = true, error = null)
+
+                        apoiadoRepository.createApoiadoProfile(
+                            input = input,
+                            onSuccess = {
+                                val nome = normalizedState.nome.trim()
+                                val details = buildString {
+                                    if (nome.isNotBlank()) append("Nome: ").append(nome)
+                                    val email = normalizedState.email.trim()
+                                    if (email.isNotBlank()) {
+                                        if (isNotEmpty()) append(" | ")
+                                        append("Email: ").append(email)
+                                    }
+                                }.takeIf { it.isNotBlank() }
+                                AuditLogger.logAction(
+                                    action = "Criou beneficiario",
+                                    entity = "apoiado",
+                                    entityId = normalizedState.numMecanografico,
+                                    details = details
+                                )
+                                uiState.value = normalizedState.copy(isLoading = false, isSuccess = true, error = null)
+                            },
+                            onError = { e ->
+                                uiState.value = normalizedState.copy(isLoading = false, error = "Erro BD: ${e.message}")
+                            }
+                        )
                     },
                     onError = { e ->
-                        uiState.value = normalizedState.copy(isLoading = false, error = "Erro BD: ${e.message}")
+                        uiState.value = normalizedState.copy(isLoading = false, error = "Erro Auth: ${e?.message}")
                     }
                 )
             },
             onError = { e ->
-                uiState.value = normalizedState.copy(isLoading = false, error = "Erro Auth: ${e?.message}")
+                uiState.value = normalizedState.copy(
+                    isLoading = false,
+                    error = "Erro ao validar Nº Mecanográfico: ${e.message}"
+                )
             }
         )
     }

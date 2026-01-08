@@ -18,7 +18,9 @@ import ipca.app.lojasas.data.AuditLogger
 import ipca.app.lojasas.data.apoiado.ApoiadoItem
 import ipca.app.lojasas.data.apoiado.ApoiadoPdfDetails
 import ipca.app.lojasas.data.apoiado.ApoiadoRepository
+import ipca.app.lojasas.data.auth.AuthRepository
 import ipca.app.lojasas.data.common.ListenerHandle
+import ipca.app.lojasas.data.funcionario.FuncionarioRepository
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -37,6 +39,7 @@ data class ApoiadoListState(
     val apoiados: List<ApoiadoItem> = emptyList(),
     val filteredApoiados: List<ApoiadoItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isAdmin: Boolean = false,
     val error: String? = null,
     val currentFilter: String = "Todos",
     val searchQuery: String = "",
@@ -46,7 +49,9 @@ data class ApoiadoListState(
 
 @HiltViewModel
 class ApoiadosListViewModel @Inject constructor(
-    private val apoiadoRepository: ApoiadoRepository
+    private val apoiadoRepository: ApoiadoRepository,
+    private val authRepository: AuthRepository,
+    private val funcionarioRepository: FuncionarioRepository
 ) : ViewModel() {
 
     var uiState = mutableStateOf(ApoiadoListState())
@@ -54,7 +59,26 @@ class ApoiadosListViewModel @Inject constructor(
     private var listener: ListenerHandle? = null
 
     init {
+        loadAdminStatus()
         loadApoiados()
+    }
+
+    private fun loadAdminStatus() {
+        val uid = authRepository.currentUserId().orEmpty()
+        if (uid.isBlank()) {
+            uiState.value = uiState.value.copy(isAdmin = false)
+            return
+        }
+
+        funcionarioRepository.fetchIsAdminByUid(
+            uid = uid,
+            onSuccess = { isAdmin ->
+                uiState.value = uiState.value.copy(isAdmin = isAdmin)
+            },
+            onError = {
+                uiState.value = uiState.value.copy(isAdmin = false)
+            }
+        )
     }
 
     fun loadApoiados() {
@@ -201,6 +225,50 @@ class ApoiadosListViewModel @Inject constructor(
             },
             onError = { e ->
                 Toast.makeText(context, "Erro ao carregar apoiado: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    fun deleteApoiado(item: ApoiadoItem, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (!uiState.value.isAdmin) {
+            onError("Apenas administradores podem apagar beneficiários.")
+            return
+        }
+
+        val targetUid = item.uid.trim()
+        if (targetUid.isBlank()) {
+            onError("UID do beneficiário indisponível.")
+            return
+        }
+
+        authRepository.deleteUserByUid(
+            uid = targetUid,
+            onSuccess = {
+                apoiadoRepository.deleteApoiadoProfile(
+                    apoiadoId = item.id,
+                    onSuccess = {
+                        val details = buildString {
+                            if (item.nome.isNotBlank()) append("Nome: ").append(item.nome)
+                            if (item.email.isNotBlank()) {
+                                if (isNotEmpty()) append(" | ")
+                                append("Email: ").append(item.email)
+                            }
+                        }.takeIf { it.isNotBlank() }
+                        AuditLogger.logAction(
+                            action = "Apagou beneficiario",
+                            entity = "apoiado",
+                            entityId = item.id,
+                            details = details
+                        )
+                        onSuccess()
+                    },
+                    onError = { e ->
+                        onError(e.message ?: "Erro ao apagar beneficiário.")
+                    }
+                )
+            },
+            onError = { e ->
+                onError(e?.message ?: "Erro ao apagar autenticação.")
             }
         )
     }
