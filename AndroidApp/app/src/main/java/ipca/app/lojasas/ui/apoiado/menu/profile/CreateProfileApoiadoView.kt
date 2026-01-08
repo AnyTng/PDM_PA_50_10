@@ -143,11 +143,11 @@ fun CreateProfileApoiadoView(
             }
 
             // --- NOME ---
-            FormSection(title = "Nome") {
+            FormSection(title = "Nome Completo") {
                 FormInput(
                     value = state.nome,
                     onValueChange = { viewModel.onNomeChange(it) },
-                    placeholder = "Nome",
+                    placeholder = "Nome Completo",
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
             }

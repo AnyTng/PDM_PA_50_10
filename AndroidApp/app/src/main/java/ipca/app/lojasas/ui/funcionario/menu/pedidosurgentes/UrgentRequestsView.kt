@@ -302,17 +302,6 @@ private fun PedidoUrgenteCard(
                 }
             }
 
-            // CASO 2: APROVADO MAS FALTA CRIAR CESTA (Botão de Recuperação)
-            if (isAprovadoSemCesta) {
-                Spacer(Modifier.height(14.dp))
-                Button(
-                    onClick = onCriarCesta,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = PendingOrange)
-                ) {
-                    Text("⚠️ Finalizar: Criar Cesta", color = WhiteColor, fontWeight = FontWeight.Bold)
-                }
-            }
 
             Spacer(Modifier.height(10.dp))
             Row(
@@ -326,6 +315,19 @@ private fun PedidoUrgenteCard(
                     Text("Exportar PDF", color = GreenSas, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
+
+            // CASO 2: APROVADO MAS FALTA CRIAR CESTA (Botão de Recuperação)
+            if (isAprovadoSemCesta) {
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = onCriarCesta,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = PendingOrange)
+                ) {
+                    Text("⚠️ Finalizar: Criar Cesta", color = WhiteColor, fontWeight = FontWeight.Bold)
+                }
+            }
+
         }
     }
 }
