@@ -221,7 +221,7 @@ fun CompleteDataView(
                 },
                 modifier = Modifier.fillMaxWidth()
             )
-
+        }
         if (state.dataNascimento != null && !Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)) {
             Text(
                 text = "Deve ter pelo menos ${Validators.MIN_AGE_YEARS} anos para submeter.",
@@ -342,7 +342,6 @@ fun CompleteDataView(
                 Text(item)
             }
         }
-
         Spacer(modifier = Modifier.height(20.dp))
 
         // --- BOTÃO SUBMETER ---
@@ -363,7 +362,8 @@ fun CompleteDataView(
             if (state.isLoading) CircularProgressIndicator(color = WhiteColor)
             else Text("Guardar Dados")
         }
+
         Spacer(modifier = Modifier.height(50.dp))
-        }
+
     }
 }
