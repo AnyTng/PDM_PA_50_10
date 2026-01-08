@@ -207,25 +207,28 @@ fun CompleteDataView(
             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(state.dataNascimento)
         } else ""
 
-        OutlinedTextField(
-            value = dateText,
-            onValueChange = {},
-            label = { Text("Data de Nascimento *") },
-            readOnly = true,
-            trailingIcon = {
-                Icon(Icons.Default.DateRange, contentDescription = null, Modifier.clickable { datePickerDialog.show() })
-            },
+        Box(
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            OutlinedTextField(
+                value = dateText,
+                onValueChange = {},
+                label = { Text("Data de Nascimento *") },
+                readOnly = true,
+                trailingIcon = {
+                    // Removemos o clickable daqui, pois a Box vai tratar de tudo
+                    Icon(Icons.Default.DateRange, contentDescription = null)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        if (state.dataNascimento != null && !Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)) {
-            Text(
-                text = "Deve ter pelo menos ${Validators.MIN_AGE_YEARS} anos para submeter.",
-                color = Color.Red,
-                fontSize = 12.sp
+            // Esta Box invisível fica por cima do TextField e captura o clique em toda a área
+            Box(
+                modifier = Modifier
+                    .matchParentSize() // Ocupa o mesmo tamanho do TextField
+                    .clickable { datePickerDialog.show() } // Abre o calendário ao clicar
             )
         }
-
         Divider()
 
         // --- RELAÇÃO IPCA ---
