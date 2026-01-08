@@ -19,7 +19,7 @@ import javax.inject.Inject
 data class ValidateState(
     val pendingAccounts: List<ApoiadoSummary> = emptyList(),
     val selectedApoiadoDetails: ApoiadoDetails? = null,
-    val apoaidoDocuments: List<DocumentSummary> = emptyList(),
+    val apoiadoDocuments: List<DocumentSummary> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -72,7 +72,7 @@ class ValidateAccountsViewModel @Inject constructor(
                         val docsList = mapDocumentSummaries(files)
                         uiState.value = uiState.value.copy(
                             selectedApoiadoDetails = details,
-                            apoaidoDocuments = docsList,
+                            apoiadoDocuments = docsList,
                             isLoading = false
                         )
                     },
@@ -94,7 +94,7 @@ class ValidateAccountsViewModel @Inject constructor(
     }
 
     fun clearSelection() {
-        uiState.value = uiState.value.copy(selectedApoiadoDetails = null, apoaidoDocuments = emptyList())
+        uiState.value = uiState.value.copy(selectedApoiadoDetails = null, apoiadoDocuments = emptyList())
     }
 
     // --- AÇÕES DE VALIDAÇÃO ---
