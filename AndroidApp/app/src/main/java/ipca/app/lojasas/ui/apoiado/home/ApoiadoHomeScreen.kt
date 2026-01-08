@@ -971,7 +971,7 @@ private fun formatPedidoEstado(raw: String): String {
         normalized.isBlank() -> "—"
         // Estados do fluxo de aprovação (Pedidos Urgentes)
         normalized == "preparar_apoio" || normalized == "preparar apoio" || normalized == "em preparar apoio" ->
-            "Pedido Aprovado. O seu pedido esta a ser preparado. Quando pronto ira aparecer para levantar a cesta"
+            "Pedido Aprovado. O seu pedido esta a ser preparado. Quando pronto irá aparecer para levantar a cesta"
         normalized == "negado" -> "Pedido Negado"
         normalized == "analise" || normalized == "em analise" || normalized == "em_analise" -> "Em Análise"
         normalized == "aprovado" -> "Aprovado"
