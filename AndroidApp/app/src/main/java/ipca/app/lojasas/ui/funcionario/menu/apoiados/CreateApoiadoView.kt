@@ -251,7 +251,7 @@ fun CreateApoiadoView(
 
                     Divider(Modifier.padding(vertical = 8.dp))
                     Text("Tipos de Cabaz:", fontWeight = FontWeight.Bold)
-                    val options = listOf("Produtos Alimentares", "Produtos de higiene", "Produtos de Limpeza")
+                    val options = listOf("Produtos Alimentares", "Produtos de Higiene", "Produtos de Limpeza")
                     options.forEach { item ->
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { viewModel.toggleNecessidade(item) }) {
                             Checkbox(

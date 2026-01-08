@@ -328,7 +328,7 @@ fun CompleteDataView(
 
         // --- NECESSIDADES ---
         Text("Necessidades (Selecione pelo menos uma) *:", fontWeight = FontWeight.Bold)
-        val options = listOf("Produtos Alimentares", "Produtos de higiene", "Produtos de Limpeza")
+        val options = listOf("Produtos Alimentares", "Produtos de Higiene", "Produtos de Limpeza")
         options.forEach { item ->
             Row(
                 Modifier.fillMaxWidth().clickable { viewModel.toggleNecessidade(item) },
