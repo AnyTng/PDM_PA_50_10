@@ -164,11 +164,11 @@ fun CreateProfileApoiadoView(
             }
 
             // --- EMAIL E PASSE ---
-            FormSection(title = "Email e Passe") {
+            FormSection(title = "Email e Password") {
                 FormInput(
                     value = state.email,
                     onValueChange = { viewModel.onEmailChange(it) },
-                    placeholder = "Mail",
+                    placeholder = "Email",
                     keyboardType = KeyboardType.Email,
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
@@ -176,7 +176,7 @@ fun CreateProfileApoiadoView(
                 FormInput(
                     value = state.password,
                     onValueChange = { viewModel.onPasswordChange(it) },
-                    placeholder = "Passe",
+                    placeholder = "Password",
                     isPassword = true,
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
@@ -225,7 +225,7 @@ fun CreateProfileApoiadoView(
                 FormInput(
                     value = state.codPostal,
                     onValueChange = { viewModel.onCodPostalChange(it) },
-                    placeholder = "CodPostal",
+                    placeholder = "Codigo Postal (Ex: 1234-567)",
                     imeAction = ImeAction.Done,
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
