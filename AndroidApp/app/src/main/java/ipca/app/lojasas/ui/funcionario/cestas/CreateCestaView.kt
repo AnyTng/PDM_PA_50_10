@@ -3,6 +3,7 @@ package ipca.app.lojasas.ui.funcionario.cestas
 import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,17 +16,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,6 +38,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -49,11 +54,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
@@ -503,6 +511,121 @@ private fun ProdutosSelecionadosList(
 }
 
 @Composable
+private fun PickerDialogContainer(
+    title: String,
+    subtitle: String?,
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .widthIn(max = 560.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+            border = BorderStroke(1.dp, DividerGreenLight)
+        ) {
+            Column {
+                PickerDialogHeader(title = title, subtitle = subtitle, onDismiss = onDismiss)
+                HorizontalDivider(color = DividerGreenLight)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    content()
+                }
+                HorizontalDivider(color = DividerGreenLight)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Fechar", color = GreenSas, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PickerDialogHeader(
+    title: String,
+    subtitle: String?,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+            .background(GreenSas)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = WhiteColor
+                )
+                if (!subtitle.isNullOrBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = subtitle,
+                        fontSize = 12.sp,
+                        color = WhiteColor.copy(alpha = 0.85f)
+                    )
+                }
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = "Fechar", tint = WhiteColor)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PickerMetaPill(text: String, color: Color = GreenSas) {
+    Card(
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.3f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            color = color
+        )
+    }
+}
+
+private fun resolveApoiadoStatusColor(status: String): Color = when (status.trim()) {
+    "Aprovado" -> GreenSas
+    "Conta Expirada" -> WarningOrangeDark
+    "Bloqueado", "Negado" -> DarkRed
+    "Apoio Pausado" -> StatusOrange
+    "Analise" -> StatusBlue
+    "Por Submeter" -> GreyColor
+    else -> GreyColor
+}
+
+@Composable
 private fun ApoiadoPickerDialog(
     title: String,
     options: List<ApoiadoOption>,
@@ -516,10 +639,14 @@ private fun ApoiadoPickerDialog(
         unfocusedLabelColor = GreenSas,
         focusedPlaceholderColor = GreenSas,
         unfocusedPlaceholderColor = GreenSas,
-        cursorColor = GreenSas
+        cursorColor = GreenSas,
+        focusedContainerColor = SurfaceLight,
+        unfocusedContainerColor = SurfaceLight,
+        disabledContainerColor = SurfaceLight
     )
 
     var query by remember { mutableStateOf("") }
+    val ultimoFmt = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
     val filtered = remember(options, query) {
         val q = query.trim().lowercase(Locale.getDefault())
         if (q.isBlank()) options
@@ -540,66 +667,102 @@ private fun ApoiadoPickerDialog(
                 )
             )
     }
+    val headerSubtitle = if (query.isBlank()) {
+        "${options.size} beneficiários disponíveis"
+    } else {
+        "${filtered.size} resultados"
+    }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("Pesquisar por nome ou nº mecanográfico", color = GreenSas) },
-                    colors = ipcaFieldColors
-                )
-                Spacer(Modifier.height(10.dp))
+    PickerDialogContainer(
+        title = title,
+        subtitle = headerSubtitle,
+        onDismiss = onDismiss
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = GreenSas) },
+            placeholder = { Text("Pesquisar por nome ou nº mecanográfico", color = GreenSas) },
+            shape = RoundedCornerShape(12.dp),
+            colors = ipcaFieldColors
+        )
+        HorizontalDivider(color = DividerGreenLight)
 
-                if (filtered.isEmpty()) {
-                    Text("Sem apoiados.")
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(320.dp)
-                            .verticalScroll(rememberScrollState())
+        if (filtered.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Sem apoiados.", color = GreyColor)
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 360.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                grouped.forEach { (status, items) ->
+                    val statusColor = resolveApoiadoStatusColor(status)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        grouped.forEach { (status, items) ->
-                            Text(status, fontWeight = FontWeight.Bold, color = GreenSas)
-                            Spacer(Modifier.height(6.dp))
-                            items.forEach { opt ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onSelect(opt) }
-                                        .padding(vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(opt.nome, fontWeight = FontWeight.SemiBold)
-                                        Text(opt.id, fontSize = 12.sp, color = GreyColor)
+                        PickerSectionLabel(text = status, color = statusColor)
+                        Text(
+                            text = "${items.size}",
+                            fontSize = 12.sp,
+                            color = statusColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    items.forEach { opt ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(opt) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+                            border = BorderStroke(1.dp, statusColor.copy(alpha = 0.2f)),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .background(statusColor, CircleShape)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(opt.nome, fontWeight = FontWeight.SemiBold, color = TextDark)
                                     }
-                                    Text(
-                                        text = opt.ultimoLevantamento?.let {
-                                            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it)
-                                        } ?: "—",
-                                        fontSize = 12.sp,
-                                        color = GreyColor
-                                    )
+                                    Text(opt.id, fontSize = 12.sp, color = GreyColor)
+                                }
+                                val ultimo = opt.ultimoLevantamento?.let { ultimoFmt.format(it) } ?: "—"
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text("Ultimo levantamento", fontSize = 10.sp, color = GreyColor)
+                                    Text(ultimo, fontSize = 12.sp, color = TextDark)
                                 }
                             }
-                            Spacer(Modifier.height(10.dp))
                         }
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Fechar") }
         }
-    )
+    }
 }
 
 @Composable
@@ -618,7 +781,10 @@ private fun ProdutosPickerDialog(
         unfocusedLabelColor = GreenSas,
         focusedPlaceholderColor = GreenSas,
         unfocusedPlaceholderColor = GreenSas,
-        cursorColor = GreenSas
+        cursorColor = GreenSas,
+        focusedContainerColor = SurfaceLight,
+        unfocusedContainerColor = SurfaceLight,
+        disabledContainerColor = SurfaceLight
     )
 
     var query by remember { mutableStateOf("") }
@@ -654,59 +820,81 @@ private fun ProdutosPickerDialog(
                 )
             }
     }
+    val headerSubtitle = if (query.isBlank()) {
+        "${produtos.size} produtos disponíveis"
+    } else {
+        "${filteredProdutos.size} resultados"
+    }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Selecionar produtos") },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(380.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("Pesquisar produto (nome, código, categoria)", color = GreenSas) },
-                    colors = ipcaFieldColors
-                )
-                Spacer(Modifier.height(12.dp))
+    PickerDialogContainer(
+        title = "Selecionar produtos",
+        subtitle = headerSubtitle,
+        onDismiss = onDismiss
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = GreenSas) },
+            placeholder = { Text("Pesquisar produto (nome, código, categoria)", color = GreenSas) },
+            shape = RoundedCornerShape(12.dp),
+            colors = ipcaFieldColors
+        )
+        PickerMetaPill(text = "Selecionados: ${selecionadosIds.size}", color = GreenSas)
+        HorizontalDivider(color = DividerGreenLight)
 
-                if (filteredProdutos.isEmpty()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 380.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (filteredProdutos.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text("Sem produtos disponíveis.", color = GreyColor)
-                    return@Column
                 }
-
+            } else {
                 if (proximos.isNotEmpty()) {
-                    Text(
-                        text = "Mais próximos do fim da validade",
-                        fontWeight = FontWeight.Bold,
-                        color = ReservedOrange
-                    )
-                    Spacer(Modifier.height(8.dp))
+                    PickerSectionLabel(text = "Mais proximos do fim da validade", color = ReservedOrange)
                     proximos.forEach { p ->
                         ProdutoPickRow(p, selecionadosIds, dateFmt, onAdd)
                     }
-                    Spacer(Modifier.height(14.dp))
                 }
 
                 porCategoria.forEach { (cat, list) ->
-                    Text(cat, fontWeight = FontWeight.Bold, color = GreenSas)
-                    Spacer(Modifier.height(6.dp))
+                    PickerSectionLabel(text = cat, color = GreenSas)
                     list.forEach { p ->
                         ProdutoPickRow(p, selecionadosIds, dateFmt, onAdd)
                     }
-                    Spacer(Modifier.height(12.dp))
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Fechar") }
         }
-    )
+    }
+}
+
+@Composable
+private fun PickerSectionLabel(text: String, color: Color) {
+    Card(
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.35f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+    }
 }
 
 @Composable
@@ -717,30 +905,73 @@ private fun ProdutoPickRow(
     onAdd: (Product) -> Unit
 ) {
     val already = selecionadosIds.contains(p.id)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    val backgroundColor = if (already) SurfaceMuted else WhiteColor
+    val textColor = if (already) GreyColor else TextDark
+    val borderColor = if (already) DividerLight else DividerGreenLight
+    val validadeTxt = p.validade?.let { dateFmt.format(it) } ?: "—"
+    val validadeColor = when {
+        p.validade == null -> GreyColor
+        p.alertaValidade7d -> WarningOrange
+        else -> GreenSas
+    }
+    val categoriaLabel = listOfNotNull(
+        p.categoria?.takeIf { it.isNotBlank() },
+        p.subCategoria.takeIf { it.isNotBlank() }
+    ).joinToString(" • ")
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        border = BorderStroke(1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(p.nomeProduto.ifBlank { p.id }, fontWeight = FontWeight.SemiBold)
-            val validadeTxt = p.validade?.let { dateFmt.format(it) } ?: "—"
-            Text(
-                text = "Validade: $validadeTxt",
-                fontSize = 12.sp,
-                color = GreyColor
-            )
-        }
-        Spacer(Modifier.width(10.dp))
-        Button(
-            onClick = { onAdd(p) },
-            enabled = !already,
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(if (already) "Adicionado" else "Adicionar")
+            Column(modifier = Modifier.weight(1f)) {
+                Text(p.nomeProduto.ifBlank { p.id }, fontWeight = FontWeight.SemiBold, color = textColor)
+                if (categoriaLabel.isNotBlank()) {
+                    Text(categoriaLabel, fontSize = 12.sp, color = GreyColor)
+                    Spacer(Modifier.height(4.dp))
+                }
+                PickerMetaPill(text = "Validade: $validadeTxt", color = validadeColor)
+            }
+            Spacer(Modifier.width(10.dp))
+            Button(
+                onClick = { onAdd(p) },
+                enabled = !already,
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GreenSas,
+                    contentColor = WhiteColor,
+                    disabledContainerColor = SurfaceMuted,
+                    disabledContentColor = GreyColor
+                )
+            ) {
+                if (already) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Adicionado")
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Adicionar")
+                }
+            }
         }
     }
 }
