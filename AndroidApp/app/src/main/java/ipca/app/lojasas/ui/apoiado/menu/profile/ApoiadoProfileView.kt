@@ -92,63 +92,102 @@ fun ApoiadoProfileView(
 
                 // --- IDENTIFICAÇÃO ---
                 FormSection(title = "Identificação") {
+                    ProfileLabel("Número Mecanográfico")
                     ReadOnlyInput(value = state.numMecanografico, placeholder = "Nº Mecanográfico")
                 }
 
                 // --- DADOS PESSOAIS ---
                 FormSection(title = "Dados Pessoais") {
-                    FormInput(value = state.nome, onValueChange = { viewModel.onNomeChange(it) }, placeholder = "Nome")
-                    Spacer(modifier = Modifier.height(8.dp))
+                    ProfileLabel("Nome Completo")
+                    FormInput(
+                        value = state.nome,
+                        onValueChange = { viewModel.onNomeChange(it) },
+                        placeholder = "Nome"
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     val docLabel = if(state.documentType == "Passaporte") "Passaporte" else "NIF"
+                    ProfileLabel(docLabel)
                     ReadOnlyInput(value = state.documentNumber, placeholder = docLabel)
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileLabel("Nacionalidade")
                     ReadOnlyInput(value = state.nacionalidade, placeholder = "Nacionalidade")
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileLabel("Data de Nascimento")
                     val dataNascStr = state.dataNascimento?.let { dateFormatter.format(it) } ?: ""
                     ReadOnlyInput(value = dataNascStr, placeholder = "Data de Nascimento")
                 }
 
                 // --- CONTACTOS ---
                 FormSection(title = "Contactos") {
-                    FormInput(value = state.contacto, onValueChange = { viewModel.onContactoChange(it) }, placeholder = "Telemóvel", keyboardType = KeyboardType.Phone)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    ProfileLabel("Telemóvel")
+                    FormInput(
+                        value = state.contacto,
+                        onValueChange = { viewModel.onContactoChange(it) },
+                        placeholder = "Telemóvel",
+                        keyboardType = KeyboardType.Phone
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileLabel("Email")
                     ReadOnlyInput(value = state.email, placeholder = "Email")
                 }
 
                 // --- MORADA ---
                 FormSection(title = "Morada") {
-                    FormInput(value = state.morada, onValueChange = { viewModel.onMoradaChange(it) }, placeholder = "Rua / Localidade")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    FormInput(value = state.codPostal, onValueChange = { viewModel.onCodPostalChange(it) }, placeholder = "Código Postal")
+                    ProfileLabel("Rua / Localidade")
+                    FormInput(
+                        value = state.morada,
+                        onValueChange = { viewModel.onMoradaChange(it) },
+                        placeholder = "Rua / Localidade"
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    ProfileLabel("Código Postal")
+                    FormInput(
+                        value = state.codPostal,
+                        onValueChange = { viewModel.onCodPostalChange(it) },
+                        placeholder = "Código Postal"
+                    )
                 }
 
-                // --- DADOS SOCIAIS / ACADÉMICOS (NOVO) ---
+                // --- DADOS SOCIAIS / ACADÉMICOS ---
                 FormSection(title = "Dados Sócio-Económicos") {
+                    ProfileLabel("Relação com o IPCA")
                     ReadOnlyInput(value = state.relacaoIPCA, placeholder = "Relação com o IPCA")
 
                     if (state.relacaoIPCA == "Estudante") {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ProfileLabel("Curso")
                         ReadOnlyInput(value = state.curso, placeholder = "Curso")
-                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ProfileLabel("Grau de Ensino")
                         ReadOnlyInput(value = state.graoEnsino, placeholder = "Grau de Ensino")
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ProfileLabel("Bolsa de Estudos")
                         val bolsaTexto = if (state.bolsaEstudos) "Sim (${state.valorBolsa} €)" else "Não"
                         ReadOnlyInput(value = bolsaTexto, placeholder = "Bolsa de Estudos")
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ProfileLabel("Apoio de Emergência Social")
                     val emergenciaTexto = if (state.apoioEmergencia) "Sim" else "Não"
                     ReadOnlyInput(value = emergenciaTexto, placeholder = "Apoio de Emergência")
 
                     if (state.necessidades.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        ProfileLabel("Necessidades Identificadas")
                         ReadOnlyInput(value = state.necessidades.joinToString(", "), placeholder = "Necessidades")
                     }
-
                 }
 
 
@@ -209,4 +248,15 @@ fun ApoiadoProfileView(
             )
         }
     }
+}
+
+@Composable
+fun ProfileLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = Color.Gray,
+        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+    )
 }

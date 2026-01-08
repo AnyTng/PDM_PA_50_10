@@ -733,12 +733,12 @@ private fun CestaDetailsDialog(
                     fontFamily = IntroFontFamily
                 )
 
-                Text(
+                /*Text(
                     text = "ID: ${cesta.id}",
                     fontFamily = IntroFontFamily,
                     fontSize = 12.sp,
                     color = GreyColor
-                )
+                )*/
             }
         }
     )
