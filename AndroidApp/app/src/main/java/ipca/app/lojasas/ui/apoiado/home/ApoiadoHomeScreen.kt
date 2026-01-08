@@ -1,6 +1,7 @@
 package ipca.app.lojasas.ui.apoiado.home
 
 import ipca.app.lojasas.ui.theme.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,17 +13,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,6 +34,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,6 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
@@ -693,55 +700,37 @@ private fun CestaDetailsDialog(
     onDismiss: () -> Unit
 ) {
     val fmtFull = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val estadoLabel = cesta.estadoCesta.ifBlank { "—" }
+    val estadoColor = resolveCestaEstadoColor(estadoLabel)
+    val produtosLabel = if (cesta.numeroItens == 1) "1 produto" else "${cesta.numeroItens} produtos"
+    val recolhaLabel = cesta.dataRecolha?.let { fmtFull.format(it) } ?: "A definir"
+    val agendadaLabel = cesta.dataAgendada?.let { fmtFull.format(it) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-            ) { Text("Fechar", color = WhiteColor) }
-        },
-        title = {
-            Text(
-                text = "Detalhes da Entrega",
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "Estado: ${cesta.estadoCesta.ifBlank { "—" }}",
-                    fontFamily = IntroFontFamily
-                )
-
-                Text(
-                    text = "Data recolha: ${cesta.dataRecolha?.let { fmtFull.format(it) } ?: "A definir"}",
-                    fontFamily = IntroFontFamily
-                )
-
-                if (cesta.dataAgendada != null) {
-                    Text(
-                        text = "Data agendada: ${fmtFull.format(cesta.dataAgendada)}",
-                        fontFamily = IntroFontFamily
-                    )
-                }
-
-                Text(
-                    text = "Produtos: ${cesta.numeroItens}",
-                    fontFamily = IntroFontFamily
-                )
-
-                /*Text(
-                    text = "ID: ${cesta.id}",
-                    fontFamily = IntroFontFamily,
-                    fontSize = 12.sp,
-                    color = GreyColor
-                )*/
+    ApoiadoDialogContainer(
+        title = "Detalhes da Entrega",
+        subtitle = "Estado: $estadoLabel",
+        onDismiss = onDismiss
+    ) {
+        ApoiadoDialogSection(title = "Resumo") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ApoiadoDialogChip(text = estadoLabel, color = estadoColor)
+                ApoiadoDialogChip(text = produtosLabel, color = GreenSas)
+            }
+            if (!cesta.origem.isNullOrBlank()) {
+                ApoiadoDialogRow("Origem", cesta.origem!!.trim())
+            }
+            if (cesta.faltas > 0) {
+                ApoiadoDialogRow("Faltas", cesta.faltas.toString())
             }
         }
-    )
+
+        ApoiadoDialogSection(title = "Datas") {
+            ApoiadoDialogRow("Recolha", recolhaLabel)
+            if (agendadaLabel != null) {
+                ApoiadoDialogRow("Agendada", agendadaLabel)
+            }
+        }
+    }
 }
 
 @Composable
@@ -750,52 +739,200 @@ private fun UrgentRequestDetailsDialog(
     onDismiss: () -> Unit
 ) {
     val fmtFull = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val tipoLabel = request.tipo.ifBlank { "—" }
+    val estadoLabel = formatPedidoEstado(request.estado)
+    val estadoColor = resolvePedidoEstadoColor(request.estado)
+    val dataLabel = request.data?.let { fmtFull.format(it) } ?: "—"
 
-    AlertDialog(
+    ApoiadoDialogContainer(
+        title = "Pedido de Ajuda",
+        subtitle = tipoLabel,
+        onDismiss = onDismiss
+    ) {
+        ApoiadoDialogSection(title = "Resumo") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ApoiadoDialogChip(text = tipoLabel, color = StatusBlue)
+                ApoiadoDialogChip(text = request.estado.ifBlank { "—" }, color = estadoColor)
+            }
+            ApoiadoDialogRow("Estado", estadoLabel)
+            ApoiadoDialogRow("Data", dataLabel)
+        }
+
+        if (request.descricao.isNotBlank()) {
+            ApoiadoDialogSection(title = "Descrição") {
+                Text(
+                    text = request.descricao,
+                    fontFamily = IntroFontFamily,
+                    fontSize = 13.sp,
+                    color = TextDark
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApoiadoDialogContainer(
+    title: String,
+    subtitle: String,
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(
         onDismissRequest = onDismiss,
-        confirmButton = {
-            Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-            ) { Text("Fechar", color = WhiteColor) }
-        },
-        title = {
-            Text(
-                text = "Pedido de Ajuda",
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    text = "Tipo: ${request.tipo.ifBlank { "—" }}",
-                    fontFamily = IntroFontFamily
-                )
-                Text(
-                    text = "Estado: ${formatPedidoEstado(request.estado)}",
-                    fontFamily = IntroFontFamily
-                )
-                Text(
-                    text = "Data: ${request.data?.let { fmtFull.format(it) } ?: "—"}",
-                    fontFamily = IntroFontFamily
-                )
-
-                if (request.descricao.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Descrição:",
-                        fontFamily = IntroFontFamily,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = request.descricao,
-                        fontFamily = IntroFontFamily
-                    )
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .heightIn(max = 560.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+            border = BorderStroke(1.dp, DividerGreenLight)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                ApoiadoDialogHeader(title = title, subtitle = subtitle, onDismiss = onDismiss)
+                Column(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    content()
+                }
+                HorizontalDivider(color = DividerGreenLight)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+                    ) { Text("Fechar", color = WhiteColor) }
                 }
             }
         }
-    )
+    }
+}
+
+@Composable
+private fun ApoiadoDialogHeader(
+    title: String,
+    subtitle: String,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(GreenSas)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontFamily = IntroFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = WhiteColor
+                )
+                Text(
+                    text = subtitle,
+                    fontFamily = IntroFontFamily,
+                    fontSize = 12.sp,
+                    color = WhiteColor.copy(alpha = 0.85f)
+                )
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Default.Close, contentDescription = "Fechar", tint = WhiteColor)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApoiadoDialogSection(title: String, content: @Composable () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+        border = BorderStroke(1.dp, DividerGreenLight),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                fontFamily = IntroFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = GreenSas
+            )
+            HorizontalDivider(color = DividerGreenLight)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ApoiadoDialogRow(label: String, value: String) {
+    Column {
+        Text(label, fontSize = 12.sp, color = GreyColor, fontFamily = IntroFontFamily)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark, fontFamily = IntroFontFamily)
+    }
+}
+
+@Composable
+private fun ApoiadoDialogChip(text: String, color: Color) {
+    Card(
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.12f)),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.35f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            fontFamily = IntroFontFamily,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+    }
+}
+
+private fun resolveCestaEstadoColor(estado: String): Color {
+    val normalized = estado.trim().lowercase(Locale.getDefault())
+    return when {
+        normalized.contains("cancel") -> ErrorRed
+        normalized.contains("nao") || normalized.contains("não") -> ErrorRed
+        normalized.contains("entreg") -> GreenSas
+        normalized.contains("agend") -> StatusBlue
+        normalized.contains("prepar") -> WarningOrange
+        normalized.isBlank() || normalized == "—" -> GreyColor
+        else -> GreenSas
+    }
+}
+
+private fun resolvePedidoEstadoColor(estado: String): Color {
+    val normalized = estado.trim().lowercase(Locale.getDefault())
+    return when {
+        normalized.isBlank() -> GreyColor
+        normalized.contains("negado") || normalized.contains("rejeitado") -> ErrorRed
+        normalized.contains("analise") || normalized.contains("em analise") || normalized.contains("em_analise") -> WarningOrange
+        normalized.contains("aprovado") || normalized.contains("concluido") || normalized.contains("concluído") -> GreenSas
+        normalized.contains("preparar") -> StatusBlue
+        else -> GreenSas
+    }
 }
 
 // -----------------------------------------------------------------------------

@@ -2,10 +2,12 @@ package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
 import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -89,14 +91,15 @@ private fun CampaignCreateViewContent(
                 contentColor = WhiteColor,
                 modifier = Modifier.size(64.dp)
             ) { Icon(Icons.Default.Check, null) }
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
                 .background(WhiteColor)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Nome
@@ -143,15 +146,28 @@ fun RowScope.DateButton(label: String, date: Date?, onClick: () -> Unit) {
         SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
     else
         "Selecionar"
+    val showPlaceholderIcon = date == null
 
     OutlinedButton(
         onClick = onClick,
         modifier = Modifier.weight(1f),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, GreenSas)
     ) {
         Column(horizontalAlignment = Alignment.Start) {
             Text(label, fontSize = 12.sp, color = GreyColor)
-            Text(text, color = BlackColor)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text, color = BlackColor)
+                if (showPlaceholderIcon) {
+                    Spacer(Modifier.width(6.dp))
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = GreenSas,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
         }
     }
 }

@@ -858,7 +858,10 @@ private fun resolveCestaStatusLabel(cesta: CestaItem, now: Date = Date()): Strin
     val data = cesta.dataReferencia() ?: return estadoLabel
     val nowInstant = now.toInstant()
     val targetInstant = data.toInstant()
-    if (!targetInstant.isAfter(nowInstant)) return estadoLabel
+    if (!targetInstant.isAfter(nowInstant)) {
+        val toleranceEnd = targetInstant.plus(AGORA_TOLERANCE)
+        return if (toleranceEnd.isAfter(nowInstant)) "Agora" else estadoLabel
+    }
 
     val zoneId = ZoneId.systemDefault()
     val today = nowInstant.atZone(zoneId).toLocalDate()
@@ -902,8 +905,12 @@ private fun CestaItem.dataReferencia(): Date? {
 
 private fun CestaItem.isOverdue(reference: Date = Date()): Boolean {
     val data = dataReferencia()
-    return data != null && reference.after(data)
+    if (data == null) return false
+    val toleranceEnd = data.toInstant().plus(AGORA_TOLERANCE)
+    return reference.toInstant().isAfter(toleranceEnd)
 }
+
+private val AGORA_TOLERANCE = Duration.ofHours(1)
 
 private fun CestaItem.estadoLabel(): String {
     val n = normalizeEstadoKey(estado)

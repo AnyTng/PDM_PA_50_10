@@ -138,7 +138,8 @@ class UrgentRequestsViewModel @Inject constructor(
             }
         }
 
-        uiState.value = state.copy(filteredPedidos = result)
+        val (approvedWithoutCesta, rest) = result.partition { isAprovadoSemCesta(it) }
+        uiState.value = state.copy(filteredPedidos = approvedWithoutCesta + rest)
     }
 
     fun exportToPDF(context: Context) {
@@ -218,6 +219,12 @@ private fun resolveEstadoLabel(estado: String, cestaId: String?): String {
         !cestaId.isNullOrBlank() -> "Concluido (Cesta Criada)"
         else -> estado.ifBlank { "-" }
     }
+}
+
+private fun isAprovadoSemCesta(pedido: PedidoUrgenteItem): Boolean {
+    val estadoNorm = pedido.estado.trim().lowercase(Locale.getDefault())
+    return (estadoNorm == "preparar_apoio" || estadoNorm == "preparar apoio") &&
+        pedido.cestaId.isNullOrBlank()
 }
 
 private fun formatDate(date: Date?, formatter: SimpleDateFormat): String {
