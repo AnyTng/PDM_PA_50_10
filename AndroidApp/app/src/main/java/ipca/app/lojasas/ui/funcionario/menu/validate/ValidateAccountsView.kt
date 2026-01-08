@@ -70,7 +70,7 @@ fun ValidateAccountsView(
             if (state.selectedApoiadoDetails != null) {
                 ApoiadoDetailDialog(
                     details = state.selectedApoiadoDetails!!,
-                    documents = state.apoaidoDocuments,
+                    documents = state.apoiadoDocuments,
                     isLoading = state.isLoading,
                     onDismiss = { viewModel.clearSelection() },
                     onApprove = { viewModel.approveAccount(state.selectedApoiadoDetails!!.id) { Toast.makeText(context, "Conta Aprovada!", Toast.LENGTH_SHORT).show() } },
@@ -97,11 +97,11 @@ fun ValidateAccountCard(account: ApoiadoSummary, onActionClick: () -> Unit) {
             }
             Column(Modifier.fillMaxWidth().background(WhiteColor).padding(16.dp)) {
                 Text("Info: Pedido de Validação", color = BlackColor, fontSize = 14.sp)
-                Text("When: Pendente", color = GreyColor, fontSize = 14.sp)
+                Text("Estado: Pendente", color = GreyColor, fontSize = 14.sp)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Button(onClick = onActionClick, colors = ButtonDefaults.buttonColors(containerColor = GreenSas), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(24.dp, 8.dp), modifier = Modifier.height(36.dp)) {
-                        Text("Validar", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("Veredito", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
