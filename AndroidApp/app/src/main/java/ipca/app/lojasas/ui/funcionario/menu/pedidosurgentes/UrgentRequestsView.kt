@@ -76,22 +76,22 @@ fun UrgentRequestsView(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
+                        .background(WhiteColor)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+                    Icon(Icons.Default.Search, contentDescription = null, tint = GreyColor)
                     Spacer(modifier = Modifier.width(8.dp))
 
                     BasicTextField(
                         value = state.searchQuery,
                         onValueChange = { viewModel.onSearchQueryChange(it) },
                         modifier = Modifier.weight(1f),
-                        textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                        textStyle = TextStyle(fontSize = 16.sp, color = BlackColor),
                         singleLine = true,
                         decorationBox = { innerTextField ->
                             if (state.searchQuery.isEmpty()) {
-                                Text("Numero mecanografico...", color = Color.Gray)
+                                Text("Numero mecanografico...", color = GreyColor)
                             }
                             innerTextField()
                         }
@@ -101,12 +101,12 @@ fun UrgentRequestsView(
 
                     Box {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Ano: ${state.selectedYear}", fontSize = 12.sp, color = Color.Gray)
+                            Text("Ano: ${state.selectedYear}", fontSize = 12.sp, color = GreyColor)
                             IconButton(onClick = { showYearMenu = true }) {
                                 Icon(
                                     Icons.Default.DateRange,
                                     contentDescription = "Filtrar por ano",
-                                    tint = if (state.selectedYear != "Todos") GreenSas else Color.Black
+                                    tint = if (state.selectedYear != "Todos") GreenSas else BlackColor
                                 )
                             }
                         }
@@ -130,7 +130,7 @@ fun UrgentRequestsView(
                         Icon(
                             Icons.Default.PictureAsPdf,
                             contentDescription = "Exportar PDF",
-                            tint = Color.Black
+                            tint = BlackColor
                         )
                     }
                 }
@@ -138,7 +138,7 @@ fun UrgentRequestsView(
                 state.error?.let {
                     Text(
                         it,
-                        color = Color.Red,
+                        color = RedColor,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
@@ -156,7 +156,7 @@ fun UrgentRequestsView(
                             .padding(top = 40.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(emptyText, color = Color.Gray)
+                        Text(emptyText, color = GreyColor)
                     }
                 } else {
                     LazyColumn(
@@ -235,7 +235,7 @@ private fun PedidoUrgenteCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -257,7 +257,7 @@ private fun PedidoUrgenteCard(
                     color = when {
                         estadoNorm == "negado" -> ErrorRed
                         !pedido.cestaId.isNullOrBlank() -> GreenSas // Verde se já tiver cesta
-                        else -> Color.Gray
+                        else -> GreyColor
                     }
                 )
             }
@@ -267,7 +267,7 @@ private fun PedidoUrgenteCard(
                 Text(
                     text = "Submetido: ${dateFmt.format(it)}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
 
@@ -275,7 +275,7 @@ private fun PedidoUrgenteCard(
             Text(
                 text = pedido.descricao.ifBlank { "(Sem descrição)" },
                 fontSize = 14.sp,
-                color = Color.Black
+                color = BlackColor
             )
 
             // CASO 1: EM ANÁLISE (Botões de Decisão)
@@ -310,7 +310,7 @@ private fun PedidoUrgenteCard(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = PendingOrange)
                 ) {
-                    Text("⚠️ Finalizar: Criar Cesta", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("⚠️ Finalizar: Criar Cesta", color = WhiteColor, fontWeight = FontWeight.Bold)
                 }
             }
 

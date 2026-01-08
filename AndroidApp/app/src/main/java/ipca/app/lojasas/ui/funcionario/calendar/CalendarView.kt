@@ -119,7 +119,7 @@ fun CalendarView(
 
             if (selectedDayEvents.isEmpty()) {
                 Box(modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    Text("Sem eventos para este dia.", color = Color.Gray)
+                    Text("Sem eventos para este dia.", color = GreyColor)
                 }
             } else {
                 LazyColumn(
@@ -171,7 +171,7 @@ fun CalendarGrid(
     Column {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
             listOf("D", "S", "T", "Q", "Q", "S", "S").forEach {
-                Text(it, fontWeight = FontWeight.Bold, color = Color.Gray)
+                Text(it, fontWeight = FontWeight.Bold, color = GreyColor)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -206,13 +206,13 @@ fun DayCell(day: Int, isSelected: Boolean, events: List<CalendarEvent>, onClick:
         modifier = Modifier
             .size(45.dp)
             .padding(2.dp)
-            .background(if (isSelected) GreenSas else Color.Transparent, CircleShape)
+            .background(if (isSelected) GreenSas else TransparentColor, CircleShape)
             .clickable(onClick = onClick)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = day.toString(),
-                color = if (isSelected) Color.White else Color.Black,
+                color = if (isSelected) WhiteColor else BlackColor,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
             )
             if (events.isNotEmpty()) {
@@ -264,7 +264,7 @@ fun MandatoryPasswordChangeDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("É obrigatório alterar a sua palavra-passe.")
-                if (errorMessage != null) Text(errorMessage, color = Color.Red, fontSize = 12.sp)
+                if (errorMessage != null) Text(errorMessage, color = RedColor, fontSize = 12.sp)
                 OutlinedTextField(value = oldPass, onValueChange = { oldPass = it }, label = { Text("Senha Atual") }, visualTransformation = PasswordVisualTransformation())
                 OutlinedTextField(value = newPass, onValueChange = { newPass = it }, label = { Text("Nova Senha") }, visualTransformation = PasswordVisualTransformation())
                 OutlinedTextField(value = confirmPass, onValueChange = { confirmPass = it }, label = { Text("Repetir Senha") }, visualTransformation = PasswordVisualTransformation())
@@ -281,7 +281,7 @@ fun MandatoryPasswordChangeDialog(
 @Composable
 fun EventItemCard(event: CalendarEvent) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(2.dp),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
@@ -295,7 +295,7 @@ fun EventItemCard(event: CalendarEvent) {
             Column {
                 Text(event.title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 if (event.description.isNotEmpty()) {
-                    Text(event.description, fontSize = 12.sp, color = Color.Gray)
+                    Text(event.description, fontSize = 12.sp, color = GreyColor)
                 }
             }
         }

@@ -304,7 +304,7 @@ private fun <T> ProductDetailsViewContent(
                 error != null -> {
                     Text(
                         text = error.ifBlank { "Erro" },
-                        color = Color.Red,
+                        color = RedColor,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
@@ -380,7 +380,7 @@ private fun ProductDetailsViewPreview_Normal() {
         groupRow = { g ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
@@ -496,7 +496,7 @@ private fun DropdownMenuSectionHeader(
     onToggle: () -> Unit
 ) {
     DropdownMenuItem(
-        text = { Text(title, color = Color.Gray) },
+        text = { Text(title, color = GreyColor) },
         onClick = onToggle,
         trailingIcon = {
             Icon(
@@ -506,7 +506,7 @@ private fun DropdownMenuSectionHeader(
                     androidx.compose.material.icons.Icons.Default.KeyboardArrowDown
                 },
                 contentDescription = null,
-                tint = Color.Gray
+                tint = GreyColor
             )
         }
     )

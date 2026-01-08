@@ -1,6 +1,8 @@
 package ipca.app.lojasas.ui.theme
 
+import android.graphics.Color as AndroidColor
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.toColorInt
 
 /**
  * Fonte única para todas as cores **custom** do projeto.
@@ -14,6 +16,19 @@ import androidx.compose.ui.graphics.Color
 const val HEX_GREEN_SAS = "#094E33"
 const val HEX_CHART_ORANGE = "#D88C28"
 const val HEX_CHART_TEAL = "#0F4C5C"
+
+// -----------------------------------------------------------------------------
+// Android (Int) colors (Canvas/PDF/system bars)
+// -----------------------------------------------------------------------------
+const val AndroidBlack = AndroidColor.BLACK
+const val AndroidWhite = AndroidColor.WHITE
+const val AndroidGrey = AndroidColor.GRAY
+const val AndroidDarkGrey = AndroidColor.DKGRAY
+const val AndroidMagenta = AndroidColor.MAGENTA
+const val AndroidTransparent = AndroidColor.TRANSPARENT
+val AndroidGreenSas = HEX_GREEN_SAS.toColorInt()
+val AndroidChartOrange = HEX_CHART_ORANGE.toColorInt()
+val AndroidChartTeal = HEX_CHART_TEAL.toColorInt()
 
 // -----------------------------------------------------------------------------
 // Material 3 (template) - mantidos para o Theme.kt
@@ -32,6 +47,17 @@ val Pink40 = Color(0xFF7D5260)
 val GreenSas = Color(0xFF094E33)
 val WhiteColor = Color(0xFFFFFFFF)
 val BlackColor = Color(0xFF000000)
+
+// -----------------------------------------------------------------------------
+// Base / system (Compose defaults)
+// -----------------------------------------------------------------------------
+val TransparentColor = Color(0x00000000)
+val GreyColor = Color(0xFF888888)
+val LightGreyColor = Color(0xFFCCCCCC)
+val DarkGreyColor = Color(0xFF444444)
+val RedColor = Color(0xFFFF0000)
+val MagentaColor = Color(0xFFFF00FF)
+val UnspecifiedColor = Color.Unspecified
 
 // -----------------------------------------------------------------------------
 // Inputs

@@ -20,7 +20,9 @@ import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.data.UserRole
 import ipca.app.lojasas.core.navigation.AppNavGraph
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.ui.theme.AndroidTransparent
 import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
+import ipca.app.lojasas.ui.theme.TransparentColor
 import ipca.app.lojasas.data.UserRoleRepository
 import ipca.app.lojasas.data.destination
 import ipca.app.lojasas.data.auth.AuthRepository
@@ -47,10 +49,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            statusBarStyle = SystemBarStyle.dark(AndroidTransparent),
             navigationBarStyle = SystemBarStyle.light(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT
+                AndroidTransparent,
+                AndroidTransparent
             )
         )
         setContent {
@@ -188,7 +190,7 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = Color.Transparent,
+                    containerColor = TransparentColor,
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     topBar = {
                         headerConfig?.let {

@@ -207,7 +207,7 @@ private fun <T> CampaignsViewContent(
         FloatingActionButton(
             onClick = onCreate,
             containerColor = GreenSas,
-            contentColor = Color.White,
+            contentColor = WhiteColor,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
@@ -257,7 +257,7 @@ private fun CampaignCardContent(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -270,7 +270,7 @@ private fun CampaignCardContent(
                         Icon(
                             Icons.Default.Delete,
                             contentDescription = "Apagar",
-                            tint = Color.Red,
+                            tint = RedColor,
                             modifier = Modifier
                                 .padding(end = 16.dp)
                                 .clickable { onDelete() }
@@ -281,7 +281,7 @@ private fun CampaignCardContent(
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Editar",
-                            tint = Color.Gray,
+                            tint = GreyColor,
                             modifier = Modifier.clickable { onAction() }
                         )
                     }
@@ -291,12 +291,12 @@ private fun CampaignCardContent(
             Text(
                 "${dateFormat.format(dataInicio)} até ${dateFormat.format(dataFim)}",
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = GreyColor
             )
 
             if (desc.isNotEmpty()) {
                 Spacer(Modifier.height(4.dp))
-                Text(desc, fontSize = 14.sp, maxLines = 2, color = Color.Black)
+                Text(desc, fontSize = 14.sp, maxLines = 2, color = BlackColor)
             }
 
             if (showResults) {
@@ -377,8 +377,8 @@ fun EditCampaignDialog(
                         enabled = !hasStarted
                     ) {
                         Column {
-                            val color = if (hasStarted) Color.LightGray else Color.Black
-                            val labelColor = if (hasStarted) Color.LightGray else Color.Gray
+                            val color = if (hasStarted) LightGreyColor else BlackColor
+                            val labelColor = if (hasStarted) LightGreyColor else GreyColor
 
                             Text("Início", fontSize = 10.sp, color = labelColor)
                             Text(dateFormat.format(dataInicio), color = color, fontSize = 14.sp)
@@ -391,18 +391,18 @@ fun EditCampaignDialog(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Column {
-                            Text("Fim", fontSize = 10.sp, color = Color.Gray)
-                            Text(dateFormat.format(dataFim), color = Color.Black, fontSize = 14.sp)
+                            Text("Fim", fontSize = 10.sp, color = GreyColor)
+                            Text(dateFormat.format(dataFim), color = BlackColor, fontSize = 14.sp)
                         }
                     }
                 }
 
                 if (hasStarted) {
-                    Text("⚠️ Campanha ativa. Início bloqueado.", color = Color.Gray, fontSize = 11.sp)
+                    Text("⚠️ Campanha ativa. Início bloqueado.", color = GreyColor, fontSize = 11.sp)
                 }
 
                 if (dataInicio.after(dataFim)) {
-                    Text("⚠️ A data de início deve ser anterior ao fim.", color = Color.Red, fontSize = 12.sp)
+                    Text("⚠️ A data de início deve ser anterior ao fim.", color = RedColor, fontSize = 12.sp)
                 }
 
                 OutlinedTextField(
@@ -437,9 +437,9 @@ fun EditCampaignDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar", color = Color.Gray) }
+            TextButton(onClick = onDismiss) { Text("Cancelar", color = GreyColor) }
         },
-        containerColor = Color.White,
+        containerColor = WhiteColor,
         shape = RoundedCornerShape(12.dp)
     )
 }
@@ -450,14 +450,14 @@ fun SectionTitle(text: String) {
         text,
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
-        color = Color.Black,
+        color = BlackColor,
         modifier = Modifier.padding(bottom = 8.dp)
     )
 }
 
 @Composable
 fun EmptyText() {
-    Text("Nenhuma campanha encontrada.", color = Color.Gray, fontSize = 14.sp)
+    Text("Nenhuma campanha encontrada.", color = GreyColor, fontSize = 14.sp)
 }
 
 // ---------------- PREVIEWS ----------------

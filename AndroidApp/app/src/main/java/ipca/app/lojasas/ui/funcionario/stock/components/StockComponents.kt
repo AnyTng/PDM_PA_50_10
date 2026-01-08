@@ -66,7 +66,7 @@ fun StockSearchBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(WhiteColor)
     ) {
         Row(
             modifier = Modifier
@@ -99,8 +99,8 @@ fun StockSearchBar(
                     unfocusedLeadingIconColor = GreenSas,
                     focusedTextColor = GreenSas,
                     unfocusedTextColor = GreenSas,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    focusedContainerColor = TransparentColor,
+                    unfocusedContainerColor = TransparentColor
                 )
             )
             if (showFilter) {
@@ -145,7 +145,7 @@ fun StockGroupCard(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         border = BorderStroke(2.dp, GreenSas)
     ) {
         Row(
@@ -167,7 +167,7 @@ fun StockGroupCard(
 
             Surface(
                 color = GreenSas,
-                contentColor = Color.White,
+                contentColor = WhiteColor,
                 shape = RoundedCornerShape(50)
             ) {
                 Row(
@@ -182,7 +182,7 @@ fun StockGroupCard(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Abrir",
-                        tint = Color.White,
+                        tint = WhiteColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -216,14 +216,14 @@ fun StockExpiredSummaryCard(
                     fontWeight = FontWeight.Bold,
                     fontFamily = IntroFontFamily
                 ),
-                color = Color.White,
+                color = WhiteColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
 
             Surface(
-                color = Color.White,
+                color = WhiteColor,
                 contentColor = ExpiredRed,
                 shape = RoundedCornerShape(50)
             ) {
@@ -276,7 +276,7 @@ fun StockProductGroupCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         border = BorderStroke(2.dp, statusColor)
     ) {
         // Cabeçalho por estado
@@ -293,7 +293,7 @@ fun StockProductGroupCard(
             ) {
                 Text(
                     text = product.nomeProduto,
-                    color = Color.White,
+                    color = WhiteColor,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontFamily = IntroFontFamily
@@ -304,7 +304,7 @@ fun StockProductGroupCard(
                 )
 
                 Surface(
-                    color = Color.White,
+                    color = WhiteColor,
                     contentColor = statusColor,
                     shape = RoundedCornerShape(50)
                 ) {
@@ -366,7 +366,7 @@ fun StockProductGroupCard(
                         Text(
                             text = product.codBarras!!,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Black
+                            color = BlackColor
                         )
                     }
                 } else {
@@ -376,10 +376,10 @@ fun StockProductGroupCard(
                 Button(
                     onClick = onViewClick,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
+                        containerColor = TransparentColor,
                         contentColor = GreenSas
                     ),
-                    border = BorderStroke(1.dp, Color.Transparent),
+                    border = BorderStroke(1.dp, TransparentColor),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 0.dp,
                         pressedElevation = 0.dp,
@@ -408,12 +408,12 @@ fun StockLabelValue(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-            color = Color.Black
+            color = BlackColor
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Black
+            color = BlackColor
         )
     }
 }
@@ -427,7 +427,7 @@ fun generateBarcodeBitmap(content: String, width: Int, height: Int): Bitmap? {
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         for (x in 0 until w) {
             for (y in 0 until h) {
-                bitmap.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                bitmap.setPixel(x, y, if (bitMatrix[x, y]) AndroidBlack else AndroidWhite)
             }
         }
         bitmap
@@ -442,7 +442,7 @@ fun StockFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     FloatingActionButton(
         onClick = onClick,
         containerColor = GreenSas,
-        contentColor = Color.White,
+        contentColor = WhiteColor,
         modifier = modifier.size(64.dp)
     ) {
         Icon(imageVector = Icons.Default.Add, contentDescription = "Adicionar")
@@ -463,12 +463,12 @@ fun ConfirmDeleteDialog(
                 enabled = !isLoading,
                 colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
             ) {
-                if (isLoading) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp).size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp).size(16.dp), color = WhiteColor, strokeWidth = 2.dp)
                 Text("Apagar")
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss, enabled = !isLoading, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = GreenSas)) {
+            Button(onClick = onDismiss, enabled = !isLoading, colors = ButtonDefaults.buttonColors(containerColor = WhiteColor, contentColor = GreenSas)) {
                 Text("Cancelar")
             }
         }

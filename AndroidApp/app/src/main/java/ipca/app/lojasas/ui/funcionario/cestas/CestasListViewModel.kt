@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
@@ -256,11 +255,11 @@ class CestasListViewModel @Inject constructor(
         val blockSpacing = 8f
         val lineHeight = 12f
         val maxWidth = pageWidth - margin * 2
-        val ipcaGreen = Color.parseColor(HEX_GREEN_SAS)
+        val ipcaGreen = AndroidGreenSas
         val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
         val titlePaint = Paint().apply {
-            color = Color.BLACK
+            color = AndroidBlack
             textSize = 16f
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
@@ -270,11 +269,11 @@ class CestasListViewModel @Inject constructor(
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
         val textPaint = Paint().apply {
-            color = Color.BLACK
+            color = AndroidBlack
             textSize = 11f
         }
         val mutedPaint = Paint().apply {
-            color = Color.DKGRAY
+            color = AndroidDarkGrey
             textSize = 10f
         }
 
@@ -519,7 +518,7 @@ private fun createPdfBranding(
     val headerPaint = Paint().apply { color = ipcaGreen }
     val footerPaint = Paint().apply { color = ipcaGreen }
     val footerTextPaint = Paint().apply {
-        color = Color.WHITE
+        color = AndroidWhite
         textSize = 9f
     }
 

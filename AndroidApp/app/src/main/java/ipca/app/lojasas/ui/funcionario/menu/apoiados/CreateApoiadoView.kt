@@ -99,7 +99,7 @@ fun CreateApoiadoView(
                     Text("Entendido")
                 }
             },
-            containerColor = Color.White
+            containerColor = WhiteColor
         )
     }
 
@@ -183,10 +183,10 @@ fun CreateApoiadoView(
                             modifier = Modifier.fillMaxWidth(),
                             enabled = false,
                             colors = OutlinedTextFieldDefaults.colors(
-                                disabledTextColor = Color.Black,
-                                disabledBorderColor = Color.Gray,
-                                disabledLabelColor = Color.Black,
-                                disabledTrailingIconColor = Color.Gray
+                                disabledTextColor = BlackColor,
+                                disabledBorderColor = GreyColor,
+                                disabledLabelColor = BlackColor,
+                                disabledTrailingIconColor = GreyColor
                             )
                         )
                         Box(
@@ -247,7 +247,7 @@ fun CreateApoiadoView(
                         Checkbox(checked = state.apoioEmergencia, onCheckedChange = { viewModel.onApoioEmergenciaChange(it) }, colors = CheckboxDefaults.colors(checkedColor = GreenSas))
                         Text("Apoio de Emergência Social?", fontWeight = FontWeight.Bold)
                     }
-                    //Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = Color.Gray)
+                    //Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = GreyColor)
 
                     Divider(Modifier.padding(vertical = 8.dp))
                     Text("Tipos de Cabaz:", fontWeight = FontWeight.Bold)
@@ -289,7 +289,7 @@ fun CreateApoiadoView(
                     shape = RoundedCornerShape(8.dp),
                     enabled = !state.isLoading
                 ) {
-                    if (state.isLoading) CircularProgressIndicator(color = Color.White)
+                    if (state.isLoading) CircularProgressIndicator(color = WhiteColor)
                     else Text("Criar Conta Aprovada", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
@@ -304,7 +304,7 @@ fun CreateApoiadoView(
 @Composable
 fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth()

@@ -61,7 +61,7 @@ fun SubmittedDocumentsView(
             } else if (state.groupedDocuments.isEmpty()) {
                 Text(
                     text = "Ainda não submeteu documentos.",
-                    color = Color.Gray,
+                    color = GreyColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
@@ -109,7 +109,7 @@ fun SubmittedDocumentsView(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = Color.Red,
+                    color = RedColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -126,7 +126,7 @@ fun SubmittedFileCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -152,24 +152,24 @@ fun SubmittedFileCard(
                     text = file.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = BlackColor
                 )
                 Text(
                     text = file.fileName,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
                 Text(
                     text = dateFormat.format(file.date),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
 
             Icon(
                 imageVector = Icons.Default.Visibility,
                 contentDescription = "Ver",
-                tint = Color.Gray
+                tint = GreyColor
             )
         }
     }

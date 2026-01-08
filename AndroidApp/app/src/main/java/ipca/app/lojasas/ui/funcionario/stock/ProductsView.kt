@@ -176,7 +176,7 @@ private fun <T> ProductsViewContent(
                 error != null -> {
                     Text(
                         text = error.ifBlank { "Erro" },
-                        color = Color.Red,
+                        color = RedColor,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
@@ -239,7 +239,7 @@ private fun ProductsViewPreview_Normal() {
         groupRow = { name ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Box(

@@ -1,6 +1,7 @@
 package ipca.app.lojasas.ui.components
 
 import ipca.app.lojasas.ui.theme.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,11 +19,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.navigation.NavController
 import ipca.app.lojasas.R
 import ipca.app.lojasas.core.navigation.Screen
@@ -32,6 +44,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 enum class FooterType { FUNCIONARIO, APOIADO }
 
+
+
+//Durante o desenvolvimento da app, desenvolvemos 2 designs de footers
+//Preferimos o design mais parecido com o footer nativo de Android, mas mantivemos o anterior
+//Para chamar o footer anterior, basta colocar useNative = False
 private sealed class FooterIconSpec {
     data class Drawable(val resId: Int) : FooterIconSpec()
     object HeartHome : FooterIconSpec()
@@ -56,6 +73,7 @@ fun Footer(
     fun isActiveRoute(vararg screens: Screen): Boolean {
         return currentRoute != null && screens.any { it.route == currentRoute }
     }
+
 
     val items = when (type) {
         FooterType.FUNCIONARIO -> {
@@ -201,7 +219,7 @@ private fun NativeFooter(items: List<FooterItem>) {
     val unselectedColor = GreenSas.copy(alpha = 0.55f)
     val indicatorColor = GreenSas.copy(alpha = 0.18f)
 
-    NavigationBar(containerColor = Color.White) {
+    NavigationBar(containerColor = WhiteColor) {
         items.forEach { item ->
             NavigationBarItem(
                 selected = item.selected,
@@ -279,26 +297,18 @@ private fun HeartHomeIcon(
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val heartScale = 18f / 42f
     Box(
         modifier = modifier
             .then(if (enabled) Modifier.clickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Filled.Home,
+        MaskedHeartHomeIcon(
             contentDescription = contentDescription,
-            tint = Color.White,
-            modifier = Modifier
-                .size(42.dp)
-                .alpha(if (enabled) 1f else 0.5f)
-        )
-        Icon(
-            imageVector = Icons.Filled.Favorite,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier
-                .size(18.dp)
-                .alpha(if (enabled) 1f else 0.5f)
+            tint = WhiteColor,
+            iconSize = 42.dp,
+            heartScale = heartScale,
+            alpha = if (enabled) 1f else 0.5f
         )
     }
 }
@@ -309,24 +319,57 @@ private fun HeartHomeNavIcon(
     modifier: Modifier = Modifier
 ) {
     val iconSize = 30.dp
-    val heartSize = iconSize * 0.43f
+    MaskedHeartHomeIcon(
+        contentDescription = contentDescription,
+        tint = LocalContentColor.current,
+        iconSize = iconSize,
+        heartScale = 0.43f,
+        modifier = modifier
+    )
+}
 
-    Box(
-        modifier = modifier.size(iconSize),
-        contentAlignment = Alignment.Center
+@Composable
+private fun MaskedHeartHomeIcon(
+    contentDescription: String,
+    tint: Color,
+    iconSize: Dp,
+    heartScale: Float,
+    alpha: Float = 1f,
+    modifier: Modifier = Modifier
+) {
+    val homePainter = rememberVectorPainter(image = Icons.Filled.Home)
+    val heartPainter = rememberVectorPainter(image = Icons.Filled.Favorite)
+
+    Canvas(
+        modifier = modifier
+            .size(iconSize)
+            .alpha(alpha)
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .semantics { this.contentDescription = contentDescription }
     ) {
-        Icon(
-            imageVector = Icons.Filled.Home,
-            contentDescription = contentDescription,
-            tint = LocalContentColor.current,
-            modifier = Modifier.size(iconSize)
+        with(homePainter) {
+            draw(
+                size = size,
+                colorFilter = ColorFilter.tint(tint)
+            )
+        }
+
+        val heartSize = Size(size.width * heartScale, size.height * heartScale)
+        val heartOffset = Offset(
+            (size.width - heartSize.width) / 2f,
+            (size.height - heartSize.height) / 2f
         )
-        Icon(
-            imageVector = Icons.Filled.Favorite,
-            contentDescription = null,
-            tint = LocalContentColor.current,
-            modifier = Modifier.size(heartSize)
-        )
+
+        withTransform({
+            translate(heartOffset.x, heartOffset.y)
+        }) {
+            with(heartPainter) {
+                draw(
+                    size = heartSize,
+                    colorFilter = ColorFilter.tint(BlackColor, BlendMode.Clear)
+                )
+            }
+        }
     }
 }
 
@@ -340,7 +383,8 @@ fun FooterFuncionarioPreview() {
     val navController = rememberNavController()
     Footer(
         navController = navController,
-        type = FooterType.FUNCIONARIO
+        type = FooterType.FUNCIONARIO,
+        useNative = true
     )
 }
 
@@ -350,6 +394,7 @@ fun FooterApoiadoPreview() {
     val navController = rememberNavController()
     Footer(
         navController = navController,
-        type = FooterType.APOIADO
+        type = FooterType.APOIADO,
+        useNative = true
     )
 }

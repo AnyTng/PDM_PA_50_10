@@ -83,14 +83,14 @@ fun HistoryView(
                 state.error != null -> {
                     Text(
                         text = state.error ?: "Erro ao carregar histórico.",
-                        color = Color.Red,
+                        color = RedColor,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
                 state.entries.isEmpty() -> {
                     Text(
                         text = "Sem registos de histórico.",
-                        color = Color.Gray,
+                        color = GreyColor,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -111,7 +111,7 @@ fun HistoryView(
                         if (state.filteredEntries.isEmpty()) {
                             Text(
                                 text = "Sem resultados para os filtros selecionados.",
-                                color = Color.Gray,
+                                color = GreyColor,
                                 modifier = Modifier.align(Alignment.CenterHorizontally)
                             )
                         } else {
@@ -146,7 +146,7 @@ private fun HistoryFiltersCard(
         state.selectedFuncionarios.isNotEmpty()
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -160,7 +160,7 @@ private fun HistoryFiltersCard(
                 )
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onClear, enabled = hasFilters) {
-                    Text("Limpar", color = if (hasFilters) GreenSas else Color.Gray)
+                    Text("Limpar", color = if (hasFilters) GreenSas else GreyColor)
                 }
                 Spacer(Modifier.width(6.dp))
                 Button(
@@ -171,16 +171,16 @@ private fun HistoryFiltersCard(
                     Icon(
                         imageVector = Icons.Default.PictureAsPdf,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = WhiteColor
                     )
                     Spacer(Modifier.width(6.dp))
-                    Text("Exportar PDF", color = Color.White, fontSize = 12.sp)
+                    Text("Exportar PDF", color = WhiteColor, fontSize = 12.sp)
                 }
             }
 
             Text(
                 text = "Resultados: ${state.filteredEntries.size} / ${state.entries.size}",
-                color = Color.DarkGray,
+                color = DarkGreyColor,
                 fontSize = 12.sp
             )
 
@@ -216,9 +216,9 @@ private fun HistoryFilterSection(
     onToggle: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(text = title, fontWeight = FontWeight.SemiBold, color = Color.Black)
+        Text(text = title, fontWeight = FontWeight.SemiBold, color = BlackColor)
         if (options.isEmpty()) {
-            Text(text = "Sem opções disponíveis.", color = Color.Gray, fontSize = 12.sp)
+            Text(text = "Sem opções disponíveis.", color = GreyColor, fontSize = 12.sp)
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(options, key = { it.id }) { option ->
@@ -240,8 +240,8 @@ private fun HistoryFilterChip(
     onClick: () -> Unit
 ) {
     val background = if (selected) GreenSas else SurfaceMuted
-    val content = if (selected) Color.White else Color.Black
-    val border = if (selected) null else BorderStroke(1.dp, Color.LightGray)
+    val content = if (selected) WhiteColor else BlackColor
+    val border = if (selected) null else BorderStroke(1.dp, LightGreyColor)
 
     Surface(
         color = background,
@@ -269,7 +269,7 @@ private fun HistoryCard(entry: HistoryEntry, whenText: String) {
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         shape = RoundedCornerShape(14.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         border = BorderStroke(1.dp, GreenSas.copy(alpha = 0.15f))
@@ -286,14 +286,14 @@ private fun HistoryCard(entry: HistoryEntry, whenText: String) {
                     if (entityLabel.isNotBlank()) {
                         Text(
                             text = entityLabel,
-                            color = Color.DarkGray,
+                            color = DarkGreyColor,
                             fontSize = 12.sp
                         )
                     }
                 }
                 Text(
                     text = whenText,
-                    color = Color.Gray,
+                    color = GreyColor,
                     fontSize = 11.sp
                 )
             }
@@ -302,13 +302,13 @@ private fun HistoryCard(entry: HistoryEntry, whenText: String) {
 
             Text(
                 text = "Por: $actorName",
-                color = Color.Black,
+                color = BlackColor,
                 fontSize = 13.sp
             )
             if (!entry.details.isNullOrBlank()) {
                 Text(
                     text = entry.details ?: "",
-                    color = Color.Gray,
+                    color = GreyColor,
                     fontSize = 12.sp
                 )
             }

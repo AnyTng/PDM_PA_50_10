@@ -197,7 +197,7 @@ fun LoginView(
                 if (uiState.error != null) {
                     Text(
                         text = uiState.error!!,
-                        color = Color.Red,
+                        color = RedColor,
                         fontSize = 12.sp
                     )
                 }
@@ -264,7 +264,7 @@ fun LoginView(
                             fontSize = 13.sp,
                             fontFamily = FontFamily(Font(R.font.introboldalt)),
                             fontWeight = FontWeight.Normal,
-                            color = Color.Gray,
+                            color = GreyColor,
                             textDecoration = TextDecoration.Underline
                         ),
                         modifier = Modifier
@@ -334,7 +334,7 @@ fun LoginView(
                 },
                 dismissButton = {
                     TextButton(onClick = { showForgotPasswordDialog = false }) {
-                        Text("Cancelar", color = Color.Gray)
+                        Text("Cancelar", color = GreyColor)
                     }
                 },
                 containerColor = WhiteColor,
@@ -370,7 +370,7 @@ fun CustomFigmaInput(
         onValueChange = onValueChange,
         textStyle = TextStyle(
             fontSize = 16.sp,
-            color = Color.Black
+            color = BlackColor
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
@@ -393,7 +393,7 @@ fun CustomFigmaInput(
                 if (value.isEmpty() && !isFocused) {
                     Text(
                         text = placeholder,
-                        style = TextStyle(color = Color.Gray, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
+                        style = TextStyle(color = GreyColor, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
                         )
                     )
                 }

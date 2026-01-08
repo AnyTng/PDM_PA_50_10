@@ -64,13 +64,13 @@ fun CollaboratorsListView(
                 onValueChange = { viewModel.onSearchChange(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(8.dp)),
+                    .background(WhiteColor, RoundedCornerShape(8.dp)),
                 placeholder = { Text("Pesquisar (Nome, ID, Função)") },
                 leadingIcon = { Icon(Icons.Default.Search, null) },
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = GreenSas,
-                    unfocusedBorderColor = Color.LightGray
+                    unfocusedBorderColor = LightGreyColor
                 )
             )
 
@@ -113,13 +113,13 @@ fun CollaboratorsListView(
                         }
                         itemToDelete = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = RedColor)
                 ) { Text("Apagar") }
             },
             dismissButton = {
                 TextButton(onClick = { itemToDelete = null }) { Text("Cancelar") }
             },
-            containerColor = Color.White
+            containerColor = WhiteColor
         )
     }
 
@@ -142,7 +142,7 @@ fun CollaboratorsListView(
             dismissButton = {
                 TextButton(onClick = { itemToPromote = null }) { Text("Cancelar") }
             },
-            containerColor = Color.White
+            containerColor = WhiteColor
         )
     }
 
@@ -164,7 +164,7 @@ fun CollaboratorsListView(
             dismissButton = {
                 TextButton(onClick = { itemToDemote = null }) { Text("Cancelar") }
             },
-            containerColor = Color.White
+            containerColor = WhiteColor
         )
     }
 }
@@ -182,15 +182,15 @@ fun CollaboratorCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f)) {
                     Text(item.nome, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("ID: ${item.id}", fontSize = 12.sp, color = Color.Gray)
-                    Text(item.email, fontSize = 12.sp, color = Color.Gray)
+                    Text("ID: ${item.id}", fontSize = 12.sp, color = GreyColor)
+                    Text(item.email, fontSize = 12.sp, color = GreyColor)
                 }
 
                 // Badge da Role
@@ -201,7 +201,7 @@ fun CollaboratorCard(
                 ) {
                     Text(
                         text = if (isAdmin) "ADMIN" else "COLAB",
-                        color = Color.White,
+                        color = WhiteColor,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -210,7 +210,7 @@ fun CollaboratorCard(
             }
 
             Spacer(Modifier.height(12.dp))
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
+            HorizontalDivider(color = LightGreyColor.copy(alpha = 0.5f))
             Spacer(Modifier.height(8.dp))
 
             // Ações
@@ -224,7 +224,7 @@ fun CollaboratorCard(
                     // Botão Promover/Despromover
                     TextButton(
                         onClick = if (isAdmin) onDemote else onPromote,
-                        colors = ButtonDefaults.textButtonColors(contentColor = if (isAdmin) Color.DarkGray else GreenSas)
+                        colors = ButtonDefaults.textButtonColors(contentColor = if (isAdmin) DarkGreyColor else GreenSas)
                     ) {
                         Icon(
                             if (isAdmin) Icons.Default.Security else Icons.Default.SupervisorAccount,
@@ -239,14 +239,14 @@ fun CollaboratorCard(
 
                     // Botão Apagar
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = Color.Gray)
+                        Icon(Icons.Default.Delete, contentDescription = "Apagar", tint = GreyColor)
                     }
                 } else {
                     // Opcional: Mostrar texto informativo
                     Text(
                         text = " (Você) ",
                         fontSize = 12.sp,
-                        color = Color.LightGray,
+                        color = LightGreyColor,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                     )
                 }

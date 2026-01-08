@@ -74,7 +74,7 @@ private fun MenuViewContent(
             item {
                 // --- GRUPO PERFIL / ADMIN ---
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -97,7 +97,7 @@ private fun MenuViewContent(
                 // --- BLOCO EXTRA ADMIN (como tinhas “Historico”) ---
                 item {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = WhiteColor),
                         shape = RoundedCornerShape(12.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -113,7 +113,7 @@ private fun MenuViewContent(
             // --- OUTRAS OPÇÕES ---
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -132,7 +132,7 @@ private fun MenuViewContent(
 
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -153,7 +153,7 @@ private fun MenuViewContent(
             // --- BOTÃO TERMINAR SESSÃO ---
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
@@ -168,7 +168,7 @@ private fun MenuViewContent(
                     ) {
                         Text(
                             text = "Terminar Sessão",
-                            color = Color.Red,
+                            color = RedColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -196,13 +196,13 @@ fun MenuRow(
         Text(
             text = title,
             fontSize = 18.sp,
-            color = Color.Black,
+            color = BlackColor,
             fontWeight = FontWeight.Normal
         )
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
             contentDescription = "Ir",
-            tint = Color.Black,
+            tint = BlackColor,
             modifier = Modifier.size(20.dp)
         )
     }
