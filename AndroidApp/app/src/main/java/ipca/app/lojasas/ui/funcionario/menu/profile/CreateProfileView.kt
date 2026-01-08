@@ -56,11 +56,11 @@ fun CreateProfileView(
                     }
                 },
                 containerColor = GreenSas,
-                contentColor = Color.White,
+                contentColor = WhiteColor,
                 modifier = Modifier.size(64.dp)
             ) {
                 if (state.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = WhiteColor, modifier = Modifier.size(24.dp))
                 } else {
                     Icon(
                         imageVector = Icons.Default.Check,
@@ -85,7 +85,7 @@ fun CreateProfileView(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = Color.Red,
+                    color = RedColor,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
@@ -217,8 +217,8 @@ fun CreateProfileView(
 @Composable
 fun FormSection(title: String, content: @Composable () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black, fontFamily = IntroFontFamily)
-        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 12.dp), thickness = 1.dp, color = Color.Gray)
+        Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = BlackColor, fontFamily = IntroFontFamily)
+        HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 12.dp), thickness = 1.dp, color = GreyColor)
         content()
     }
 }
@@ -228,17 +228,17 @@ fun FormInput(value: String, onValueChange: (String) -> Unit, placeholder: Strin
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+        textStyle = TextStyle(fontSize = 16.sp, color = BlackColor),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
         keyboardActions = keyboardActions,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         singleLine = true,
         decorationBox = { innerTextField ->
             Box(
-                modifier = Modifier.fillMaxWidth().height(50.dp).background(Color.White, RoundedCornerShape(8.dp)).border(1.dp, Color.Gray.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp).background(WhiteColor, RoundedCornerShape(8.dp)).border(1.dp, GreyColor.copy(alpha = 0.5f), RoundedCornerShape(8.dp)).padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
-                if (value.isEmpty()) Text(text = placeholder, color = Color.Gray, fontSize = 16.sp)
+                if (value.isEmpty()) Text(text = placeholder, color = GreyColor, fontSize = 16.sp)
                 innerTextField()
             }
         }
@@ -249,6 +249,6 @@ fun FormInput(value: String, onValueChange: (String) -> Unit, placeholder: Strin
 fun RoleRadioButton(selected: Boolean, text: String, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { onClick() }) {
         RadioButton(selected = selected, onClick = onClick, colors = RadioButtonDefaults.colors(selectedColor = GreenSas))
-        Text(text = text, fontSize = 16.sp, color = Color.Black)
+        Text(text = text, fontSize = 16.sp, color = BlackColor)
     }
 }

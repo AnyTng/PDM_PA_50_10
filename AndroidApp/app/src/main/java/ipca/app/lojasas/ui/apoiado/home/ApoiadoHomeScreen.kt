@@ -151,7 +151,7 @@ fun ApoiadoHomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(WhiteColor),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
@@ -305,7 +305,7 @@ private fun HomeHeader(
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = BlackColor
                 )
                 Text(
                     text = statusUi.label,
@@ -338,7 +338,7 @@ private fun HomeHeader(
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
-                    color = Color.White
+                    color = WhiteColor
                 )
             }
         }
@@ -363,7 +363,7 @@ private fun SectionSeparator(title: String) {
             fontFamily = IntroFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
-            color = Color.Gray
+            color = GreyColor
         )
 
         HorizontalDivider(
@@ -383,7 +383,7 @@ private fun CardActionButton(
     onClick: () -> Unit
 ) {
     Surface(
-        color = Color.White,
+        color = WhiteColor,
         shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .clickable(onClick = onClick)
@@ -419,7 +419,7 @@ private fun CestaHomeCard(
         CestaCardStyle.PENDENTE -> Quadruple(
             "Entrega de bens agendada",
             DarkGreenCard,
-            Color.White,
+            WhiteColor,
             DarkGreenCard
         )
 
@@ -566,7 +566,7 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.White
+                color = WhiteColor
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -576,7 +576,7 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.95f)
+                color = WhiteColor.copy(alpha = 0.95f)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -609,7 +609,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.White
+                color = WhiteColor
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -620,7 +620,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 /*Surface(
-                    color = Color.White,
+                    color = WhiteColor,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -637,7 +637,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Surface(
-                    color = Color.White,
+                    color = WhiteColor,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .clickable(onClick = onEnviar)
@@ -700,7 +700,7 @@ private fun CestaDetailsDialog(
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-            ) { Text("Fechar", color = Color.White) }
+            ) { Text("Fechar", color = WhiteColor) }
         },
         title = {
             Text(
@@ -737,7 +737,7 @@ private fun CestaDetailsDialog(
                     text = "ID: ${cesta.id}",
                     fontFamily = IntroFontFamily,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
         }
@@ -757,7 +757,7 @@ private fun UrgentRequestDetailsDialog(
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
-            ) { Text("Fechar", color = Color.White) }
+            ) { Text("Fechar", color = WhiteColor) }
         },
         title = {
             Text(
@@ -812,11 +812,11 @@ private fun PausedCard() {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Info, contentDescription = null, tint = WhiteColor)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Apoio Pausado",
-                    color = Color.White,
+                    color = WhiteColor,
                     fontSize = 16.sp,
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Bold
@@ -825,7 +825,7 @@ private fun PausedCard() {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Contacte o SAS: sas@ipca.pt",
-                color = Color.White,
+                color = WhiteColor,
                 fontSize = 14.sp,
                 fontFamily = IntroFontFamily
             )
@@ -841,7 +841,7 @@ fun BlockedAccountScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(WhiteColor)
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -872,9 +872,9 @@ fun BlockedAccountScreen(
                 onLogout()
                 navController.navigate(Screen.Login.route) { popUpTo(0) }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+            colors = ButtonDefaults.buttonColors(containerColor = BlackColor)
         ) {
-            Text("Terminar Sessão", color = Color.White)
+            Text("Terminar Sessão", color = WhiteColor)
         }
     }
 }
@@ -890,7 +890,7 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Pedido Rejeitado",
-                color = Color.White,
+                color = WhiteColor,
                 fontSize = 16.sp,
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold
@@ -898,7 +898,7 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Motivo: $reason",
-                color = Color.White,
+                color = WhiteColor,
                 fontSize = 13.sp,
                 fontFamily = IntroFontFamily
             )
@@ -909,7 +909,7 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
             ) {
                 Button(
                     onClick = onTryAgain,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    colors = ButtonDefaults.buttonColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {

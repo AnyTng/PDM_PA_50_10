@@ -76,7 +76,7 @@ private fun CampaignCreateViewContent(
             FloatingActionButton(
                 onClick = onSaveClick,
                 containerColor = GreenSas,
-                contentColor = Color.White,
+                contentColor = WhiteColor,
                 modifier = Modifier.size(64.dp)
             ) { Icon(Icons.Default.Check, null) }
         }
@@ -85,7 +85,7 @@ private fun CampaignCreateViewContent(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(Color.White)
+                .background(WhiteColor)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -138,8 +138,8 @@ fun RowScope.DateButton(label: String, date: Date?, onClick: () -> Unit) {
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(horizontalAlignment = Alignment.Start) {
-            Text(label, fontSize = 12.sp, color = Color.Gray)
-            Text(text, color = Color.Black)
+            Text(label, fontSize = 12.sp, color = GreyColor)
+            Text(text, color = BlackColor)
         }
     }
 }

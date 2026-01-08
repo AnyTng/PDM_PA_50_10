@@ -129,7 +129,7 @@ fun CreateCestaView(
                     .verticalScroll(rememberScrollState())
             ) {
                 state.error?.let {
-                    Text(it, color = Color.Red, fontSize = 12.sp)
+                    Text(it, color = RedColor, fontSize = 12.sp)
                     Spacer(Modifier.height(10.dp))
                 }
 
@@ -158,7 +158,7 @@ fun CreateCestaView(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor)
                 ) {
                     Column(Modifier.padding(14.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -192,7 +192,7 @@ fun CreateCestaView(
                             Text(
                                 text = "Agendado para: ${dateFmt.format(state.dataAgendada)}",
                                 fontSize = 12.sp,
-                                color = Color.Gray
+                                color = GreyColor
                             )
                         }
                     }
@@ -204,7 +204,7 @@ fun CreateCestaView(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor)
                 ) {
                     Column(Modifier.padding(14.dp)) {
                         // Vindo de pedido urgente: sempre única
@@ -217,7 +217,7 @@ fun CreateCestaView(
                                 enabled = recorrenteEnabled,
                                 colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                             )
-                            Text("Única", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
+                            Text("Única", color = if (recorrenteEnabled) UnspecifiedColor else GreyColor)
                         }
 
                         Row(
@@ -230,12 +230,12 @@ fun CreateCestaView(
                                 enabled = recorrenteEnabled,
                                 colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                             )
-                            Text("Sim", color = if (recorrenteEnabled) Color.Unspecified else Color.Gray)
+                            Text("Sim", color = if (recorrenteEnabled) UnspecifiedColor else GreyColor)
                         }
 
                        // if (state.recorrente) {
                        //     Spacer(Modifier.height(6.dp))
-                       //     Text("Intervalo fixo: 30 dias", fontSize = 12.sp, color = Color.Gray)
+                       //     Text("Intervalo fixo: 30 dias", fontSize = 12.sp, color = GreyColor)
                        // }
                     }
                 }
@@ -246,7 +246,7 @@ fun CreateCestaView(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor)
                 ) {
                     OutlinedTextField(
                         value = state.obs,
@@ -269,14 +269,14 @@ fun CreateCestaView(
                     }
                 },
                 containerColor = GreenSas,
-                contentColor = Color.White,
+                contentColor = WhiteColor,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
                     .size(64.dp)
             ) {
                 if (state.isSubmitting) {
-                    CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(22.dp), color = WhiteColor, strokeWidth = 2.dp)
                 } else {
                     Icon(imageVector = Icons.Default.Check, contentDescription = "Confirmar")
                 }
@@ -314,7 +314,7 @@ private fun SectionTitle(text: String) {
         text = text,
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp,
-        color = Color.Black,
+        color = BlackColor,
         modifier = Modifier.padding(bottom = 8.dp)
     )
 }
@@ -326,7 +326,7 @@ private fun BeneficiarioSelector(value: String, enabled: Boolean, onClick: () ->
             .fillMaxWidth()
             .clickable(enabled = enabled) { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = WhiteColor)
     ) {
         Row(
             modifier = Modifier
@@ -337,7 +337,7 @@ private fun BeneficiarioSelector(value: String, enabled: Boolean, onClick: () ->
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(value, color = if (enabled) GreenSas else Color.Gray, fontWeight = FontWeight.SemiBold)
+            Text(value, color = if (enabled) GreenSas else GreyColor, fontWeight = FontWeight.SemiBold)
             Icon(imageVector = Icons.Default.Add, contentDescription = "Selecionar", tint = GreenSas)
         }
     }
@@ -355,7 +355,7 @@ private fun ProdutosSelecionadosList(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = WhiteColor)
             ) {
                 Row(
                     modifier = Modifier
@@ -373,7 +373,7 @@ private fun ProdutosSelecionadosList(
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                         ) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Remover", tint = Color.White)
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Remover", tint = WhiteColor)
                         }
                         Button(
                             onClick = { onVer(p.id) },
@@ -393,7 +393,7 @@ private fun ProdutosSelecionadosList(
                 .fillMaxWidth()
                 .clickable { onAdd() },
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = WhiteColor)
         ) {
             Row(
                 modifier = Modifier
@@ -477,14 +477,14 @@ private fun ApoiadoPickerDialog(
                                 ) {
                                     Column {
                                         Text(opt.nome, fontWeight = FontWeight.SemiBold)
-                                        Text(opt.id, fontSize = 12.sp, color = Color.Gray)
+                                        Text(opt.id, fontSize = 12.sp, color = GreyColor)
                                     }
                                     Text(
                                         text = opt.ultimoLevantamento?.let {
                                             SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(it)
                                         } ?: "—",
                                         fontSize = 12.sp,
-                                        color = Color.Gray
+                                        color = GreyColor
                                     )
                                 }
                             }
@@ -563,7 +563,7 @@ private fun ProdutosPickerDialog(
                 Spacer(Modifier.height(12.dp))
 
                 if (filteredProdutos.isEmpty()) {
-                    Text("Sem produtos disponíveis.", color = Color.Gray)
+                    Text("Sem produtos disponíveis.", color = GreyColor)
                     return@Column
                 }
 
@@ -617,7 +617,7 @@ private fun ProdutoPickRow(
             Text(
                 text = "Validade: $validadeTxt",
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = GreyColor
             )
         }
         Spacer(Modifier.width(10.dp))

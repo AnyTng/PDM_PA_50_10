@@ -98,7 +98,7 @@ fun CompleteDataView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(WhiteColor)
             .imePadding()
             .padding(16.dp)
             .verticalScroll(scrollState),
@@ -110,7 +110,7 @@ fun CompleteDataView(
             fontWeight = FontWeight.Bold,
             color = GreenSas
         )
-        Text("Verifique os seus dados e corrija o necessário.", color = Color.Gray)
+        Text("Verifique os seus dados e corrija o necessário.", color = GreyColor)
 
         // ✅ Aviso quando o formulário está a ser solicitado por expiração de validade.
         if (validadeExpiradaEm != null) {
@@ -147,7 +147,7 @@ fun CompleteDataView(
             CircularProgressIndicator(color = GreenSas)
         }
         if (state.error != null) {
-            Text(state.error!!, color = Color.Red, fontSize = 14.sp)
+            Text(state.error!!, color = RedColor, fontSize = 14.sp)
         }
 
         // --- NACIONALIDADE ---
@@ -187,7 +187,7 @@ fun CompleteDataView(
                 ExposedDropdownMenu(
                     expanded = expandedNacionalidade,
                     onDismissRequest = { expandedNacionalidade = false },
-                    modifier = Modifier.background(Color.White)
+                    modifier = Modifier.background(WhiteColor)
                 ) {
                     filteredNationalities.forEach { nation ->
                         DropdownMenuItem(
@@ -222,13 +222,14 @@ fun CompleteDataView(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Esta Box invisível fica por cima do TextField e captura o clique em toda a área
-            Box(
-                modifier = Modifier
-                    .matchParentSize() // Ocupa o mesmo tamanho do TextField
-                    .clickable { datePickerDialog.show() } // Abre o calendário ao clicar
+        if (state.dataNascimento != null && !Validators.isAgeAtLeast(state.dataNascimento!!, Validators.MIN_AGE_YEARS)) {
+            Text(
+                text = "Deve ter pelo menos ${Validators.MIN_AGE_YEARS} anos para submeter.",
+                color = RedColor,
+                fontSize = 12.sp
             )
         }
+
         Divider()
 
         // --- RELAÇÃO IPCA ---
@@ -282,7 +283,7 @@ fun CompleteDataView(
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
-                    Divider(color = Color.LightGray)
+                    Divider(color = LightGreyColor)
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // Bolsa (AGORA AQUI DENTRO)
@@ -354,14 +355,15 @@ fun CompleteDataView(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = GreenSas,
-                disabledContainerColor = Color.LightGray
+                disabledContainerColor = LightGreyColor
             ),
             // Só ativa se não estiver a carregar E o formulário for válido
             enabled = !state.isLoading && isFormValid
         ) {
-            if (state.isLoading) CircularProgressIndicator(color = Color.White)
+            if (state.isLoading) CircularProgressIndicator(color = WhiteColor)
             else Text("Guardar Dados")
         }
         Spacer(modifier = Modifier.height(50.dp))
+        }
     }
 }

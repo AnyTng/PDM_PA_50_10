@@ -64,7 +64,7 @@ fun AppHeader(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.cd_back),
-                        tint = Color.White,
+                        tint = WhiteColor,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -77,7 +77,7 @@ fun AppHeader(
                     fontSize = 22.sp,
                     fontFamily = FontFamily(Font(R.font.introboldalt)),
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = WhiteColor
                 )
             )
         }

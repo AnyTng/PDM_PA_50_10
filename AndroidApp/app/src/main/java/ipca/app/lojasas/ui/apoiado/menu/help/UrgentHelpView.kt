@@ -30,7 +30,7 @@ fun UrgentHelpView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(WhiteColor)
     ) {
 
 
@@ -48,7 +48,7 @@ fun UrgentHelpView(
             )
             Text(
                 text = "Descreva abaixo o que necessita com urgência.",
-                color = Color.Gray,
+                color = GreyColor,
                 fontSize = 14.sp
             )
 
@@ -66,7 +66,7 @@ fun UrgentHelpView(
 
             if (error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(error!!, color = Color.Red)
+                Text(error!!, color = RedColor)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -81,7 +81,7 @@ fun UrgentHelpView(
                 colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
                 enabled = !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(color = Color.White)
+                if (isLoading) CircularProgressIndicator(color = WhiteColor)
                 else Text("Submeter Pedido")
             }
         }

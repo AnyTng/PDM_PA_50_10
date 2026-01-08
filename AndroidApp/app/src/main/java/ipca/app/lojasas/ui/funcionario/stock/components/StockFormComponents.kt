@@ -82,7 +82,7 @@ fun StockPrimaryButton(
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                color = Color.White,
+                color = WhiteColor,
                 strokeWidth = 2.dp,
                 modifier = Modifier.size(18.dp)
             )

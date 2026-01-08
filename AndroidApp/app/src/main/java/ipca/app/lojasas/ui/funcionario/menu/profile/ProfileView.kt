@@ -63,7 +63,7 @@ fun ProfileView(
                         }
                     },
                     containerColor = GreenSas,
-                    contentColor = Color.White,
+                    contentColor = WhiteColor,
                     modifier = Modifier.size(64.dp)
                 ) {
                     Icon(
@@ -92,7 +92,7 @@ fun ProfileView(
             ) {
 
                 if (state.error != null) {
-                    Text(text = state.error!!, color = Color.Red, fontSize = 14.sp)
+                    Text(text = state.error!!, color = RedColor, fontSize = 14.sp)
                 }
 
                 // --- IDENTIFICAÇÃO (Apenas Leitura) ---
@@ -133,13 +133,13 @@ fun ProfileView(
                 // --- BOTÕES DE AÇÃO ---
                 ProfileOptionCard(
                     text = "Trocar Senha",
-                    textColor = Color.Black,
+                    textColor = BlackColor,
                     onClick = { showPasswordDialog = true }
                 )
 
                 ProfileOptionCard(
                     text = "Apagar Conta",
-                    textColor = Color.Red,
+                    textColor = RedColor,
                     onClick = { showDeleteDialog = true }
                 )
 
@@ -190,7 +190,7 @@ fun ProfileView(
                             Text("Entendi")
                         }
                     },
-                    containerColor = Color.White
+                    containerColor = WhiteColor
                 )
             } else {
                 // --- DIÁLOGO PARA COLABORADOR/APOIADO (Confirmação de Apagar) ---
@@ -206,7 +206,7 @@ fun ProfileView(
                                     navController.navigate(Screen.Login.route) { popUpTo(0) }
                                 }
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                            colors = ButtonDefaults.textButtonColors(contentColor = RedColor)
                         ) {
                             Text("Apagar")
                         }
@@ -214,12 +214,12 @@ fun ProfileView(
                     dismissButton = {
                         TextButton(
                             onClick = { showDeleteDialog = false },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                            colors = ButtonDefaults.textButtonColors(contentColor = BlackColor)
                         ) {
                             Text("Cancelar")
                         }
                     },
-                    containerColor = Color.White
+                    containerColor = WhiteColor
                 )
             }
         }
@@ -235,7 +235,7 @@ fun ProfileOptionCard(
     onClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
@@ -274,7 +274,7 @@ fun ChangePasswordDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (error != null) {
-                    Text(error!!, color = Color.Red, fontSize = 12.sp)
+                    Text(error!!, color = RedColor, fontSize = 12.sp)
                 }
 
                 OutlinedTextField(
@@ -320,10 +320,10 @@ fun ChangePasswordDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = Color.Black)
+                Text("Cancelar", color = BlackColor)
             }
         },
-        containerColor = Color.White
+        containerColor = WhiteColor
     )
 }
 
@@ -333,7 +333,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
         value = value,
         onValueChange = {},
         enabled = false,
-        textStyle = TextStyle(fontSize = 16.sp, color = Color.Gray),
+        textStyle = TextStyle(fontSize = 16.sp, color = GreyColor),
         singleLine = true,
         decorationBox = { innerTextField ->
             Box(
@@ -345,7 +345,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
-                    Text(text = placeholder, color = Color.Gray, fontSize = 16.sp)
+                    Text(text = placeholder, color = GreyColor, fontSize = 16.sp)
                 }
                 innerTextField()
             }

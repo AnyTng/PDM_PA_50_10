@@ -120,7 +120,7 @@ fun ExpiredProductsView(
                         modifier = Modifier.fillMaxWidth()
                     )
                     if (!state.donationError.isNullOrBlank()) {
-                        Text(text = state.donationError ?: "Erro", color = Color.Red)
+                        Text(text = state.donationError ?: "Erro", color = RedColor)
                     }
                 }
             },
@@ -132,7 +132,7 @@ fun ExpiredProductsView(
                 ) {
                     if (state.isDonating) {
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = WhiteColor,
                             strokeWidth = 2.dp,
                             modifier = Modifier
                                 .padding(end = 8.dp)
@@ -291,7 +291,7 @@ private fun ExpiredProductsViewContent(
             if (!donationError.isNullOrBlank()) {
                 Text(
                     text = donationError ?: "Erro ao doar.",
-                    color = Color.Red,
+                    color = RedColor,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                 )
             }
@@ -311,7 +311,7 @@ private fun ExpiredProductsViewContent(
                 error != null -> {
                     Text(
                         text = error.ifBlank { "Erro" },
-                        color = Color.Red,
+                        color = RedColor,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
@@ -346,9 +346,9 @@ private fun ExpiredProductsViewContent(
                                     enabled = !isDonating,
                                     colors = CheckboxDefaults.colors(
                                         checkedColor = ExpiredRed,
-                                        uncheckedColor = Color.Gray,
-                                        checkmarkColor = Color.White,
-                                        disabledUncheckedColor = Color.LightGray
+                                        uncheckedColor = GreyColor,
+                                        checkmarkColor = WhiteColor,
+                                        disabledUncheckedColor = LightGreyColor
                                     ),
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
@@ -414,7 +414,7 @@ private fun DropdownMenuSectionHeader(
     onToggle: () -> Unit
 ) {
     DropdownMenuItem(
-        text = { Text(title, color = Color.Gray) },
+        text = { Text(title, color = GreyColor) },
         onClick = onToggle,
         trailingIcon = {
             Icon(
@@ -424,7 +424,7 @@ private fun DropdownMenuSectionHeader(
                     Icons.Default.KeyboardArrowDown
                 },
                 contentDescription = null,
-                tint = Color.Gray
+                tint = GreyColor
             )
         }
     )

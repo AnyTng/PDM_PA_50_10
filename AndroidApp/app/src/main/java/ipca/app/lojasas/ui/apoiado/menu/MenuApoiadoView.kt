@@ -49,7 +49,7 @@ fun MenuApoiadoView(
 
             // --- GRUPO: CONTA ---
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -62,7 +62,7 @@ fun MenuApoiadoView(
 
             // --- GRUPO: AÇÃO SOCIAL ---
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -89,7 +89,7 @@ fun MenuApoiadoView(
                 }
             }
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -103,7 +103,7 @@ fun MenuApoiadoView(
             }
             // --- BOTÃO TERMINAR SESSÃO ---
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier
@@ -127,7 +127,7 @@ fun MenuApoiadoView(
                 ) {
                     Text(
                         text = "Terminar Sessão",
-                        color = Color.Red,
+                        color = RedColor,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -144,7 +144,7 @@ fun MenuApoiadoRow(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val contentColor = if (enabled) Color.Black else Color.Gray.copy(alpha = 0.6f)
+    val contentColor = if (enabled) BlackColor else GreyColor.copy(alpha = 0.6f)
 
     Row(
         modifier = Modifier

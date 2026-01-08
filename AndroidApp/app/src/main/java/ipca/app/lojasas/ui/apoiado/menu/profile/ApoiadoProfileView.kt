@@ -58,7 +58,7 @@ fun ApoiadoProfileView(
                         }
                     },
                     containerColor = GreenSas,
-                    contentColor = Color.White,
+                    contentColor = WhiteColor,
                     shape = CircleShape,
                     modifier = Modifier.size(64.dp)
                 ) {
@@ -87,7 +87,7 @@ fun ApoiadoProfileView(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 if (state.error != null) {
-                    Text(text = state.error!!, color = Color.Red, fontSize = 14.sp)
+                    Text(text = state.error!!, color = RedColor, fontSize = 14.sp)
                 }
 
                 // --- IDENTIFICAÇÃO ---
@@ -167,7 +167,7 @@ fun ApoiadoProfileView(
                 // --- OPÇÕES DE CONTA ---
                 ProfileOptionCard(text = "Alterar Senha", textColor = Color.Black) { showPasswordDialog = true }
                 /* Apoiados nao devem apagar as contas */
-                // ProfileOptionCard(text = "Apagar Conta", textColor = Color.Red) { showDeleteDialog = true }
+                //ProfileOptionCard(text = "Apagar Conta", textColor = Color.Red) { showDeleteDialog = true }
 
                 Spacer(modifier = Modifier.height(80.dp))
             }
@@ -200,12 +200,12 @@ fun ApoiadoProfileView(
                     TextButton(onClick = {
                         showDeleteDialog = false
                         viewModel.deleteAccount { navController.navigate(Screen.Login.route) { popUpTo(0) } }
-                    }) { Text("Apagar", color = Color.Red) }
+                    }) { Text("Apagar", color = RedColor) }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) { Text("Cancelar") }
                 },
-                containerColor = Color.White
+                containerColor = WhiteColor
             )
         }
     }

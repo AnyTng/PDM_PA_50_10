@@ -146,20 +146,20 @@ fun DocumentSubmissionContent(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Voltar",
-                        tint = Color.White
+                        tint = WhiteColor
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
                         text = "Entrega de Documentos",
-                        color = Color.White,
+                        color = WhiteColor,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Entrega nº ${state.currentDeliveryNumber}", // MOSTRA O NÚMERO
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = WhiteColor.copy(alpha = 0.8f),
                         fontSize = 14.sp
                     )
                 }
@@ -169,7 +169,7 @@ fun DocumentSubmissionContent(
             Button(
                 onClick = onFinishRequest,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (checkMandatory()) GreenSas else Color.Gray
+                    containerColor = if (checkMandatory()) GreenSas else GreyColor
                 ),
                 enabled = !state.uploadProgress && !state.isLoading,
                 modifier = Modifier
@@ -195,7 +195,7 @@ fun DocumentSubmissionContent(
                     .padding(horizontal = 16.dp)
             ) {
                 if (state.error != null) {
-                    Text(state.error!!, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(vertical = 8.dp))
+                    Text(state.error!!, color = RedColor, fontSize = 12.sp, modifier = Modifier.padding(vertical = 8.dp))
                 }
 
                 LazyColumn(
@@ -229,7 +229,7 @@ fun DocumentSubmissionContent(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Badge(containerColor = GreenSas) {
-                                Text("${state.uploadedFiles.size}", color = Color.White)
+                                Text("${state.uploadedFiles.size}", color = WhiteColor)
                             }
                         }
                         HorizontalDivider(modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
@@ -237,7 +237,7 @@ fun DocumentSubmissionContent(
 
                     if (state.uploadedFiles.isEmpty()) {
                         item {
-                            Text("Ainda não adicionou documentos a esta entrega.", color = Color.Gray, fontSize = 14.sp)
+                            Text("Ainda não adicionou documentos a esta entrega.", color = GreyColor, fontSize = 14.sp)
                         }
                     } else {
                         items(state.uploadedFiles) { file ->
@@ -255,7 +255,7 @@ fun DocumentSubmissionContent(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White.copy(alpha = 0.7f))
+                        .background(WhiteColor.copy(alpha = 0.7f))
                         .clickable(enabled = false) {},
                     contentAlignment = Alignment.Center
                 ) {
@@ -304,8 +304,8 @@ fun UploadTypeCard(
     hasSubmitted: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (hasSubmitted) GreenSas else Color.LightGray
-    val backgroundColor = if (hasSubmitted) SuccessBg else Color.White // Fundo ligeiramente verde se já submetido
+    val borderColor = if (hasSubmitted) GreenSas else LightGreyColor
+    val backgroundColor = if (hasSubmitted) SuccessBg else WhiteColor // Fundo ligeiramente verde se já submetido
 
     Card(
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
@@ -322,14 +322,14 @@ fun UploadTypeCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(docType.title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                    if (docType.isMandatory) Text(" *", color = Color.Red, fontWeight = FontWeight.Bold)
+                    Text(docType.title, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = BlackColor)
+                    if (docType.isMandatory) Text(" *", color = RedColor, fontWeight = FontWeight.Bold)
                     if (hasSubmitted) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(Icons.Default.Check, contentDescription = "OK", tint = GreenSas, modifier = Modifier.size(16.dp))
                     }
                 }
-                Text(docType.description, fontSize = 12.sp, color = Color.Gray)
+                Text(docType.description, fontSize = 12.sp, color = GreyColor)
             }
             Icon(Icons.Default.AddCircle, contentDescription = "Upload", tint = GreenSas, modifier = Modifier.size(32.dp))
         }
@@ -340,16 +340,16 @@ fun UploadTypeCard(
 fun UploadedFileRow(file: UploadedFile, onPreviewClick: () -> Unit) {
     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).clickable { onPreviewClick() }
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.Description, null, tint = Color.Gray)
+            Icon(Icons.Outlined.Description, null, tint = GreyColor)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(file.customDescription ?: file.typeTitle, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(dateFormat.format(Date(file.date)), fontSize = 10.sp, color = Color.Gray)
+                Text(dateFormat.format(Date(file.date)), fontSize = 10.sp, color = GreyColor)
             }
             Icon(Icons.Default.Visibility, null, tint = GreenSas)
         }
