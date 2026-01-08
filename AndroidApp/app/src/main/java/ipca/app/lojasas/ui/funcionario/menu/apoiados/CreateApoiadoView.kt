@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.widget.DatePicker
 import android.widget.Toast
@@ -31,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.utils.Validators
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -99,7 +99,7 @@ fun CreateApoiadoView(
                     Text("Entendido")
                 }
             },
-            containerColor = Color.White
+            containerColor = WhiteColor
         )
     }
 
@@ -112,7 +112,7 @@ fun CreateApoiadoView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             Column(
                 modifier = Modifier
@@ -183,10 +183,10 @@ fun CreateApoiadoView(
                             modifier = Modifier.fillMaxWidth(),
                             enabled = false,
                             colors = OutlinedTextFieldDefaults.colors(
-                                disabledTextColor = Color.Black,
-                                disabledBorderColor = Color.Gray,
-                                disabledLabelColor = Color.Black,
-                                disabledTrailingIconColor = Color.Gray
+                                disabledTextColor = BlackColor,
+                                disabledBorderColor = GreyColor,
+                                disabledLabelColor = BlackColor,
+                                disabledTrailingIconColor = GreyColor
                             )
                         )
                         Box(
@@ -247,7 +247,7 @@ fun CreateApoiadoView(
                         Checkbox(checked = state.apoioEmergencia, onCheckedChange = { viewModel.onApoioEmergenciaChange(it) }, colors = CheckboxDefaults.colors(checkedColor = GreenSas))
                         Text("Apoio de Emergência Social?", fontWeight = FontWeight.Bold)
                     }
-                    //Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = Color.Gray)
+                    //Text("(Se marcado, não exige documentos imediatos)", fontSize = 12.sp, color = GreyColor)
 
                     Divider(Modifier.padding(vertical = 8.dp))
                     Text("Tipos de Cabaz:", fontWeight = FontWeight.Bold)
@@ -268,13 +268,13 @@ fun CreateApoiadoView(
                 // Mantemos também o Toast, mas isto ajuda a perceber imediatamente porque a criação foi bloqueada.
                 if (state.error != null) {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                        colors = CardDefaults.cardColors(containerColor = ErrorBg),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = state.error ?: "",
-                            color = Color(0xFFB00020),
+                            color = ErrorRed,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(12.dp)
                         )
@@ -289,7 +289,7 @@ fun CreateApoiadoView(
                     shape = RoundedCornerShape(8.dp),
                     enabled = !state.isLoading
                 ) {
-                    if (state.isLoading) CircularProgressIndicator(color = Color.White)
+                    if (state.isLoading) CircularProgressIndicator(color = WhiteColor)
                     else Text("Criar Conta Aprovada", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
 
@@ -304,7 +304,7 @@ fun CreateApoiadoView(
 @Composable
 fun SectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         modifier = Modifier.fillMaxWidth()

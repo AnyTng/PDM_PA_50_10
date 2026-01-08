@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,7 +30,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
-import ipca.app.lojasas.ui.theme.GreenSas
 
 
 @Composable
@@ -63,7 +63,7 @@ fun ProfileView(
                         }
                     },
                     containerColor = GreenSas,
-                    contentColor = Color.White,
+                    contentColor = WhiteColor,
                     modifier = Modifier.size(64.dp)
                 ) {
                     Icon(
@@ -85,14 +85,14 @@ fun ProfileView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(Color(0xFFF8F8F8))
+                    .background(SurfaceLight)
                     .verticalScroll(scrollState)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
 
                 if (state.error != null) {
-                    Text(text = state.error!!, color = Color.Red, fontSize = 14.sp)
+                    Text(text = state.error!!, color = RedColor, fontSize = 14.sp)
                 }
 
                 // --- IDENTIFICAÇÃO (Apenas Leitura) ---
@@ -133,13 +133,13 @@ fun ProfileView(
                 // --- BOTÕES DE AÇÃO ---
                 ProfileOptionCard(
                     text = "Trocar Senha",
-                    textColor = Color.Black,
+                    textColor = BlackColor,
                     onClick = { showPasswordDialog = true }
                 )
 
                 ProfileOptionCard(
                     text = "Apagar Conta",
-                    textColor = Color.Red,
+                    textColor = RedColor,
                     onClick = { showDeleteDialog = true }
                 )
 
@@ -172,7 +172,7 @@ fun ProfileView(
                 // --- DIÁLOGO PARA ADMIN (Apenas Aviso) ---
                 AlertDialog(
                     onDismissRequest = { showDeleteDialog = false },
-                    icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFFA000)) },
+                    icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = WarningAmber) },
                     title = { Text(text = "Ação Não Permitida", fontWeight = FontWeight.Bold) },
                     text = {
                         Text(
@@ -190,7 +190,7 @@ fun ProfileView(
                             Text("Entendi")
                         }
                     },
-                    containerColor = Color.White
+                    containerColor = WhiteColor
                 )
             } else {
                 // --- DIÁLOGO PARA COLABORADOR/APOIADO (Confirmação de Apagar) ---
@@ -206,7 +206,7 @@ fun ProfileView(
                                     navController.navigate(Screen.Login.route) { popUpTo(0) }
                                 }
                             },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                            colors = ButtonDefaults.textButtonColors(contentColor = RedColor)
                         ) {
                             Text("Apagar")
                         }
@@ -214,12 +214,12 @@ fun ProfileView(
                     dismissButton = {
                         TextButton(
                             onClick = { showDeleteDialog = false },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                            colors = ButtonDefaults.textButtonColors(contentColor = BlackColor)
                         ) {
                             Text("Cancelar")
                         }
                     },
-                    containerColor = Color.White
+                    containerColor = WhiteColor
                 )
             }
         }
@@ -235,7 +235,7 @@ fun ProfileOptionCard(
     onClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
@@ -274,7 +274,7 @@ fun ChangePasswordDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (error != null) {
-                    Text(error!!, color = Color.Red, fontSize = 12.sp)
+                    Text(error!!, color = RedColor, fontSize = 12.sp)
                 }
 
                 OutlinedTextField(
@@ -320,10 +320,10 @@ fun ChangePasswordDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar", color = Color.Black)
+                Text("Cancelar", color = BlackColor)
             }
         },
-        containerColor = Color.White
+        containerColor = WhiteColor
     )
 }
 
@@ -333,19 +333,19 @@ fun ReadOnlyInput(value: String, placeholder: String) {
         value = value,
         onValueChange = {},
         enabled = false,
-        textStyle = TextStyle(fontSize = 16.sp, color = Color.Gray),
+        textStyle = TextStyle(fontSize = 16.sp, color = GreyColor),
         singleLine = true,
         decorationBox = { innerTextField ->
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
-                    .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp))
+                    .background(SurfaceElevated, RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (value.isEmpty()) {
-                    Text(text = placeholder, color = Color.Gray, fontSize = 16.sp)
+                    Text(text = placeholder, color = GreyColor, fontSize = 16.sp)
                 }
                 innerTextField()
             }

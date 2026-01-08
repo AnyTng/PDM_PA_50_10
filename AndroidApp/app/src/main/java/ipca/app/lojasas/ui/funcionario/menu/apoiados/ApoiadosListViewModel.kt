@@ -1,10 +1,10 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas as PdfCanvas
-import android.graphics.Color as PdfColor
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
@@ -228,11 +228,11 @@ private fun createApoiadosListPdf(context: Context, state: ApoiadoListState) {
     val maxWidth = pageWidth - margin * 2
     val lineHeight = 12f
     val blockSpacing = 8f
-    val ipcaGreen = PdfColor.parseColor("#094E33")
+    val ipcaGreen = AndroidGreenSas
     val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
     val titlePaint = Paint().apply {
-        color = PdfColor.BLACK
+        color = AndroidBlack
         textSize = 16f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
@@ -242,11 +242,11 @@ private fun createApoiadosListPdf(context: Context, state: ApoiadoListState) {
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
     val textPaint = Paint().apply {
-        color = PdfColor.BLACK
+        color = AndroidBlack
         textSize = 11f
     }
     val mutedPaint = Paint().apply {
-        color = PdfColor.DKGRAY
+        color = AndroidDarkGrey
         textSize = 10f
     }
 
@@ -360,11 +360,11 @@ private fun createApoiadoPdf(context: Context, details: ApoiadoPdfDetails) {
     val maxWidth = pageWidth - margin * 2
     val lineHeight = 12f
     val sectionSpacing = 8f
-    val ipcaGreen = PdfColor.parseColor("#094E33")
+    val ipcaGreen = AndroidGreenSas
     val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
     val titlePaint = Paint().apply {
-        color = PdfColor.BLACK
+        color = AndroidBlack
         textSize = 16f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
@@ -374,11 +374,11 @@ private fun createApoiadoPdf(context: Context, details: ApoiadoPdfDetails) {
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
     val textPaint = Paint().apply {
-        color = PdfColor.BLACK
+        color = AndroidBlack
         textSize = 11f
     }
     val mutedPaint = Paint().apply {
-        color = PdfColor.DKGRAY
+        color = AndroidDarkGrey
         textSize = 10f
     }
 
@@ -521,7 +521,7 @@ private fun createPdfBranding(
     val headerPaint = Paint().apply { color = ipcaGreen }
     val footerPaint = Paint().apply { color = ipcaGreen }
     val footerTextPaint = Paint().apply {
-        color = PdfColor.WHITE
+        color = AndroidWhite
         textSize = 9f
     }
 

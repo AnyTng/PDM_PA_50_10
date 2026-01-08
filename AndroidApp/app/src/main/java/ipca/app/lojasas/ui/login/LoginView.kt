@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.login
 
+import ipca.app.lojasas.ui.theme.*
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -61,11 +62,6 @@ import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.R
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.UserRole
-import ipca.app.lojasas.ui.theme.LojaSocialIPCATheme
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.WhiteColor
-import ipca.app.lojasas.ui.theme.InputBorder
-import ipca.app.lojasas.ui.theme.InputBackground
 
 
 
@@ -164,7 +160,7 @@ fun LoginView(
                         fontSize = 20.sp,
                         fontFamily = FontFamily(Font(R.font.introboldalt)),
                         fontWeight = FontWeight(700),
-                        color = Color(0xFF000000),
+                        color = BlackColor,
                     ),
                     modifier = Modifier.align(Alignment.Start)
                 )
@@ -201,7 +197,7 @@ fun LoginView(
                 if (uiState.error != null) {
                     Text(
                         text = uiState.error!!,
-                        color = Color.Red,
+                        color = RedColor,
                         fontSize = 12.sp
                     )
                 }
@@ -268,7 +264,7 @@ fun LoginView(
                             fontSize = 13.sp,
                             fontFamily = FontFamily(Font(R.font.introboldalt)),
                             fontWeight = FontWeight.Normal,
-                            color = Color.Gray,
+                            color = GreyColor,
                             textDecoration = TextDecoration.Underline
                         ),
                         modifier = Modifier
@@ -338,7 +334,7 @@ fun LoginView(
                 },
                 dismissButton = {
                     TextButton(onClick = { showForgotPasswordDialog = false }) {
-                        Text("Cancelar", color = Color.Gray)
+                        Text("Cancelar", color = GreyColor)
                     }
                 },
                 containerColor = WhiteColor,
@@ -374,7 +370,7 @@ fun CustomFigmaInput(
         onValueChange = onValueChange,
         textStyle = TextStyle(
             fontSize = 16.sp,
-            color = Color.Black
+            color = BlackColor
         ),
         keyboardOptions = KeyboardOptions(
             keyboardType = keyboardType,
@@ -397,7 +393,7 @@ fun CustomFigmaInput(
                 if (value.isEmpty() && !isFocused) {
                     Text(
                         text = placeholder,
-                        style = TextStyle(color = Color.Gray, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
+                        style = TextStyle(color = GreyColor, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.introboldalt)),
                         )
                     )
                 }

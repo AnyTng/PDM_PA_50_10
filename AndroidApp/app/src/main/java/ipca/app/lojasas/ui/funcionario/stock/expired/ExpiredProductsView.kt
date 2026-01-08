@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock.expired
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,11 +48,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.Product
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
-import ipca.app.lojasas.ui.funcionario.stock.components.StockExpired
 import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
-import ipca.app.lojasas.ui.theme.GreenSas
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
@@ -122,7 +120,7 @@ fun ExpiredProductsView(
                         modifier = Modifier.fillMaxWidth()
                     )
                     if (!state.donationError.isNullOrBlank()) {
-                        Text(text = state.donationError ?: "Erro", color = Color.Red)
+                        Text(text = state.donationError ?: "Erro", color = RedColor)
                     }
                 }
             },
@@ -134,7 +132,7 @@ fun ExpiredProductsView(
                 ) {
                     if (state.isDonating) {
                         CircularProgressIndicator(
-                            color = Color.White,
+                            color = WhiteColor,
                             strokeWidth = 2.dp,
                             modifier = Modifier
                                 .padding(end = 8.dp)
@@ -195,7 +193,7 @@ private fun ExpiredProductsViewContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
@@ -293,7 +291,7 @@ private fun ExpiredProductsViewContent(
             if (!donationError.isNullOrBlank()) {
                 Text(
                     text = donationError ?: "Erro ao doar.",
-                    color = Color.Red,
+                    color = RedColor,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                 )
             }
@@ -313,7 +311,7 @@ private fun ExpiredProductsViewContent(
                 error != null -> {
                     Text(
                         text = error.ifBlank { "Erro" },
-                        color = Color.Red,
+                        color = RedColor,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
@@ -347,10 +345,10 @@ private fun ExpiredProductsViewContent(
                                     onCheckedChange = { onToggleSelection(group) },
                                     enabled = !isDonating,
                                     colors = CheckboxDefaults.colors(
-                                        checkedColor = StockExpired,
-                                        uncheckedColor = Color.Gray,
-                                        checkmarkColor = Color.White,
-                                        disabledUncheckedColor = Color.LightGray
+                                        checkedColor = ExpiredRed,
+                                        uncheckedColor = GreyColor,
+                                        checkmarkColor = WhiteColor,
+                                        disabledUncheckedColor = LightGreyColor
                                     ),
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
@@ -416,7 +414,7 @@ private fun DropdownMenuSectionHeader(
     onToggle: () -> Unit
 ) {
     DropdownMenuItem(
-        text = { Text(title, color = Color.Gray) },
+        text = { Text(title, color = GreyColor) },
         onClick = onToggle,
         trailingIcon = {
             Icon(
@@ -426,7 +424,7 @@ private fun DropdownMenuSectionHeader(
                     Icons.Default.KeyboardArrowDown
                 },
                 contentDescription = null,
-                tint = Color.Gray
+                tint = GreyColor
             )
         }
     )
@@ -449,7 +447,7 @@ private fun ExpiredEmptyState(message: String) {
         Text(
             text = message,
             textAlign = TextAlign.Center,
-            color = Color(0xFF333333),
+            color = TextDarkGrey,
             modifier = Modifier.padding(top = 8.dp)
         )
     }

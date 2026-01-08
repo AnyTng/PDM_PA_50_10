@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,11 +28,10 @@ fun MenuView(
 ) {
     val viewModel: MenuFuncionarioViewModel = hiltViewModel()
     val isAdmin by viewModel.isAdmin
-    val backgroundColor = Color(0xFFF2F2F2)
 
     MenuViewContent(
         isAdmin = isAdmin,
-        backgroundColor = backgroundColor,
+        GreyBg = GreyBg,
         onNavigate = { route -> navController.navigate(route) },
         onLogout = {
             try {
@@ -51,7 +51,7 @@ fun MenuView(
 @Composable
 private fun MenuViewContent(
     isAdmin: Boolean,
-    backgroundColor: Color,
+    GreyBg: Color,
     onNavigate: (String) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -59,7 +59,7 @@ private fun MenuViewContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(GreyBg)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -74,7 +74,7 @@ private fun MenuViewContent(
             item {
                 // --- GRUPO PERFIL / ADMIN ---
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -97,7 +97,7 @@ private fun MenuViewContent(
                 // --- BLOCO EXTRA ADMIN (como tinhas “Historico”) ---
                 item {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = WhiteColor),
                         shape = RoundedCornerShape(12.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -113,7 +113,7 @@ private fun MenuViewContent(
             // --- OUTRAS OPÇÕES ---
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -132,7 +132,7 @@ private fun MenuViewContent(
 
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -153,7 +153,7 @@ private fun MenuViewContent(
             // --- BOTÃO TERMINAR SESSÃO ---
             item {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
@@ -168,7 +168,7 @@ private fun MenuViewContent(
                     ) {
                         Text(
                             text = "Terminar Sessão",
-                            color = Color.Red,
+                            color = RedColor,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -196,13 +196,13 @@ fun MenuRow(
         Text(
             text = title,
             fontSize = 18.sp,
-            color = Color.Black,
+            color = BlackColor,
             fontWeight = FontWeight.Normal
         )
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
             contentDescription = "Ir",
-            tint = Color.Black,
+            tint = BlackColor,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -212,7 +212,7 @@ fun MenuRow(
 @Composable
 fun MenuDivider() {
     HorizontalDivider(
-        color = Color(0xFFE0E0E0),
+        color = DividerLight,
         thickness = 1.dp
     )
 }
@@ -225,7 +225,7 @@ private fun MenuViewPreview_Colaborador() {
     MaterialTheme {
         MenuViewContent(
             isAdmin = false,
-            backgroundColor = Color(0xFFF2F2F2),
+            GreyBg = GreyBg,
             onNavigate = {},
             onLogout = {}
         )
@@ -238,7 +238,7 @@ private fun MenuViewPreview_Admin() {
     MaterialTheme {
         MenuViewContent(
             isAdmin = true,
-            backgroundColor = Color(0xFFF2F2F2),
+            GreyBg = GreyBg,
             onNavigate = {},
             onLogout = {}
         )

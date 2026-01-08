@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,7 +24,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.data.apoiado.ApoiadoItem
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -51,7 +51,7 @@ fun ApoiadosListView(
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.CreateApoiado.route) },
                 containerColor = GreenSas,
-                contentColor = Color.White,
+                contentColor = WhiteColor,
                 modifier = Modifier.size(64.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Criar Apoiado", modifier = Modifier.size(32.dp))
@@ -62,27 +62,27 @@ fun ApoiadosListView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             // --- BARRA DE FERRAMENTAS ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
+                    .background(WhiteColor)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+                Icon(Icons.Default.Search, contentDescription = null, tint = GreyColor)
                 Spacer(modifier = Modifier.width(8.dp))
 
                 BasicTextField(
                     value = state.searchQuery,
                     onValueChange = { viewModel.onSearchQueryChange(it) },
                     modifier = Modifier.weight(1f),
-                    textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                    textStyle = TextStyle(fontSize = 16.sp, color = BlackColor),
                     singleLine = true,
                     decorationBox = { innerTextField ->
-                        if (state.searchQuery.isEmpty()) Text("Pesquisar...", color = Color.Gray)
+                        if (state.searchQuery.isEmpty()) Text("Pesquisar...", color = GreyColor)
                         innerTextField()
                     }
                 )
@@ -90,7 +90,7 @@ fun ApoiadosListView(
                 // Filtros
                 Box {
                     IconButton(onClick = { showFilterMenu = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = if(state.currentFilter != "Todos") GreenSas else Color.Black)
+                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = if(state.currentFilter != "Todos") GreenSas else BlackColor)
                     }
                     DropdownMenu(
                         expanded = showFilterMenu,
@@ -124,7 +124,7 @@ fun ApoiadosListView(
                 // Ordenação
                 Box {
                     IconButton(onClick = { showSortMenu = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color.Black)
+                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = BlackColor)
                     }
                     DropdownMenu(
                         expanded = showSortMenu,
@@ -142,11 +142,11 @@ fun ApoiadosListView(
                     Icon(
                         Icons.Default.PictureAsPdf,
                         contentDescription = "Download PDF",
-                        tint = Color.Black
+                        tint = BlackColor
                     )
                 }
                 IconButton(onClick = { viewModel.exportToCSV(context) }) {      
-                    Icon(Icons.Default.FileDownload, contentDescription = "Download CSV", tint = Color.Black)
+                    Icon(Icons.Default.FileDownload, contentDescription = "Download CSV", tint = BlackColor)
                 }
             }
 
@@ -187,7 +187,7 @@ fun ApoiadosListView(
         Dialog(onDismissRequest = { viewModel.selectApoiado(null) }) {
             Card(
                 modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(Modifier.padding(16.dp)) {
@@ -201,15 +201,15 @@ fun ApoiadosListView(
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
                     ) {
-                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color.White)
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = WhiteColor)
                         Spacer(Modifier.width(8.dp))
-                        Text("Exportar PDF", color = Color.White)
+                        Text("Exportar PDF", color = WhiteColor)
                     }
                     HorizontalDivider(color = GreenSas, modifier = Modifier.padding(vertical = 8.dp))
 
                     Column(Modifier.weight(1f, fill = false)) {
                         Text(user.nome, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(user.email, fontSize = 14.sp, color = Color.Gray)
+                        Text(user.email, fontSize = 14.sp, color = GreyColor)
                         Spacer(Modifier.height(16.dp))
 
                         DetailRow("Nº Mecanográfico", user.id)
@@ -231,23 +231,23 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
     // Definir a cor do cabeçalho baseada no status
     val statusColor = when(apoiado.displayStatus) {
         "Aprovado" -> GreenSas
-        "Conta Expirada" -> Color(0xFFB65A00) // Laranja Escuro
-        "Bloqueado", "Negado" -> Color(0xFFD32F2F) // Vermelho Escuro
-        "Apoio Pausado" -> Color(0xFFF57C00) // Laranja
-        "Analise" -> Color(0xFF1976D2) // Azul
-        else -> Color.Gray // Cinzento para outros (Por Submeter, etc)
+        "Conta Expirada" -> WarningOrangeDark // Laranja Escuro
+        "Bloqueado", "Negado" -> DarkRed // Vermelho Escuro
+        "Apoio Pausado" -> StatusOrange // Laranja
+        "Analise" -> StatusBlue // Azul
+        else -> GreyColor // Cinzento para outros (Por Submeter, etc)
     }
 
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
             // Fundo do cabeçalho agora usa a cor dinâmica 'statusColor'
             Box(Modifier.fillMaxWidth().background(statusColor).padding(horizontal = 16.dp, vertical = 10.dp)) {
-                Text(text = apoiado.nome, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(text = apoiado.nome, color = WhiteColor, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -265,23 +265,23 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { onAction("details") }) { Text("Detalhes", color = Color.Gray) }
+                    TextButton(onClick = { onAction("details") }) { Text("Detalhes", color = GreyColor) }
                     Spacer(modifier = Modifier.width(8.dp))
 
                     // Botões de ação dinâmica
                     when (apoiado.rawStatus) {
                         "Bloqueado" -> ActionButton("Desbloquear", GreenSas) { onAction("unblock") }
                         "Aprovado" -> {
-                            ActionButton("Pausar Apoio", Color(0xFFF57C00)) { onAction("suspend") }
+                            ActionButton("Pausar Apoio", StatusOrange) { onAction("suspend") }
                             Spacer(modifier = Modifier.width(8.dp))
-                            ActionButton("Bloquear", Color.Black) { onAction("block") }
+                            ActionButton("Bloquear", BlackColor) { onAction("block") }
                         }
                         "Suspenso" -> {
                             ActionButton("Reativar", GreenSas) { onAction("reactivate") }
                             Spacer(modifier = Modifier.width(8.dp))
-                            ActionButton("Bloquear", Color.Black) { onAction("block") }
+                            ActionButton("Bloquear", BlackColor) { onAction("block") }
                         }
-                        else -> ActionButton("Bloquear", Color.Black) { onAction("block") }
+                        else -> ActionButton("Bloquear", BlackColor) { onAction("block") }
                     }
                 }
             }
@@ -305,7 +305,7 @@ fun ActionButton(text: String, color: Color, onClick: () -> Unit) {
 @Composable
 private fun DetailRow(label: String, value: String) {
     Column(modifier = Modifier.padding(bottom = 6.dp)) {
-        Text(label, fontSize = 12.sp, color = Color.Gray)
+        Text(label, fontSize = 12.sp, color = GreyColor)
         Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }

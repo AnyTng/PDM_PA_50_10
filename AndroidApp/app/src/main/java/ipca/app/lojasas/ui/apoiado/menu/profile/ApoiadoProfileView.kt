@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +26,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.menu.profile.*
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -58,7 +58,7 @@ fun ApoiadoProfileView(
                         }
                     },
                     containerColor = GreenSas,
-                    contentColor = Color.White,
+                    contentColor = WhiteColor,
                     shape = CircleShape,
                     modifier = Modifier.size(64.dp)
                 ) {
@@ -81,13 +81,13 @@ fun ApoiadoProfileView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(Color(0xFFF8F8F8))
+                    .background(SurfaceLight)
                     .verticalScroll(scrollState)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 if (state.error != null) {
-                    Text(text = state.error!!, color = Color.Red, fontSize = 14.sp)
+                    Text(text = state.error!!, color = RedColor, fontSize = 14.sp)
                 }
 
                 // --- IDENTIFICAÇÃO ---
@@ -165,8 +165,8 @@ fun ApoiadoProfileView(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // --- OPÇÕES DE CONTA ---
-                ProfileOptionCard(text = "Alterar Senha", textColor = Color.Black) { showPasswordDialog = true }
-                //ProfileOptionCard(text = "Apagar Conta", textColor = Color.Red) { showDeleteDialog = true }
+                ProfileOptionCard(text = "Alterar Senha", textColor = BlackColor) { showPasswordDialog = true }
+                //ProfileOptionCard(text = "Apagar Conta", textColor = RedColor) { showDeleteDialog = true }
 
                 Spacer(modifier = Modifier.height(80.dp))
             }
@@ -199,12 +199,12 @@ fun ApoiadoProfileView(
                     TextButton(onClick = {
                         showDeleteDialog = false
                         viewModel.deleteAccount { navController.navigate(Screen.Login.route) { popUpTo(0) } }
-                    }) { Text("Apagar", color = Color.Red) }
+                    }) { Text("Apagar", color = RedColor) }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) { Text("Cancelar") }
                 },
-                containerColor = Color.White
+                containerColor = WhiteColor
             )
         }
     }

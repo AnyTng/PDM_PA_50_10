@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,10 +27,7 @@ import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.ui.funcionario.stock.components.ConfirmDeleteDialog
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -101,7 +99,7 @@ fun ProductFormView(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar", color = Color.Gray)
+                    Text("Cancelar", color = GreyColor)
                 }
             }
         ) {
@@ -125,7 +123,7 @@ fun ProductFormView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         if (state.isLoading) {
             CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
@@ -172,7 +170,7 @@ private fun ProductFormViewContent(
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = BlackColor
             ),
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -276,7 +274,7 @@ private fun ProductFormViewContent(
                     .padding(top = 8.dp)
                     .background(GreenSas, shape = RoundedCornerShape(8.dp))
             ) {
-                Icon(Icons.Default.PhotoCamera, contentDescription = "Scan", tint = Color.White)
+                Icon(Icons.Default.PhotoCamera, contentDescription = "Scan", tint = WhiteColor)
             }
         }
 
@@ -300,10 +298,10 @@ private fun ProductFormViewContent(
                     enabled = !state.isSaving && !state.isDeleting,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE11D2E),
-                        contentColor = Color.White,
-                        disabledContainerColor = Color(0xFFE11D2E).copy(alpha = 0.6f),
-                        disabledContentColor = Color.White.copy(alpha = 0.8f)
+                        containerColor = DangerRed,
+                        contentColor = WhiteColor,
+                        disabledContainerColor = DangerRed.copy(alpha = 0.6f),
+                        disabledContentColor = WhiteColor.copy(alpha = 0.8f)
                     )
                 ) {
                     Text(
@@ -321,7 +319,7 @@ private fun ProductFormViewContent(
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = GreenSas,
-                        contentColor = Color.White
+                        contentColor = WhiteColor
                     )
                 ) {
                     Text(
@@ -342,7 +340,7 @@ private fun ProductFormViewContent(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = GreenSas,
-                    contentColor = Color.White
+                    contentColor = WhiteColor
                 )
             ) {
                 Text(
@@ -397,20 +395,20 @@ fun StockCampaignSelector(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = GreenSas,
                     focusedLabelColor = GreenSas,
-                    focusedTextColor = Color.Black,
-                    unfocusedBorderColor = Color.Gray,
-                    unfocusedLabelColor = Color.Black,
-                    unfocusedTextColor = Color.Black
+                    focusedTextColor = BlackColor,
+                    unfocusedBorderColor = GreyColor,
+                    unfocusedLabelColor = BlackColor,
+                    unfocusedTextColor = BlackColor
                 )
             )
 
             ExposedDropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.background(Color.White)
+                modifier = Modifier.background(WhiteColor)
             ) {
                 DropdownMenuItem(
-                    text = { Text("Nenhuma", color = Color.Gray) },
+                    text = { Text("Nenhuma", color = GreyColor) },
                     onClick = {
                         onCampaignSelected("")
                         expanded = false
@@ -419,7 +417,7 @@ fun StockCampaignSelector(
 
                 campaigns.forEach { campaign ->
                     DropdownMenuItem(
-                        text = { Text(campaign.nomeCampanha, color = Color.Black) },
+                        text = { Text(campaign.nomeCampanha, color = BlackColor) },
                         onClick = {
                             onCampaignSelected(campaign.id)
                             expanded = false
@@ -477,11 +475,11 @@ fun StockAutocomplete(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = GreenSas,
                     focusedLabelColor = GreenSas,
-                    focusedTextColor = Color.Black,
+                    focusedTextColor = BlackColor,
                     cursorColor = GreenSas,
-                    unfocusedBorderColor = Color.Gray,
-                    unfocusedLabelColor = Color.Black,
-                    unfocusedTextColor = Color.Black
+                    unfocusedBorderColor = GreyColor,
+                    unfocusedLabelColor = BlackColor,
+                    unfocusedTextColor = BlackColor
                 ),
                 trailingIcon = {
                     if (!readOnly && filteredSuggestions.isNotEmpty()) {
@@ -494,11 +492,11 @@ fun StockAutocomplete(
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(Color.White)
+                    modifier = Modifier.background(WhiteColor)
                 ) {
                     filteredSuggestions.forEach { selectionOption ->
                         DropdownMenuItem(
-                            text = { Text(selectionOption, color = Color.Black) },
+                            text = { Text(selectionOption, color = BlackColor) },
                             onClick = {
                                 onValueChange(selectionOption)
                                 expanded = false
@@ -535,11 +533,11 @@ fun StockInput(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = GreenSas,
             focusedLabelColor = GreenSas,
-            focusedTextColor = Color.Black,
+            focusedTextColor = BlackColor,
             cursorColor = GreenSas,
-            unfocusedBorderColor = Color.Gray,
-            unfocusedLabelColor = Color.Black,
-            unfocusedTextColor = Color.Black
+            unfocusedBorderColor = GreyColor,
+            unfocusedLabelColor = BlackColor,
+            unfocusedTextColor = BlackColor
         )
     )
 }
@@ -564,16 +562,16 @@ fun StockDateInput(
             shape = RoundedCornerShape(10.dp),
             readOnly = true,
             trailingIcon = {
-                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = Color.Gray)
+                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = GreyColor)
             },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = GreenSas,
                 focusedLabelColor = GreenSas,
-                focusedTextColor = Color.Black,
+                focusedTextColor = BlackColor,
                 cursorColor = GreenSas,
-                unfocusedBorderColor = Color.Gray,
-                unfocusedLabelColor = Color.Black,
-                unfocusedTextColor = Color.Black
+                unfocusedBorderColor = GreyColor,
+                unfocusedLabelColor = BlackColor,
+                unfocusedTextColor = BlackColor
             )
         )
         Box(
@@ -592,7 +590,7 @@ private fun ProductFormViewPreview_New() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         val previewState = ProductFormUiState(
@@ -627,7 +625,7 @@ private fun ProductFormViewPreview_Edit() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         val previewState = ProductFormUiState(
@@ -661,7 +659,7 @@ private fun ProductFormViewPreview_Loading() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))

@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,11 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
 import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
-import ipca.app.lojasas.ui.theme.GreenSas
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -139,7 +138,7 @@ private fun <T> ProductDetailsViewContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
@@ -305,7 +304,7 @@ private fun <T> ProductDetailsViewContent(
                 error != null -> {
                     Text(
                         text = error.ifBlank { "Erro" },
-                        color = Color.Red,
+                        color = RedColor,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                     )
                 }
@@ -314,7 +313,7 @@ private fun <T> ProductDetailsViewContent(
                     Text(
                         text = emptyText,
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp),
-                        color = Color(0xFF333333)
+                        color = TextDarkGrey
                     )
                 }
 
@@ -381,7 +380,7 @@ private fun ProductDetailsViewPreview_Normal() {
         groupRow = { g ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = WhiteColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
@@ -400,7 +399,7 @@ private fun ProductDetailsViewPreview_Normal() {
                     Text(
                         text = "x${g.quantity}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF333333)
+                        color = TextDarkGrey
                     )
                 }
             }
@@ -497,7 +496,7 @@ private fun DropdownMenuSectionHeader(
     onToggle: () -> Unit
 ) {
     DropdownMenuItem(
-        text = { Text(title, color = Color.Gray) },
+        text = { Text(title, color = GreyColor) },
         onClick = onToggle,
         trailingIcon = {
             Icon(
@@ -507,7 +506,7 @@ private fun DropdownMenuSectionHeader(
                     androidx.compose.material.icons.Icons.Default.KeyboardArrowDown
                 },
                 contentDescription = null,
-                tint = Color.Gray
+                tint = GreyColor
             )
         }
     )

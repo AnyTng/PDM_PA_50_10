@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu.help
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -29,7 +30,7 @@ fun UrgentHelpView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(WhiteColor)
     ) {
 
 
@@ -43,11 +44,11 @@ fun UrgentHelpView(
                 text = "Pedido de Ajuda Urgente",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF094E33)
+                color = GreenSas
             )
             Text(
                 text = "Descreva abaixo o que necessita com urgência.",
-                color = Color.Gray,
+                color = GreyColor,
                 fontSize = 14.sp
             )
 
@@ -65,7 +66,7 @@ fun UrgentHelpView(
 
             if (error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(error!!, color = Color.Red)
+                Text(error!!, color = RedColor)
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -77,10 +78,10 @@ fun UrgentHelpView(
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF094E33)),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
                 enabled = !isLoading
             ) {
-                if (isLoading) CircularProgressIndicator(color = Color.White)
+                if (isLoading) CircularProgressIndicator(color = WhiteColor)
                 else Text("Submeter Pedido")
             }
         }

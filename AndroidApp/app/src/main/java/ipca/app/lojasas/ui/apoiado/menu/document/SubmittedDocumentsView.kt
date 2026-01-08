@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu.document
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -27,7 +28,6 @@ import ipca.app.lojasas.ui.components.AppHeader
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-val GreenSAS = Color(0xFF094E33)
 
 @Composable
 fun SubmittedDocumentsView(
@@ -51,17 +51,17 @@ fun SubmittedDocumentsView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = GreenSAS
+                    color = GreenSas
                 )
             } else if (state.groupedDocuments.isEmpty()) {
                 Text(
                     text = "Ainda não submeteu documentos.",
-                    color = Color.Gray,
+                    color = GreyColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
@@ -76,10 +76,10 @@ fun SubmittedDocumentsView(
                                 text = "Entrega nº $entregaNum",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = GreenSAS,
+                                color = GreenSas,
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                             )
-                            HorizontalDivider(color = GreenSAS, thickness = 1.dp)
+                            HorizontalDivider(color = GreenSas, thickness = 1.dp)
                         }
 
                         // --- LISTA DE FICHEIROS DA ENTREGA ---
@@ -109,7 +109,7 @@ fun SubmittedDocumentsView(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = Color.Red,
+                    color = RedColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -126,7 +126,7 @@ fun SubmittedFileCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -141,7 +141,7 @@ fun SubmittedFileCard(
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = null,
-                tint = GreenSAS,
+                tint = GreenSas,
                 modifier = Modifier.size(32.dp)
             )
 
@@ -152,24 +152,24 @@ fun SubmittedFileCard(
                     text = file.title,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color.Black
+                    color = BlackColor
                 )
                 Text(
                     text = file.fileName,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
                 Text(
                     text = dateFormat.format(file.date),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
 
             Icon(
                 imageVector = Icons.Default.Visibility,
                 contentDescription = "Ver",
-                tint = Color.Gray
+                tint = GreyColor
             )
         }
     }

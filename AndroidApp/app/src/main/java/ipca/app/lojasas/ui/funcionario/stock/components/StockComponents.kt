@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock.components
 
+import ipca.app.lojasas.ui.theme.*
 import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -39,18 +40,12 @@ import ipca.app.lojasas.ui.funcionario.stock.displayStatus
 import ipca.app.lojasas.ui.funcionario.stock.isAvailableForCount
 import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import ipca.app.lojasas.ui.funcionario.stock.isReserved
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-val StockBackground = Color(0xFFF2F2F2)
-val StockAccent = Color(0xFFC9A27B)
-val StockReserved = Color(0xFFB26A00)
-val StockExpired = Color(0xFFE53935)
 
 @Composable
 fun StockSearchBar(
@@ -71,7 +66,7 @@ fun StockSearchBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.White)
+            .background(WhiteColor)
     ) {
         Row(
             modifier = Modifier
@@ -104,14 +99,14 @@ fun StockSearchBar(
                     unfocusedLeadingIconColor = GreenSas,
                     focusedTextColor = GreenSas,
                     unfocusedTextColor = GreenSas,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
+                    focusedContainerColor = TransparentColor,
+                    unfocusedContainerColor = TransparentColor
                 )
             )
             if (showFilter) {
                 Box {
                     IconButton(onClick = { showFilterMenu = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color(0xFF333333))
+                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = TextDarkGrey)
                     }
                     filterMenuContent(showFilterMenu) { showFilterMenu = false }
                 }
@@ -119,14 +114,14 @@ fun StockSearchBar(
             if (showSort) {
                 Box {
                     IconButton(onClick = { showSortMenu = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color(0xFF333333))
+                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = TextDarkGrey)
                     }
                     sortMenuContent(showSortMenu) { showSortMenu = false }
                 }
             }
             if (showExport) {
                 IconButton(onClick = onExportClick) {
-                    Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = Color(0xFF333333))
+                    Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = TextDarkGrey)
                 }
             }
         }
@@ -150,7 +145,7 @@ fun StockGroupCard(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         border = BorderStroke(2.dp, GreenSas)
     ) {
         Row(
@@ -172,7 +167,7 @@ fun StockGroupCard(
 
             Surface(
                 color = GreenSas,
-                contentColor = Color.White,
+                contentColor = WhiteColor,
                 shape = RoundedCornerShape(50)
             ) {
                 Row(
@@ -187,7 +182,7 @@ fun StockGroupCard(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Abrir",
-                        tint = Color.White,
+                        tint = WhiteColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -207,8 +202,8 @@ fun StockExpiredSummaryCard(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = StockExpired),
-        border = BorderStroke(2.dp, StockExpired)
+        colors = CardDefaults.cardColors(containerColor = ExpiredRed),
+        border = BorderStroke(2.dp, ExpiredRed)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
@@ -221,15 +216,15 @@ fun StockExpiredSummaryCard(
                     fontWeight = FontWeight.Bold,
                     fontFamily = IntroFontFamily
                 ),
-                color = Color.White,
+                color = WhiteColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f)
             )
 
             Surface(
-                color = Color.White,
-                contentColor = StockExpired,
+                color = WhiteColor,
+                contentColor = ExpiredRed,
                 shape = RoundedCornerShape(50)
             ) {
                 Row(
@@ -244,7 +239,7 @@ fun StockExpiredSummaryCard(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Abrir",
-                        tint = StockExpired,
+                        tint = ExpiredRed,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -262,10 +257,10 @@ fun StockProductGroupCard(
     val reference = Date()
     val statusLabel = product.displayStatus(reference)
     val statusColor = when {
-        product.isExpiredVisible(reference) -> StockExpired
-        product.isReserved() -> StockReserved
+        product.isExpiredVisible(reference) -> ExpiredRed
+        product.isReserved() -> ReservedOrange
         product.isAvailableForCount(reference) -> GreenSas
-        else -> Color(0xFF9E9E9E)
+        else -> MediumGrey
     }
     val barcodeBitmap by produceState<Bitmap?>(initialValue = null, key1 = product.codBarras) {
         val code = product.codBarras?.takeIf { it.isNotBlank() }
@@ -281,7 +276,7 @@ fun StockProductGroupCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         border = BorderStroke(2.dp, statusColor)
     ) {
         // Cabeçalho por estado
@@ -298,7 +293,7 @@ fun StockProductGroupCard(
             ) {
                 Text(
                     text = product.nomeProduto,
-                    color = Color.White,
+                    color = WhiteColor,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontFamily = IntroFontFamily
@@ -309,7 +304,7 @@ fun StockProductGroupCard(
                 )
 
                 Surface(
-                    color = Color.White,
+                    color = WhiteColor,
                     contentColor = statusColor,
                     shape = RoundedCornerShape(50)
                 ) {
@@ -371,7 +366,7 @@ fun StockProductGroupCard(
                         Text(
                             text = product.codBarras!!,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Black
+                            color = BlackColor
                         )
                     }
                 } else {
@@ -381,10 +376,10 @@ fun StockProductGroupCard(
                 Button(
                     onClick = onViewClick,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
+                        containerColor = TransparentColor,
                         contentColor = GreenSas
                     ),
-                    border = BorderStroke(1.dp, Color.Transparent),
+                    border = BorderStroke(1.dp, TransparentColor),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 0.dp,
                         pressedElevation = 0.dp,
@@ -413,12 +408,12 @@ fun StockLabelValue(label: String, value: String) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
-            color = Color.Black
+            color = BlackColor
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Black
+            color = BlackColor
         )
     }
 }
@@ -432,7 +427,7 @@ fun generateBarcodeBitmap(content: String, width: Int, height: Int): Bitmap? {
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         for (x in 0 until w) {
             for (y in 0 until h) {
-                bitmap.setPixel(x, y, if (bitMatrix[x, y]) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                bitmap.setPixel(x, y, if (bitMatrix[x, y]) AndroidBlack else AndroidWhite)
             }
         }
         bitmap
@@ -447,7 +442,7 @@ fun StockFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     FloatingActionButton(
         onClick = onClick,
         containerColor = GreenSas,
-        contentColor = Color.White,
+        contentColor = WhiteColor,
         modifier = modifier.size(64.dp)
     ) {
         Icon(imageVector = Icons.Default.Add, contentDescription = "Adicionar")
@@ -466,14 +461,14 @@ fun ConfirmDeleteDialog(
             Button(
                 onClick = onConfirm,
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D2E))
+                colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
             ) {
-                if (isLoading) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp).size(16.dp), color = Color.White, strokeWidth = 2.dp)
+                if (isLoading) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp).size(16.dp), color = WhiteColor, strokeWidth = 2.dp)
                 Text("Apagar")
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss, enabled = !isLoading, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = GreenSas)) {
+            Button(onClick = onDismiss, enabled = !isLoading, colors = ButtonDefaults.buttonColors(containerColor = WhiteColor, contentColor = GreenSas)) {
                 Text("Cancelar")
             }
         }

@@ -1,14 +1,17 @@
 package ipca.app.lojasas.data.auth
 
+import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    @ApplicationContext private val appContext: Context
 ) {
     fun signIn(
         email: String,
@@ -134,10 +137,18 @@ class AuthRepository @Inject constructor(
     }
 
     fun signOut() {
+        clearRoleCache()
         auth.signOut()
     }
 
     fun currentUserEmail(): String? = auth.currentUser?.email?.trim()
 
     fun currentUserId(): String? = auth.currentUser?.uid
+
+    private fun clearRoleCache() {
+        val email = auth.currentUser?.email?.trim().orEmpty()
+        if (email.isBlank()) return
+        val prefs = appContext.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        prefs.edit().remove("role_${email}").apply()
+    }
 }

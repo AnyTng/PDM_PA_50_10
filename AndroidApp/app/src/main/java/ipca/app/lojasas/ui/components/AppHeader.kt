@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.components
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ipca.app.lojasas.R
 
-private val HeaderGreen = Color(0xFF094E33)
 
 @Composable
 fun AppHeader(
@@ -45,7 +45,7 @@ fun AppHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(HeaderGreen)
+            .background(GreenSas)
             .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,7 +64,7 @@ fun AppHeader(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.cd_back),
-                        tint = Color.White,
+                        tint = WhiteColor,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -77,7 +77,7 @@ fun AppHeader(
                     fontSize = 22.sp,
                     fontFamily = FontFamily(Font(R.font.introboldalt)),
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = WhiteColor
                 )
             )
         }

@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.home
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +53,6 @@ import ipca.app.lojasas.data.cestas.ApoiadoCesta
 import ipca.app.lojasas.data.requests.UrgentRequest
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
 import ipca.app.lojasas.ui.funcionario.calendar.MandatoryPasswordChangeDialog
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -60,24 +60,14 @@ import java.util.Locale
 // -----------------------------------------------------------------------------
 //  Design tokens (cores aproximadas do mockup)
 // -----------------------------------------------------------------------------
-private val TextGreen = Color(0xFF094E33)
-private val DarkGreenCard = TextGreen
-private val BlueGreyCard = Color(0xFF09414E)
-private val LightGreenCard = Color(0xFF9DD0BC)
+private val DarkGreenCard = GreenSas
 
 // Card para: "Entregas não levantadas"
-private val LightYellowCard = Color(0xFFF6E7A1)
-private val LightYellowText = Color(0xFF7A5D00)
 
 // Card para: "Entregas canceladas"
-private val LightGreyCard = Color(0xFF7B0A1F)
-private val DarkGreyText = Color(0xFFFFFFFF)
 
 // Card para: "Documentos em Falta"
-private val WarningOrange = Color(0xFFD07D1D)
 
-private val RedError = Color(0xFFB00020)
-private val DividerGrey = Color(0xFFD9D9D9)
 
 private enum class CestaCardStyle {
     PENDENTE,
@@ -107,7 +97,7 @@ fun ApoiadoHomeScreen(
     // 1) Loading
     if (state.isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = TextGreen)
+            CircularProgressIndicator(color = GreenSas)
         }
         return
     }
@@ -161,7 +151,7 @@ fun ApoiadoHomeScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(WhiteColor),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
@@ -299,7 +289,7 @@ private fun HomeHeader(
             fontFamily = IntroFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 28.sp,
-            color = TextGreen
+            color = GreenSas
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -315,7 +305,7 @@ private fun HomeHeader(
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color.Black
+                    color = BlackColor
                 )
                 Text(
                     text = statusUi.label,
@@ -338,7 +328,7 @@ private fun HomeHeader(
 
             Button(
                 onClick = onVerPerfil,
-                colors = ButtonDefaults.buttonColors(containerColor = TextGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
                 shape = RoundedCornerShape(10.dp),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                 modifier = Modifier.height(36.dp)
@@ -348,7 +338,7 @@ private fun HomeHeader(
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
-                    color = Color.White
+                    color = WhiteColor
                 )
             }
         }
@@ -373,7 +363,7 @@ private fun SectionSeparator(title: String) {
             fontFamily = IntroFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 12.sp,
-            color = Color.Gray
+            color = GreyColor
         )
 
         HorizontalDivider(
@@ -393,7 +383,7 @@ private fun CardActionButton(
     onClick: () -> Unit
 ) {
     Surface(
-        color = Color.White,
+        color = WhiteColor,
         shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .clickable(onClick = onClick)
@@ -429,15 +419,15 @@ private fun CestaHomeCard(
         CestaCardStyle.PENDENTE -> Quadruple(
             "Entrega de bens agendada",
             DarkGreenCard,
-            Color.White,
+            WhiteColor,
             DarkGreenCard
         )
 
         CestaCardStyle.CONCLUIDA -> Quadruple(
             "Entrega de bens concluída",
             LightGreenCard,
-            TextGreen,
-            TextGreen
+            GreenSas,
+            GreenSas
         )
 
         CestaCardStyle.NAO_LEVANTADA -> Quadruple(
@@ -448,9 +438,9 @@ private fun CestaHomeCard(
         )
         CestaCardStyle.CANCELADA -> Quadruple(
             "Entrega cancelada",
-            LightGreyCard,
-            DarkGreyText,
-            DarkGreyText
+            DarkRedCard,
+            WhiteColor,
+            WhiteColor
         )
     }
 
@@ -576,7 +566,7 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.White
+                color = WhiteColor
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -586,7 +576,7 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.95f)
+                color = WhiteColor.copy(alpha = 0.95f)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -619,7 +609,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
-                color = Color.White
+                color = WhiteColor
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -630,7 +620,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 /*Surface(
-                    color = Color.White,
+                    color = WhiteColor,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -647,7 +637,7 @@ private fun MissingDocumentsCard(onEnviar: () -> Unit) {
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Surface(
-                    color = Color.White,
+                    color = WhiteColor,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .clickable(onClick = onEnviar)
@@ -688,7 +678,7 @@ private fun EmptyStateCheck() {
         Text(
             text = "✓",
             fontSize = 54.sp,
-            color = Color(0xFFB0B0B0)
+            color = TextMutedGrey
         )
     }
 }
@@ -709,8 +699,8 @@ private fun CestaDetailsDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TextGreen)
-            ) { Text("Fechar", color = Color.White) }
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+            ) { Text("Fechar", color = WhiteColor) }
         },
         title = {
             Text(
@@ -747,7 +737,7 @@ private fun CestaDetailsDialog(
                     text = "ID: ${cesta.id}",
                     fontFamily = IntroFontFamily,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
         }
@@ -766,8 +756,8 @@ private fun UrgentRequestDetailsDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = TextGreen)
-            ) { Text("Fechar", color = Color.White) }
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas)
+            ) { Text("Fechar", color = WhiteColor) }
         },
         title = {
             Text(
@@ -822,11 +812,11 @@ private fun PausedCard() {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Info, contentDescription = null, tint = WhiteColor)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Apoio Pausado",
-                    color = Color.White,
+                    color = WhiteColor,
                     fontSize = 16.sp,
                     fontFamily = IntroFontFamily,
                     fontWeight = FontWeight.Bold
@@ -835,7 +825,7 @@ private fun PausedCard() {
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = "Contacte o SAS: sas@ipca.pt",
-                color = Color.White,
+                color = WhiteColor,
                 fontSize = 14.sp,
                 fontFamily = IntroFontFamily
             )
@@ -851,7 +841,7 @@ fun BlockedAccountScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(WhiteColor)
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -859,7 +849,7 @@ fun BlockedAccountScreen(
         Icon(
             Icons.Default.Warning,
             contentDescription = null,
-            tint = RedError,
+            tint = ErrorRed,
             modifier = Modifier.size(80.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -868,7 +858,7 @@ fun BlockedAccountScreen(
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = IntroFontFamily,
-            color = RedError
+            color = ErrorRed
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -882,9 +872,9 @@ fun BlockedAccountScreen(
                 onLogout()
                 navController.navigate(Screen.Login.route) { popUpTo(0) }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+            colors = ButtonDefaults.buttonColors(containerColor = BlackColor)
         ) {
-            Text("Terminar Sessão", color = Color.White)
+            Text("Terminar Sessão", color = WhiteColor)
         }
     }
 }
@@ -892,7 +882,7 @@ fun BlockedAccountScreen(
 @Composable
 private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = RedError),
+        colors = CardDefaults.cardColors(containerColor = ErrorRed),
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -900,7 +890,7 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Pedido Rejeitado",
-                color = Color.White,
+                color = WhiteColor,
                 fontSize = 16.sp,
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Bold
@@ -908,7 +898,7 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Motivo: $reason",
-                color = Color.White,
+                color = WhiteColor,
                 fontSize = 13.sp,
                 fontFamily = IntroFontFamily
             )
@@ -919,13 +909,13 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
             ) {
                 Button(
                     onClick = onTryAgain,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    colors = ButtonDefaults.buttonColors(containerColor = WhiteColor),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Text(
                         text = "Tentar de Novo",
-                        color = RedError,
+                        color = ErrorRed,
                         fontFamily = IntroFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
@@ -944,7 +934,7 @@ private fun getProfileStatusUi(rawStatus: String, faltaDocumentos: Boolean): Pro
     val status = rawStatus.trim()
 
     return when {
-        status.equals("Aprovado", ignoreCase = true) -> ProfileStatusUi("Aprovado", TextGreen, "✓")
+        status.equals("Aprovado", ignoreCase = true) -> ProfileStatusUi("Aprovado", GreenSas, "✓")
 
         // A app usa "Analise" na BD
         status.equals("Analise", ignoreCase = true) ||
@@ -959,8 +949,8 @@ private fun getProfileStatusUi(rawStatus: String, faltaDocumentos: Boolean): Pro
             ProfileStatusUi("Faltam Dados", WarningOrange, "⛔")
 
         status.equals("Suspenso", ignoreCase = true) -> ProfileStatusUi("Em pausa", WarningOrange, "⏸")
-        status.equals("Negado", ignoreCase = true) -> ProfileStatusUi("Rejeitado", RedError, "⛔")
-        status.equals("Bloqueado", ignoreCase = true) -> ProfileStatusUi("Bloqueado", RedError, "⛔")
+        status.equals("Negado", ignoreCase = true) -> ProfileStatusUi("Rejeitado", ErrorRed, "⛔")
+        status.equals("Bloqueado", ignoreCase = true) -> ProfileStatusUi("Bloqueado", ErrorRed, "⛔")
 
         status.isBlank() -> ProfileStatusUi("Por submeter", WarningOrange, null)
         else -> ProfileStatusUi(status, BlueGreyCard, null)

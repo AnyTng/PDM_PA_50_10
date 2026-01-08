@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.cestas
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
@@ -58,7 +59,6 @@ import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.cestas.CestaItem
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.text.Normalizer
 import java.util.Calendar
@@ -66,7 +66,6 @@ import java.util.Date
 import java.util.Locale
 
 
-private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable
 fun CestasListView(
@@ -140,24 +139,24 @@ fun CestasListView(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White)
+                            .background(WhiteColor)
                             .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+                            Icon(Icons.Default.Search, contentDescription = null, tint = GreyColor)
                             Spacer(modifier = Modifier.width(8.dp))
                             BasicTextField(
                                 value = state.searchQuery,
                                 onValueChange = { viewModel.onSearchQueryChange(it) },
                                 modifier = Modifier.weight(1f),
-                                textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                                textStyle = TextStyle(fontSize = 16.sp, color = BlackColor),
                                 singleLine = true,
                                 decorationBox = { innerTextField ->
                                     Box(modifier = Modifier.fillMaxWidth()) {
                                         if (state.searchQuery.isEmpty()) {
                                             Text(
                                                 "Pesquisar numero mecanografico...",
-                                                color = Color.Gray,
+                                                color = GreyColor,
                                                 fontSize = 14.sp,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis
@@ -183,7 +182,7 @@ fun CestasListView(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box {
-                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else Color.Gray
+                                    val yearColor = if (state.selectedYear != YEAR_FILTER_ALL) GreenSas else GreyColor
                                     TextButton(onClick = { showYearMenu = true }) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
@@ -217,7 +216,7 @@ fun CestasListView(
                                     }
                                 }
                                 Box {
-                                    val estadoColor = if (state.selectedEstado != ESTADO_TODOS) GreenSas else Color.Gray
+                                    val estadoColor = if (state.selectedEstado != ESTADO_TODOS) GreenSas else GreyColor
                                     TextButton(onClick = { showEstadoMenu = true }) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
@@ -252,7 +251,7 @@ fun CestasListView(
                                 }
 
                                 Box {
-                                    val origemColor = if (state.selectedOrigem != ORIGEM_TODOS) GreenSas else Color.Gray
+                                    val origemColor = if (state.selectedOrigem != ORIGEM_TODOS) GreenSas else GreyColor
                                     TextButton(onClick = { showOrigemMenu = true }) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
@@ -289,10 +288,10 @@ fun CestasListView(
                             }
 
                             IconButton(onClick = { viewModel.exportToCSV(context) }) {
-                                Icon(Icons.Default.FileDownload, contentDescription = "Exportar CSV", tint = Color.Black)
+                                Icon(Icons.Default.FileDownload, contentDescription = "Exportar CSV", tint = BlackColor)
                             }
                             IconButton(onClick = { viewModel.exportToPDF(context) }) {
-                                Icon(Icons.Default.PictureAsPdf, contentDescription = "Exportar PDF", tint = Color.Black)
+                                Icon(Icons.Default.PictureAsPdf, contentDescription = "Exportar PDF", tint = BlackColor)
                             }
                         }
                     }
@@ -311,14 +310,14 @@ fun CestasListView(
                     ) {
                         state.error?.let {
                             item {
-                                Text(it, color = Color.Red, fontSize = 12.sp)
+                                Text(it, color = RedColor, fontSize = 12.sp)
                                 Spacer(Modifier.height(10.dp))
                             }
                         }
 
                         if (agendadas.isEmpty()) {
                             item {
-                                Text("Sem cestas agendadas.", color = Color.Gray)
+                                Text("Sem cestas agendadas.", color = GreyColor)
                             }
                         } else {
                             items(agendadas, key = { it.id }) { cesta ->
@@ -340,7 +339,7 @@ fun CestasListView(
                                 Text(
                                     "Entregue / Não levantou",
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.Gray
+                                    color = GreyColor
                                 )
                             }
                             items(historico, key = { it.id }) { cesta ->
@@ -383,7 +382,7 @@ fun CestasListView(
                             cestaParaCancelar = cesta
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                        colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                     ) {
                         Text("Cancelar")
                     }
@@ -420,8 +419,8 @@ fun CestasListView(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isOverdue,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF616161),
-                            disabledContainerColor = Color(0xFFBDBDBD)
+                            containerColor = ButtonGrey,
+                            disabledContainerColor = DisabledGrey
                         )
                     ) {
                         Text("Faltou")
@@ -430,7 +429,7 @@ fun CestasListView(
                         Text(
                             text = "So pode marcar falta depois de passar a data agendada.",
                             fontSize = 12.sp,
-                            color = Color.Gray
+                            color = GreyColor
                         )
                     }
                 }
@@ -455,7 +454,7 @@ fun CestasListView(
                         viewModel.cancelarCesta(cesta.id)
                         cestaParaCancelar = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                    colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                 ) {
                     Text("Cancelar")
                 }
@@ -521,7 +520,7 @@ fun CestasListView(
                         }
                         cestaParaFaltaReagendar = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                    colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
                 ) {
                     Text("Selecionar data")
                 }
@@ -553,7 +552,7 @@ fun CestasListView(
                         viewModel.registarTerceiraFaltaSemReagendar(cesta)
                         cestaParaTerceiraFalta = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                    colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                 ) {
                     Text("Marcar como Nao levantou")
                 }
@@ -580,7 +579,7 @@ private fun CestaCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -599,7 +598,7 @@ private fun CestaCard(
                     text = estadoLabel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = if (estadoLabel == "Nao levantou") Color(0xFFB00020) else Color.Gray
+                    color = if (estadoLabel == "Nao levantou") ErrorRed else GreyColor
                 )
             }
 
@@ -609,7 +608,7 @@ private fun CestaCard(
                     text = "Origem: Pedido Urgente",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFB26A00)
+                    color = ReservedOrange
                 )
             }
 
@@ -618,7 +617,7 @@ private fun CestaCard(
                 Text(
                     text = "Entrega: ${dateFmt.format(it)}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
 
@@ -628,7 +627,7 @@ private fun CestaCard(
                     text = "Passou da data agendada",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFB00020)
+                    color = ErrorRed
                 )
             }
 
@@ -637,7 +636,7 @@ private fun CestaCard(
                 Text(
                     text = "Faltas: ${cesta.faltas}",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = GreyColor
                 )
             }
 
@@ -658,7 +657,7 @@ private fun CestaCard(
                     Button(
                         onClick = onVerDetalhes,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
                     ) {
                         Text("Ver Detalhes")
                     }
@@ -668,7 +667,7 @@ private fun CestaCard(
                 Button(
                     onClick = onVerDetalhes,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                    colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
                 ) {
                     Text("Ver Detalhes")
                 }

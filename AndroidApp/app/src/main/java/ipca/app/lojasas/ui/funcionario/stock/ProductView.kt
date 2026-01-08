@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,9 +24,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.ProductStatus
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -46,7 +44,7 @@ fun ProductView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         when {
             state.isLoading -> {
@@ -59,7 +57,7 @@ fun ProductView(
             state.error != null -> {
                 Text(
                     text = state.error ?: "Erro desconhecido",
-                    color = Color.Red,
+                    color = RedColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -128,7 +126,7 @@ private fun ProductViewContent(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
@@ -144,17 +142,17 @@ private fun ProductViewContent(
                         fontFamily = IntroFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,
-                        color = Color.Black
+                        color = BlackColor
                     )
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Surface(
-                        color = if (isDisponivel) GreenSas.copy(alpha = 0.1f) else Color.Red.copy(alpha = 0.1f),
+                        color = if (isDisponivel) GreenSas.copy(alpha = 0.1f) else RedColor.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
                             text = estadoLabel,
-                            color = if (isDisponivel) GreenSas else Color.Red,
+                            color = if (isDisponivel) GreenSas else RedColor,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -162,7 +160,7 @@ private fun ProductViewContent(
                     }
                 }
 
-                Divider(color = Color.LightGray.copy(alpha = 0.5f))
+                Divider(color = LightGreyColor.copy(alpha = 0.5f))
 
                 // 2. Linha 1: Categoria e Tipo
                 Row(
@@ -241,7 +239,7 @@ private fun ProductViewContent(
                     Spacer(modifier = Modifier.weight(1f))
                 }
 
-                Divider(color = Color.LightGray.copy(alpha = 0.5f))
+                Divider(color = LightGreyColor.copy(alpha = 0.5f))
 
                 // 6. Código de Barras
                 DetailItemHorizontal(
@@ -256,14 +254,14 @@ private fun ProductViewContent(
                         Text(
                             text = "Descrição",
                             fontSize = 12.sp,
-                            color = Color.Gray,
+                            color = GreyColor,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = descProduto,
                             fontSize = 14.sp,
-                            color = Color.Black
+                            color = BlackColor
                         )
                     }
                 }
@@ -279,7 +277,7 @@ private fun ProductViewContent(
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = GreenSas,
-                contentColor = Color.White
+                contentColor = WhiteColor
             )
         ) {
             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -316,7 +314,7 @@ fun DetailItem(
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = Color.Gray,
+                color = GreyColor,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -324,7 +322,7 @@ fun DetailItem(
         Text(
             text = value.ifBlank { "-" },
             fontSize = 16.sp,
-            color = Color.Black,
+            color = BlackColor,
             fontWeight = FontWeight.Medium
         )
     }
@@ -357,13 +355,13 @@ fun DetailItemHorizontal(
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = Color.Gray,
+                color = GreyColor,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = value,
                 fontSize = 16.sp,
-                color = Color.Black,
+                color = BlackColor,
                 fontWeight = FontWeight.SemiBold,
                 fontFamily = IntroFontFamily
             )
@@ -403,7 +401,7 @@ private fun ProductViewPreview_Disponivel() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         ProductViewContent(
             id = "p1",
@@ -432,7 +430,7 @@ private fun ProductViewPreview_Indisponivel() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         ProductViewContent(
             id = "p2",

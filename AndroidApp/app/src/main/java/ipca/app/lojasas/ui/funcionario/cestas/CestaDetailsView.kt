@@ -1,10 +1,10 @@
 package ipca.app.lojasas.ui.funcionario.cestas
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color as PdfColor
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
@@ -49,7 +49,6 @@ import ipca.app.lojasas.R
 import ipca.app.lojasas.data.cestas.CestaDetails
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.io.File
 import java.io.FileOutputStream
 import java.text.NumberFormat
@@ -58,7 +57,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable
 fun CestaDetailsView(
@@ -86,7 +84,7 @@ fun CestaDetailsView(
             state.error != null -> {
                 Text(
                     text = state.error ?: "Erro desconhecido",
-                    color = Color.Red,
+                    color = RedColor,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -124,7 +122,7 @@ fun CestaDetailsView(
                                 Text(
                                     text = "A carregar produtos...",
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = GreyColor
                                 )
                             }
                             state.produtos.isNotEmpty() -> {
@@ -132,7 +130,7 @@ fun CestaDetailsView(
                                     state.produtos.forEachIndexed { index, produto ->
                                         ProdutoRow(produto = produto)
                                         if (index != state.produtos.lastIndex) {
-                                            HorizontalDivider(color = Color(0xFFE6E6E6))
+                                            HorizontalDivider(color = DividerLighter)
                                         }
                                     }
                                 }
@@ -141,14 +139,14 @@ fun CestaDetailsView(
                                 Text(
                                     text = state.produtosError ?: "Erro ao carregar produtos.",
                                     fontSize = 12.sp,
-                                    color = Color.Red
+                                    color = RedColor
                                 )
                             }
                             else -> {
                                 Text(
                                     text = "Sem produtos.",
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = GreyColor
                                 )
                             }
                         }
@@ -157,7 +155,7 @@ fun CestaDetailsView(
                             Text(
                                 text = state.produtosError ?: "Erro ao carregar produtos.",
                                 fontSize = 12.sp,
-                                color = Color.Red
+                                color = RedColor
                             )
                         }
 
@@ -165,7 +163,7 @@ fun CestaDetailsView(
                             Text(
                                 text = "Produtos nao encontrados: ${state.produtosMissingIds.size}",
                                 fontSize = 12.sp,
-                                color = Color.Red
+                                color = RedColor
                             )
                         }
                     }
@@ -185,14 +183,14 @@ fun CestaDetailsView(
                                 Text(
                                     text = state.apoiadoError ?: "Erro ao carregar apoiado.",
                                     fontSize = 12.sp,
-                                    color = Color.Red
+                                    color = RedColor
                                 )
                             }
                             else -> {
                                 Text(
                                     text = "A carregar dados do apoiado...",
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = GreyColor
                                 )
                             }
                         }
@@ -205,7 +203,7 @@ fun CestaDetailsView(
                     FloatingActionButton(
                         onClick = { exportCestaDetailsPdf(context, state) },
                         containerColor = GreenSas,
-                        contentColor = Color.White,
+                        contentColor = WhiteColor,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .padding(16.dp)
@@ -227,7 +225,7 @@ private fun DetailsCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -249,7 +247,7 @@ private fun DetailsCard(
 @Composable
 private fun DetailRow(label: String, value: String) {
     Column {
-        Text(label, fontSize = 12.sp, color = Color.Gray)
+        Text(label, fontSize = 12.sp, color = GreyColor)
         Text(value.ifBlank { "-" }, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
@@ -271,12 +269,12 @@ private fun ProdutoRow(produto: Product) {
         Text(
             text = "Categoria: $categoria / $subCategoria",
             fontSize = 12.sp,
-            color = Color.Gray
+            color = GreyColor
         )
         Text(
             text = "Marca: $marca | Tamanho: $tamanho | Estado: $estado",
             fontSize = 12.sp,
-            color = Color.Gray
+            color = GreyColor
         )
     }
 }
@@ -317,11 +315,11 @@ private fun exportCestaDetailsPdf(context: Context, state: CestaDetailsState) {
     val lineHeight = 12f
     val sectionSpacing = 8f
     val maxWidth = pageWidth - margin * 2
-    val ipcaGreen = PdfColor.parseColor("#094E33")
+    val ipcaGreen = AndroidGreenSas
     val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
     val titlePaint = Paint().apply {
-        color = PdfColor.BLACK
+        color = AndroidBlack
         textSize = 16f
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
@@ -331,11 +329,11 @@ private fun exportCestaDetailsPdf(context: Context, state: CestaDetailsState) {
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
     val textPaint = Paint().apply {
-        color = PdfColor.BLACK
+        color = AndroidBlack
         textSize = 11f
     }
     val mutedPaint = Paint().apply {
-        color = PdfColor.DKGRAY
+        color = AndroidDarkGrey
         textSize = 10f
     }
 
@@ -477,7 +475,7 @@ private fun createPdfBranding(
     val headerPaint = Paint().apply { color = ipcaGreen }
     val footerPaint = Paint().apply { color = ipcaGreen }
     val footerTextPaint = Paint().apply {
-        color = PdfColor.WHITE
+        color = AndroidWhite
         textSize = 9f
     }
 

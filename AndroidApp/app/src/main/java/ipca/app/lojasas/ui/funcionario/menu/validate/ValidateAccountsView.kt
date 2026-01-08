@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.validate
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -30,7 +31,6 @@ import ipca.app.lojasas.data.apoiado.ApoiadoDetails
 import ipca.app.lojasas.data.apoiado.ApoiadoSummary
 import ipca.app.lojasas.data.apoiado.DocumentSummary
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -53,12 +53,12 @@ fun ValidateAccountsView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             if (state.isLoading && state.selectedApoiadoDetails == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = GreenSas)
             } else if (state.pendingAccounts.isEmpty()) {
-                Text("Não existem contas pendentes.", modifier = Modifier.align(Alignment.Center), color = Color.Gray)
+                Text("Não existem contas pendentes.", modifier = Modifier.align(Alignment.Center), color = GreyColor)
             } else {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     items(state.pendingAccounts) { account ->
@@ -93,11 +93,11 @@ fun ValidateAccountCard(account: ApoiadoSummary, onActionClick: () -> Unit) {
     Card(shape = RoundedCornerShape(12.dp), elevation = CardDefaults.cardElevation(3.dp), modifier = Modifier.fillMaxWidth()) {
         Column {
             Box(Modifier.fillMaxWidth().background(GreenSas).padding(16.dp, 10.dp)) {
-                Text(account.nome, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(account.nome, color = WhiteColor, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
-            Column(Modifier.fillMaxWidth().background(Color.White).padding(16.dp)) {
-                Text("Info: Pedido de Validação", color = Color.Black, fontSize = 14.sp)
-                Text("When: Pendente", color = Color.Gray, fontSize = 14.sp)
+            Column(Modifier.fillMaxWidth().background(WhiteColor).padding(16.dp)) {
+                Text("Info: Pedido de Validação", color = BlackColor, fontSize = 14.sp)
+                Text("When: Pendente", color = GreyColor, fontSize = 14.sp)
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Button(onClick = onActionClick, colors = ButtonDefaults.buttonColors(containerColor = GreenSas), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(24.dp, 8.dp), modifier = Modifier.height(36.dp)) {
@@ -131,7 +131,7 @@ fun ApoiadoDetailDialog(
         Card(
             modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.9f).padding(16.dp),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+            colors = CardDefaults.cardColors(containerColor = WhiteColor)
         ) {
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 // Header
@@ -193,7 +193,7 @@ fun ApoiadoDetailDialog(
                     // SECÇÃO 4: DOCUMENTOS
                     Text("Documentos Submetidos", fontWeight = FontWeight.Bold, color = GreenSas, fontSize = 18.sp)
                     if (documents.isEmpty()) {
-                        Text("Nenhum documento encontrado.", color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
+                        Text("Nenhum documento encontrado.", color = GreyColor, modifier = Modifier.padding(vertical = 8.dp))
                     } else {
                         documents.forEach { doc ->
                             Row(
@@ -208,7 +208,7 @@ fun ApoiadoDetailDialog(
                                         Spacer(Modifier.width(4.dp))
                                         Text("(Entrega ${doc.entrega})", fontSize = 12.sp, color = GreenSas)
                                     }
-                                    Text(doc.fileName, fontSize = 12.sp, color = Color.Gray)
+                                    Text(doc.fileName, fontSize = 12.sp, color = GreyColor)
                                 }
                             }
                             HorizontalDivider()
@@ -231,10 +231,10 @@ fun ApoiadoDetailDialog(
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        TextButton(onClick = { showDenyInput = false }) { Text("Cancelar", color = Color.Gray) }
+                        TextButton(onClick = { showDenyInput = false }) { Text("Cancelar", color = GreyColor) }
                         Button(
                             onClick = { if(denyReason.isNotEmpty()) onDeny(denyReason) },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                            colors = ButtonDefaults.buttonColors(containerColor = RedColor)
                         ) { Text("Confirmar Negação") }
                     }
 
@@ -243,8 +243,8 @@ fun ApoiadoDetailDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        Button(onClick = onBlock, colors = ButtonDefaults.buttonColors(containerColor = Color.Black), modifier = Modifier.weight(1f).padding(end = 4.dp), enabled = !isLoading) { Text("Bloquear") }
-                        Button(onClick = { showDenyInput = true }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red), modifier = Modifier.weight(1f).padding(horizontal = 4.dp), enabled = !isLoading) { Text("Negar") }
+                        Button(onClick = onBlock, colors = ButtonDefaults.buttonColors(containerColor = BlackColor), modifier = Modifier.weight(1f).padding(end = 4.dp), enabled = !isLoading) { Text("Bloquear") }
+                        Button(onClick = { showDenyInput = true }, colors = ButtonDefaults.buttonColors(containerColor = RedColor), modifier = Modifier.weight(1f).padding(horizontal = 4.dp), enabled = !isLoading) { Text("Negar") }
                         Button(onClick = onApprove, colors = ButtonDefaults.buttonColors(containerColor = GreenSas), modifier = Modifier.weight(1f).padding(start = 4.dp), enabled = !isLoading) { Text("Aprovar") }
                     }
                 }
@@ -256,7 +256,7 @@ fun ApoiadoDetailDialog(
 @Composable
 fun DetailRow(label: String, value: String) {
     Column(modifier = Modifier.padding(bottom = 6.dp)) {
-        Text(label, fontSize = 12.sp, color = Color.Gray)
+        Text(label, fontSize = 12.sp, color = GreyColor)
         Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium)
     }
 }
