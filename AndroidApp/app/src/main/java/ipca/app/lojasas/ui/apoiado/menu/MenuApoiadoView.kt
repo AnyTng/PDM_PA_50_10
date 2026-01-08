@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,10 +33,9 @@ fun MenuApoiadoView(
     // 1. Ler o número mecanográfico do ViewModel
     val numeroMecanografico by viewModel.numeroMecanografico
 
-    val backgroundColor = Color(0xFFF2F2F2)
 
     Scaffold(
-        containerColor = backgroundColor,
+        containerColor = GreyBg,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
 
@@ -175,7 +175,7 @@ fun MenuApoiadoRow(
 @Composable
 fun MenuApoiadoDivider() {
     HorizontalDivider(
-        color = Color(0xFFE0E0E0),
+        color = DividerLight,
         thickness = 1.dp
     )
 }

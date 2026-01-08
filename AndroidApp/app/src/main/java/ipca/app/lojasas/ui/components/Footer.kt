@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.components
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ipca.app.lojasas.R
 import ipca.app.lojasas.core.navigation.Screen
-import ipca.app.lojasas.ui.theme.GreenSas
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState

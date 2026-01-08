@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.cestas
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -49,7 +50,6 @@ import ipca.app.lojasas.R
 import ipca.app.lojasas.data.cestas.CestaDetails
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.io.File
 import java.io.FileOutputStream
 import java.text.NumberFormat
@@ -58,7 +58,6 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable
 fun CestaDetailsView(
@@ -132,7 +131,7 @@ fun CestaDetailsView(
                                     state.produtos.forEachIndexed { index, produto ->
                                         ProdutoRow(produto = produto)
                                         if (index != state.produtos.lastIndex) {
-                                            HorizontalDivider(color = Color(0xFFE6E6E6))
+                                            HorizontalDivider(color = DividerLighter)
                                         }
                                     }
                                 }
@@ -317,7 +316,7 @@ private fun exportCestaDetailsPdf(context: Context, state: CestaDetailsState) {
     val lineHeight = 12f
     val sectionSpacing = 8f
     val maxWidth = pageWidth - margin * 2
-    val ipcaGreen = PdfColor.parseColor("#094E33")
+    val ipcaGreen = PdfColor.parseColor(HEX_GREEN_SAS)
     val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
     val titlePaint = Paint().apply {

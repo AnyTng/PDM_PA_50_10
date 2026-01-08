@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.history
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +44,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ipca.app.lojasas.data.history.HistoryEntry
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -57,21 +57,20 @@ fun HistoryView(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
-    val backgroundColor = Color(0xFFF2F2F2)
     val dateFormatter = remember {
         SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     }
     val context = LocalContext.current
 
     Scaffold(
-        containerColor = backgroundColor,
+        containerColor = GreyBg,
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(backgroundColor)
+                .background(GreyBg)
                 .padding(16.dp)
         ) {
             when {
@@ -240,7 +239,7 @@ private fun HistoryFilterChip(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val background = if (selected) GreenSas else Color(0xFFF1F1F1)
+    val background = if (selected) GreenSas else SurfaceMuted
     val content = if (selected) Color.White else Color.Black
     val border = if (selected) null else BorderStroke(1.dp, Color.LightGray)
 

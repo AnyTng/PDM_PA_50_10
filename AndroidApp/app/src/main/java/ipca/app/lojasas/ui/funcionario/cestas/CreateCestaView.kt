@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.cestas
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
@@ -61,8 +62,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private val GreenSas = Color(0xFF094E33)
-private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable
 fun CreateCestaView(
@@ -372,7 +371,7 @@ private fun ProdutosSelecionadosList(
                         Button(
                             onClick = { onRemove(p.id) },
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                            colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                         ) {
                             Icon(imageVector = Icons.Default.Close, contentDescription = "Remover", tint = Color.White)
                         }
@@ -572,7 +571,7 @@ private fun ProdutosPickerDialog(
                     Text(
                         text = "Mais próximos do fim da validade",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB26A00)
+                        color = ReservedOrange
                     )
                     Spacer(Modifier.height(8.dp))
                     proximos.forEach { p ->

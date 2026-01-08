@@ -40,4 +40,3 @@ val IntroFontFamily = FontFamily(
     Font(R.font.introregularalt, FontWeight.Normal),
     Font(R.font.introboldalt, FontWeight.Bold)
 )
-

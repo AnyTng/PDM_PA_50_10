@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu.document
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -27,7 +28,6 @@ import ipca.app.lojasas.ui.components.AppHeader
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-val GreenSAS = Color(0xFF094E33)
 
 @Composable
 fun SubmittedDocumentsView(
@@ -51,12 +51,12 @@ fun SubmittedDocumentsView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             if (state.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = GreenSAS
+                    color = GreenSas
                 )
             } else if (state.groupedDocuments.isEmpty()) {
                 Text(
@@ -76,10 +76,10 @@ fun SubmittedDocumentsView(
                                 text = "Entrega nº $entregaNum",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = GreenSAS,
+                                color = GreenSas,
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                             )
-                            HorizontalDivider(color = GreenSAS, thickness = 1.dp)
+                            HorizontalDivider(color = GreenSas, thickness = 1.dp)
                         }
 
                         // --- LISTA DE FICHEIROS DA ENTREGA ---
@@ -141,7 +141,7 @@ fun SubmittedFileCard(
             Icon(
                 imageVector = Icons.Default.Description,
                 contentDescription = null,
-                tint = GreenSAS,
+                tint = GreenSas,
                 modifier = Modifier.size(32.dp)
             )
 

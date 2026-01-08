@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +26,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.funcionario.menu.profile.*
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -81,7 +81,7 @@ fun ApoiadoProfileView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(Color(0xFFF8F8F8))
+                    .background(SurfaceLight)
                     .verticalScroll(scrollState)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)

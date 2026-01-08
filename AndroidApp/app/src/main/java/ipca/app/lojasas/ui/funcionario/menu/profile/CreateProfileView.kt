@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,8 +31,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 
 
 @Composable
@@ -76,7 +75,7 @@ fun CreateProfileView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF8F8F8))
+                .background(SurfaceLight)
                 .imePadding()
                 .verticalScroll(scrollState)
                 .padding(16.dp),

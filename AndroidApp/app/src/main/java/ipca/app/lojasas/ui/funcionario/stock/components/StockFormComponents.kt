@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock.components
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ipca.app.lojasas.ui.theme.GreenSas
 
 @Composable
 fun StockOutlinedTextField(
@@ -55,8 +55,8 @@ fun StockOutlinedTextField(
             unfocusedBorderColor = StockAccent,
             focusedLabelColor = StockAccent,
             unfocusedLabelColor = StockAccent,
-            focusedTextColor = Color(0xFF222222),
-            unfocusedTextColor = Color(0xFF222222),
+            focusedTextColor = TextDark,
+            unfocusedTextColor = TextDark,
             cursorColor = GreenSas
         )
     )

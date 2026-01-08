@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date

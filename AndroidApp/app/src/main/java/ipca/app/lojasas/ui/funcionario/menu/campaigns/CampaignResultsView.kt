@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -33,7 +34,6 @@ import ipca.app.lojasas.data.campaigns.CampaignRepository
 import ipca.app.lojasas.data.campaigns.CampaignStats
 import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.ui.funcionario.stock.displayStatus
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.io.File
 import java.io.FileOutputStream
 import java.text.NumberFormat
@@ -217,7 +217,7 @@ private fun CampaignResultsContent(
 
 @Composable
 fun SimplePieChart(data: Map<String, Float>) {
-    val colors = listOf(GreenSas, Color(0xFFD88C28), Color(0xFF0F4C5C), Color.Gray, Color.Magenta)
+    val colors = listOf(GreenSas, ChartOrange, ChartTeal, Color.Gray, Color.Magenta)
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Canvas(modifier = Modifier.size(150.dp)) {
@@ -347,7 +347,7 @@ private fun exportCampaignResultsPdf(
     val maxWidth = pageWidth - margin * 2
     val lineHeight = 14f
     val sectionSpacing = 10f
-    val ipcaGreen = PdfColor.parseColor("#094E33")
+    val ipcaGreen = PdfColor.parseColor(HEX_GREEN_SAS)
 
     val headerPaint = Paint().apply { color = ipcaGreen }
     val footerPaint = Paint().apply { color = ipcaGreen }
@@ -385,8 +385,8 @@ private fun exportCampaignResultsPdf(
 
     val chartColors = listOf(
         ipcaGreen,
-        PdfColor.parseColor("#D88C28"),
-        PdfColor.parseColor("#0F4C5C"),
+        PdfColor.parseColor(HEX_CHART_ORANGE),
+        PdfColor.parseColor(HEX_CHART_TEAL),
         PdfColor.GRAY,
         PdfColor.MAGENTA
     )

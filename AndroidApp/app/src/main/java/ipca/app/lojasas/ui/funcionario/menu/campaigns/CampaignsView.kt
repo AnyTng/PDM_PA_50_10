@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.campaigns
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,7 +27,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -137,7 +137,7 @@ private fun <T> CampaignsViewContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF2F2F2))
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         if (isLoading) {

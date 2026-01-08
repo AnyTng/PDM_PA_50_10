@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.validate
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -30,7 +31,6 @@ import ipca.app.lojasas.data.apoiado.ApoiadoDetails
 import ipca.app.lojasas.data.apoiado.ApoiadoSummary
 import ipca.app.lojasas.data.apoiado.DocumentSummary
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -53,7 +53,7 @@ fun ValidateAccountsView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             if (state.isLoading && state.selectedApoiadoDetails == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = GreenSas)

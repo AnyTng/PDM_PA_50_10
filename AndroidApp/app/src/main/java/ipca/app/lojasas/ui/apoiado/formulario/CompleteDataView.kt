@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.formulario
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.widget.DatePicker
 import androidx.compose.foundation.background
@@ -107,20 +108,18 @@ fun CompleteDataView(
             text = "Completar / Corrigir Dados",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF094E33)
+            color = GreenSas
         )
         Text("Verifique os seus dados e corrija o necessário.", color = Color.Gray)
 
         // ✅ Aviso quando o formulário está a ser solicitado por expiração de validade.
         if (validadeExpiradaEm != null) {
-            val warnColor = Color(0xFFB65A00) // Laranja escuro
-            val warnBg = Color(0xFFFFF3E0)    // Fundo laranja claro
             val formattedDate = remember(validadeExpiradaEm) {
                 SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(validadeExpiradaEm)
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = warnBg),
+                colors = CardDefaults.cardColors(containerColor = WarningBg),
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium
             ) {
@@ -131,12 +130,12 @@ fun CompleteDataView(
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
-                        tint = warnColor
+                        tint = WarningOrangeDark
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "A sua conta expirou no dia $formattedDate, volte a submeter o pedido",
-                        color = warnColor,
+                        color = WarningOrangeDark,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
@@ -145,7 +144,7 @@ fun CompleteDataView(
         }
 
         if (state.isLoading) {
-            CircularProgressIndicator(color = Color(0xFF094E33))
+            CircularProgressIndicator(color = GreenSas)
         }
         if (state.error != null) {
             Text(state.error!!, color = Color.Red, fontSize = 14.sp)
@@ -178,9 +177,9 @@ fun CompleteDataView(
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF094E33),
-                    focusedLabelColor = Color(0xFF094E33),
-                    cursorColor = Color(0xFF094E33)
+                    focusedBorderColor = GreenSas,
+                    focusedLabelColor = GreenSas,
+                    cursorColor = GreenSas
                 )
             )
 
@@ -237,7 +236,7 @@ fun CompleteDataView(
                     RadioButton(
                         selected = state.relacaoIPCA == role,
                         onClick = { viewModel.onRelacaoChange(role) },
-                        colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF094E33))
+                        colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                     )
                     Text(role, fontSize = 14.sp)
                 }
@@ -247,7 +246,7 @@ fun CompleteDataView(
         // --- CAMPOS ESPECÍFICOS DE ESTUDANTE ---
         if (state.relacaoIPCA == "Estudante") {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                colors = CardDefaults.cardColors(containerColor = SurfaceCard),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
@@ -272,7 +271,7 @@ fun CompleteDataView(
                                 RadioButton(
                                     selected = state.graoEnsino == grau,
                                     onClick = { viewModel.onGraoChange(grau) },
-                                    colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF094E33))
+                                    colors = RadioButtonDefaults.colors(selectedColor = GreenSas)
                                 )
                                 Text(grau, fontSize = 12.sp)
                             }
@@ -288,7 +287,7 @@ fun CompleteDataView(
                         Checkbox(
                             checked = state.bolsaEstudos,
                             onCheckedChange = { viewModel.onBolsaChange(it) },
-                            colors = CheckboxDefaults.colors(checkedColor = Color(0xFF094E33))
+                            colors = CheckboxDefaults.colors(checkedColor = GreenSas)
                         )
                         Text("Tem Bolsa de Estudos?")
                     }
@@ -316,7 +315,7 @@ fun CompleteDataView(
             Checkbox(
                 checked = state.apoioEmergencia,
                 onCheckedChange = { viewModel.onApoioEmergenciaChange(it) },
-                colors = CheckboxDefaults.colors(checkedColor = Color(0xFF094E33))
+                colors = CheckboxDefaults.colors(checkedColor = GreenSas)
             )
             Text("Apoio de Emergência Social?")
         }
@@ -334,7 +333,7 @@ fun CompleteDataView(
                 Checkbox(
                     checked = state.necessidades.contains(item),
                     onCheckedChange = { viewModel.toggleNecessidade(item) },
-                    colors = CheckboxDefaults.colors(checkedColor = Color(0xFF094E33))
+                    colors = CheckboxDefaults.colors(checkedColor = GreenSas)
                 )
                 Text(item)
             }
@@ -351,7 +350,7 @@ fun CompleteDataView(
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF094E33),
+                containerColor = GreenSas,
                 disabledContainerColor = Color.LightGray
             ),
             // Só ativa se não estiver a carregar E o formulário for válido

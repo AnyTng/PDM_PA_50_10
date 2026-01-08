@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,10 +27,7 @@ import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.campaigns.Campaign
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.ui.funcionario.stock.components.ConfirmDeleteDialog
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
 import ipca.app.lojasas.ui.funcionario.stock.components.rememberBarcodeScanner
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -125,7 +123,7 @@ fun ProductFormView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         if (state.isLoading) {
             CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))
@@ -300,9 +298,9 @@ private fun ProductFormViewContent(
                     enabled = !state.isSaving && !state.isDeleting,
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE11D2E),
+                        containerColor = DangerRed,
                         contentColor = Color.White,
-                        disabledContainerColor = Color(0xFFE11D2E).copy(alpha = 0.6f),
+                        disabledContainerColor = DangerRed.copy(alpha = 0.6f),
                         disabledContentColor = Color.White.copy(alpha = 0.8f)
                     )
                 ) {
@@ -592,7 +590,7 @@ private fun ProductFormViewPreview_New() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         val previewState = ProductFormUiState(
@@ -627,7 +625,7 @@ private fun ProductFormViewPreview_Edit() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         val previewState = ProductFormUiState(
@@ -661,7 +659,7 @@ private fun ProductFormViewPreview_Loading() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
             .padding(16.dp)
     ) {
         CircularProgressIndicator(color = GreenSas, modifier = Modifier.align(Alignment.Center))

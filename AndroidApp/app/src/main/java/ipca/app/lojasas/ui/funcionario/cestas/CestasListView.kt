@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.cestas
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.background
@@ -58,7 +59,6 @@ import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.cestas.CestaItem
 import ipca.app.lojasas.ui.funcionario.stock.components.StockFab
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.text.Normalizer
 import java.util.Calendar
@@ -66,7 +66,6 @@ import java.util.Date
 import java.util.Locale
 
 
-private val GreyBg = Color(0xFFF2F2F2)
 
 @Composable
 fun CestasListView(
@@ -383,7 +382,7 @@ fun CestasListView(
                             cestaParaCancelar = cesta
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                        colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                     ) {
                         Text("Cancelar")
                     }
@@ -420,8 +419,8 @@ fun CestasListView(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = isOverdue,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF616161),
-                            disabledContainerColor = Color(0xFFBDBDBD)
+                            containerColor = ButtonGrey,
+                            disabledContainerColor = DisabledGrey
                         )
                     ) {
                         Text("Faltou")
@@ -455,7 +454,7 @@ fun CestasListView(
                         viewModel.cancelarCesta(cesta.id)
                         cestaParaCancelar = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                    colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                 ) {
                     Text("Cancelar")
                 }
@@ -521,7 +520,7 @@ fun CestasListView(
                         }
                         cestaParaFaltaReagendar = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                    colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
                 ) {
                     Text("Selecionar data")
                 }
@@ -553,7 +552,7 @@ fun CestasListView(
                         viewModel.registarTerceiraFaltaSemReagendar(cesta)
                         cestaParaTerceiraFalta = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                    colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                 ) {
                     Text("Marcar como Nao levantou")
                 }
@@ -599,7 +598,7 @@ private fun CestaCard(
                     text = estadoLabel,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
-                    color = if (estadoLabel == "Nao levantou") Color(0xFFB00020) else Color.Gray
+                    color = if (estadoLabel == "Nao levantou") ErrorRed else Color.Gray
                 )
             }
 
@@ -609,7 +608,7 @@ private fun CestaCard(
                     text = "Origem: Pedido Urgente",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFB26A00)
+                    color = ReservedOrange
                 )
             }
 
@@ -628,7 +627,7 @@ private fun CestaCard(
                     text = "Passou da data agendada",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFFB00020)
+                    color = ErrorRed
                 )
             }
 
@@ -658,7 +657,7 @@ private fun CestaCard(
                     Button(
                         onClick = onVerDetalhes,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
                     ) {
                         Text("Ver Detalhes")
                     }
@@ -668,7 +667,7 @@ private fun CestaCard(
                 Button(
                     onClick = onVerDetalhes,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF616161))
+                    colors = ButtonDefaults.buttonColors(containerColor = ButtonGrey)
                 ) {
                     Text("Ver Detalhes")
                 }

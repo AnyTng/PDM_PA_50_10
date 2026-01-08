@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.pedidosurgentes
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,9 +53,6 @@ import ipca.app.lojasas.data.requests.PedidoUrgenteItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-private val GreenSas = Color(0xFF094E33)
-private val GreyBg = Color(0xFFF2F2F2)
-private val OrangeWarning = Color(0xFFE6A519) // Cor para destacar a ação pendente
 
 @Composable
 fun UrgentRequestsView(
@@ -257,7 +255,7 @@ private fun PedidoUrgenteCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
                     color = when {
-                        estadoNorm == "negado" -> Color(0xFFB00020)
+                        estadoNorm == "negado" -> ErrorRed
                         !pedido.cestaId.isNullOrBlank() -> GreenSas // Verde se já tiver cesta
                         else -> Color.Gray
                     }
@@ -290,7 +288,7 @@ private fun PedidoUrgenteCard(
                     Button(
                         onClick = onNegar,
                         modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB00020))
+                        colors = ButtonDefaults.buttonColors(containerColor = ErrorRed)
                     ) {
                         Text("Negar")
                     }
@@ -310,7 +308,7 @@ private fun PedidoUrgenteCard(
                 Button(
                     onClick = onCriarCesta,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = OrangeWarning)
+                    colors = ButtonDefaults.buttonColors(containerColor = PendingOrange)
                 ) {
                     Text("⚠️ Finalizar: Criar Cesta", color = Color.White, fontWeight = FontWeight.Bold)
                 }

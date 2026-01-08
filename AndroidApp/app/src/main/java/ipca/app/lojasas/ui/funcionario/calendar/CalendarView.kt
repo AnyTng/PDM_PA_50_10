@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.calendar
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,7 +25,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.data.calendar.CalendarEvent
 import ipca.app.lojasas.data.calendar.EventType
-import ipca.app.lojasas.ui.theme.GreenSas
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -60,7 +60,7 @@ fun CalendarView(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF8F8F8))
+        modifier = Modifier.fillMaxSize().background(SurfaceLight)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 16.dp)
@@ -235,10 +235,10 @@ fun isSameDay(d1: Date, d2: Date): Boolean {
 
 fun getEventColor(type: EventType): Color {
     return when(type) {
-        EventType.CAMPAIGN_START -> Color(0xFF1E88E5)
-        EventType.CAMPAIGN_END -> Color(0xFF5E35B1)
-        EventType.PRODUCT_EXPIRY -> Color(0xFFE53935)
-        EventType.BASKET_DELIVERY -> Color(0xFF43A047)
+        EventType.CAMPAIGN_START -> EventBlue
+        EventType.CAMPAIGN_END -> EventPurple
+        EventType.PRODUCT_EXPIRY -> ExpiredRed
+        EventType.BASKET_DELIVERY -> EventGreen
     }
 }
 

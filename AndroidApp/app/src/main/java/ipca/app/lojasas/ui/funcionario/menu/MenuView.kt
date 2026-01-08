@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,11 +28,10 @@ fun MenuView(
 ) {
     val viewModel: MenuFuncionarioViewModel = hiltViewModel()
     val isAdmin by viewModel.isAdmin
-    val backgroundColor = Color(0xFFF2F2F2)
 
     MenuViewContent(
         isAdmin = isAdmin,
-        backgroundColor = backgroundColor,
+        GreyBg = GreyBg,
         onNavigate = { route -> navController.navigate(route) },
         onLogout = {
             try {
@@ -51,7 +51,7 @@ fun MenuView(
 @Composable
 private fun MenuViewContent(
     isAdmin: Boolean,
-    backgroundColor: Color,
+    GreyBg: Color,
     onNavigate: (String) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -59,7 +59,7 @@ private fun MenuViewContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(GreyBg)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -212,7 +212,7 @@ fun MenuRow(
 @Composable
 fun MenuDivider() {
     HorizontalDivider(
-        color = Color(0xFFE0E0E0),
+        color = DividerLight,
         thickness = 1.dp
     )
 }
@@ -225,7 +225,7 @@ private fun MenuViewPreview_Colaborador() {
     MaterialTheme {
         MenuViewContent(
             isAdmin = false,
-            backgroundColor = Color(0xFFF2F2F2),
+            GreyBg = GreyBg,
             onNavigate = {},
             onLogout = {}
         )
@@ -238,7 +238,7 @@ private fun MenuViewPreview_Admin() {
     MaterialTheme {
         MenuViewContent(
             isAdmin = true,
-            backgroundColor = Color(0xFFF2F2F2),
+            GreyBg = GreyBg,
             onNavigate = {},
             onLogout = {}
         )

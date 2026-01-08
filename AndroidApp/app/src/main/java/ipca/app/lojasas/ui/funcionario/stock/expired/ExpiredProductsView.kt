@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock.expired
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,11 +48,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.Product
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
-import ipca.app.lojasas.ui.funcionario.stock.components.StockExpired
 import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
 import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
-import ipca.app.lojasas.ui.theme.GreenSas
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
@@ -195,7 +193,7 @@ private fun ExpiredProductsViewContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             StockSearchBar(
@@ -347,7 +345,7 @@ private fun ExpiredProductsViewContent(
                                     onCheckedChange = { onToggleSelection(group) },
                                     enabled = !isDonating,
                                     colors = CheckboxDefaults.colors(
-                                        checkedColor = StockExpired,
+                                        checkedColor = ExpiredRed,
                                         uncheckedColor = Color.Gray,
                                         checkmarkColor = Color.White,
                                         disabledUncheckedColor = Color.LightGray
@@ -449,7 +447,7 @@ private fun ExpiredEmptyState(message: String) {
         Text(
             text = message,
             textAlign = TextAlign.Center,
-            color = Color(0xFF333333),
+            color = TextDarkGrey,
             modifier = Modifier.padding(top = 8.dp)
         )
     }

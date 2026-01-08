@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,9 +24,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.ProductStatus
-import ipca.app.lojasas.ui.funcionario.stock.components.StockBackground
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -46,7 +44,7 @@ fun ProductView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         when {
             state.isLoading -> {
@@ -403,7 +401,7 @@ private fun ProductViewPreview_Disponivel() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         ProductViewContent(
             id = "p1",
@@ -432,7 +430,7 @@ private fun ProductViewPreview_Indisponivel() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(StockBackground)
+            .background(GreyBg)
     ) {
         ProductViewContent(
             id = "p2",

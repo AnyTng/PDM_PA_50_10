@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.apoiado.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -36,8 +37,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.UserRole
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 
 
 @Composable
@@ -84,7 +83,7 @@ fun CreateProfileApoiadoView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF8F8F8))
+                .background(SurfaceLight)
                 .imePadding() // 2. Adiciona espaço quando o teclado abre
                 .verticalScroll(scrollState)
                 .padding(16.dp),

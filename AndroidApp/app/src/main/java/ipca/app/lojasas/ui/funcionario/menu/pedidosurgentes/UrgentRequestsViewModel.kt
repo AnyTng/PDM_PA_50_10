@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.pedidosurgentes
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -241,7 +242,7 @@ private fun createUrgentRequestsListPdf(context: Context, state: UrgentRequestsS
     val maxWidth = pageWidth - margin * 2
     val lineHeight = 12f
     val blockSpacing = 8f
-    val ipcaGreen = Color.parseColor("#094E33")
+    val ipcaGreen = Color.parseColor(HEX_GREEN_SAS)
     val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
     val titlePaint = Paint().apply {
@@ -374,7 +375,7 @@ private fun createUrgentRequestPdf(context: Context, pedido: PedidoUrgenteItem) 
     val maxWidth = pageWidth - margin * 2
     val lineHeight = 12f
     val sectionSpacing = 8f
-    val ipcaGreen = Color.parseColor("#094E33")
+    val ipcaGreen = Color.parseColor(HEX_GREEN_SAS)
     val branding = createPdfBranding(context, ipcaGreen, headerHeight, pageHeight)
 
     val titlePaint = Paint().apply {

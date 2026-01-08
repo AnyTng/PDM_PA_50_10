@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import ipca.app.lojasas.ui.theme.*
 import android.app.DatePickerDialog
 import android.widget.DatePicker
 import android.widget.Toast
@@ -31,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.utils.Validators
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -112,7 +112,7 @@ fun CreateApoiadoView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             Column(
                 modifier = Modifier
@@ -268,13 +268,13 @@ fun CreateApoiadoView(
                 // Mantemos também o Toast, mas isto ajuda a perceber imediatamente porque a criação foi bloqueada.
                 if (state.error != null) {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)),
+                        colors = CardDefaults.cardColors(containerColor = ErrorBg),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = state.error ?: "",
-                            color = Color(0xFFB00020),
+                            color = ErrorRed,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(12.dp)
                         )

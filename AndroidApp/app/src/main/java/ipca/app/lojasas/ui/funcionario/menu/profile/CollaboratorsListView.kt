@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,7 +25,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.data.funcionario.CollaboratorItem
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 
 @Composable
 fun CollaboratorsListView(
@@ -55,7 +55,7 @@ fun CollaboratorsListView(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
                 .padding(16.dp)
         ) {
             // Barra de Pesquisa
@@ -158,7 +158,7 @@ fun CollaboratorsListView(
                         itemToDemote?.let { viewModel.demoteToFuncionario(it) }
                         itemToDemote = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                    colors = ButtonDefaults.buttonColors(containerColor = DarkRed)
                 ) { Text("Remover Admin") }
             },
             dismissButton = {
@@ -195,7 +195,7 @@ fun CollaboratorCard(
 
                 // Badge da Role
                 Surface(
-                    color = if (isAdmin) Color(0xFFD32F2F) else GreenSas,
+                    color = if (isAdmin) DarkRed else GreenSas,
                     shape = RoundedCornerShape(4.dp),
                     modifier = Modifier.padding(start = 8.dp)
                 ) {

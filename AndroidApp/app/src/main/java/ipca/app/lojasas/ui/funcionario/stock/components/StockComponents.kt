@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.stock.components
 
+import ipca.app.lojasas.ui.theme.*
 import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -39,18 +40,12 @@ import ipca.app.lojasas.ui.funcionario.stock.displayStatus
 import ipca.app.lojasas.ui.funcionario.stock.isAvailableForCount
 import ipca.app.lojasas.ui.funcionario.stock.isExpiredVisible
 import ipca.app.lojasas.ui.funcionario.stock.isReserved
-import ipca.app.lojasas.ui.theme.GreenSas
-import ipca.app.lojasas.ui.theme.IntroFontFamily
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-val StockBackground = Color(0xFFF2F2F2)
-val StockAccent = Color(0xFFC9A27B)
-val StockReserved = Color(0xFFB26A00)
-val StockExpired = Color(0xFFE53935)
 
 @Composable
 fun StockSearchBar(
@@ -111,7 +106,7 @@ fun StockSearchBar(
             if (showFilter) {
                 Box {
                     IconButton(onClick = { showFilterMenu = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = Color(0xFF333333))
+                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = TextDarkGrey)
                     }
                     filterMenuContent(showFilterMenu) { showFilterMenu = false }
                 }
@@ -119,14 +114,14 @@ fun StockSearchBar(
             if (showSort) {
                 Box {
                     IconButton(onClick = { showSortMenu = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = Color(0xFF333333))
+                        Icon(Icons.Default.Sort, contentDescription = "Ordenar", tint = TextDarkGrey)
                     }
                     sortMenuContent(showSortMenu) { showSortMenu = false }
                 }
             }
             if (showExport) {
                 IconButton(onClick = onExportClick) {
-                    Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = Color(0xFF333333))
+                    Icon(Icons.Default.FileDownload, contentDescription = "Exportar", tint = TextDarkGrey)
                 }
             }
         }
@@ -207,8 +202,8 @@ fun StockExpiredSummaryCard(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = StockExpired),
-        border = BorderStroke(2.dp, StockExpired)
+        colors = CardDefaults.cardColors(containerColor = ExpiredRed),
+        border = BorderStroke(2.dp, ExpiredRed)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
@@ -229,7 +224,7 @@ fun StockExpiredSummaryCard(
 
             Surface(
                 color = Color.White,
-                contentColor = StockExpired,
+                contentColor = ExpiredRed,
                 shape = RoundedCornerShape(50)
             ) {
                 Row(
@@ -244,7 +239,7 @@ fun StockExpiredSummaryCard(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = "Abrir",
-                        tint = StockExpired,
+                        tint = ExpiredRed,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -262,10 +257,10 @@ fun StockProductGroupCard(
     val reference = Date()
     val statusLabel = product.displayStatus(reference)
     val statusColor = when {
-        product.isExpiredVisible(reference) -> StockExpired
-        product.isReserved() -> StockReserved
+        product.isExpiredVisible(reference) -> ExpiredRed
+        product.isReserved() -> ReservedOrange
         product.isAvailableForCount(reference) -> GreenSas
-        else -> Color(0xFF9E9E9E)
+        else -> MediumGrey
     }
     val barcodeBitmap by produceState<Bitmap?>(initialValue = null, key1 = product.codBarras) {
         val code = product.codBarras?.takeIf { it.isNotBlank() }
@@ -466,7 +461,7 @@ fun ConfirmDeleteDialog(
             Button(
                 onClick = onConfirm,
                 enabled = !isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D2E))
+                colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
             ) {
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp).size(16.dp), color = Color.White, strokeWidth = 2.dp)
                 Text("Apagar")

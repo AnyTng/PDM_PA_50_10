@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.profile
 
+import ipca.app.lojasas.ui.theme.*
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,7 +30,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import ipca.app.lojasas.core.navigation.Screen
-import ipca.app.lojasas.ui.theme.GreenSas
 
 
 @Composable
@@ -85,7 +85,7 @@ fun ProfileView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(Color(0xFFF8F8F8))
+                    .background(SurfaceLight)
                     .verticalScroll(scrollState)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -172,7 +172,7 @@ fun ProfileView(
                 // --- DIÁLOGO PARA ADMIN (Apenas Aviso) ---
                 AlertDialog(
                     onDismissRequest = { showDeleteDialog = false },
-                    icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFFA000)) },
+                    icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = WarningAmber) },
                     title = { Text(text = "Ação Não Permitida", fontWeight = FontWeight.Bold) },
                     text = {
                         Text(
@@ -340,7 +340,7 @@ fun ReadOnlyInput(value: String, placeholder: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
-                    .background(Color(0xFFEEEEEE), RoundedCornerShape(8.dp))
+                    .background(SurfaceElevated, RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {

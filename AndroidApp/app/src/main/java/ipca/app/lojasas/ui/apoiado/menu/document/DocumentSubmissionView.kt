@@ -2,6 +2,7 @@
 
 package ipca.app.lojasas.ui.apoiado.menu.document
 
+import ipca.app.lojasas.ui.theme.*
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -37,7 +38,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-val GreenSas = Color(0xFF094E33)
+
 
 @Composable
 fun DocumentSubmissionView(
@@ -186,7 +187,7 @@ fun DocumentSubmissionContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFF8F8F8))
+                .background(SurfaceLight)
         ) {
             Column(
                 modifier = Modifier
@@ -304,7 +305,7 @@ fun UploadTypeCard(
     onClick: () -> Unit
 ) {
     val borderColor = if (hasSubmitted) GreenSas else Color.LightGray
-    val backgroundColor = if (hasSubmitted) Color(0xFFE8F5E9) else Color.White // Fundo ligeiramente verde se já submetido
+    val backgroundColor = if (hasSubmitted) SuccessBg else Color.White // Fundo ligeiramente verde se já submetido
 
     Card(
         colors = CardDefaults.cardColors(containerColor = backgroundColor),

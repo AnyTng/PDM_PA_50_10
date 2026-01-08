@@ -1,5 +1,6 @@
 package ipca.app.lojasas.ui.funcionario.menu.apoiados
 
+import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,7 +24,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.ui.components.AppHeader
-import ipca.app.lojasas.ui.theme.GreenSas
 import ipca.app.lojasas.data.apoiado.ApoiadoItem
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -62,7 +62,7 @@ fun ApoiadosListView(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF2F2F2))
+                .background(GreyBg)
         ) {
             // --- BARRA DE FERRAMENTAS ---
             Row(
@@ -231,10 +231,10 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
     // Definir a cor do cabeçalho baseada no status
     val statusColor = when(apoiado.displayStatus) {
         "Aprovado" -> GreenSas
-        "Conta Expirada" -> Color(0xFFB65A00) // Laranja Escuro
-        "Bloqueado", "Negado" -> Color(0xFFD32F2F) // Vermelho Escuro
-        "Apoio Pausado" -> Color(0xFFF57C00) // Laranja
-        "Analise" -> Color(0xFF1976D2) // Azul
+        "Conta Expirada" -> WarningOrangeDark // Laranja Escuro
+        "Bloqueado", "Negado" -> DarkRed // Vermelho Escuro
+        "Apoio Pausado" -> StatusOrange // Laranja
+        "Analise" -> StatusBlue // Azul
         else -> Color.Gray // Cinzento para outros (Por Submeter, etc)
     }
 
@@ -272,7 +272,7 @@ fun ApoiadoCard(apoiado: ApoiadoItem, onAction: (String) -> Unit) {
                     when (apoiado.rawStatus) {
                         "Bloqueado" -> ActionButton("Desbloquear", GreenSas) { onAction("unblock") }
                         "Aprovado" -> {
-                            ActionButton("Pausar Apoio", Color(0xFFF57C00)) { onAction("suspend") }
+                            ActionButton("Pausar Apoio", StatusOrange) { onAction("suspend") }
                             Spacer(modifier = Modifier.width(8.dp))
                             ActionButton("Bloquear", Color.Black) { onAction("block") }
                         }
