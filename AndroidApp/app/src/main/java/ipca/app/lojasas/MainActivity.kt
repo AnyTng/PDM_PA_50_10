@@ -35,6 +35,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -58,6 +59,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             AskNotificationPermissionOnce()
             val navController = rememberNavController()
+
+            // Quando o utilizador clica num item do widget, abrimos a app e (após login/roteamento)
+            // navegamos diretamente para os detalhes da cesta.
+            var pendingWidgetCestaId by rememberSaveable {
+                mutableStateOf(intent.getStringExtra(EXTRA_OPEN_CESTA_ID))
+            }
             LojaSocialIPCATheme {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
@@ -224,6 +231,12 @@ class MainActivity : ComponentActivity() {
                             navController.navigate(role.destination()) {
                                 popUpTo(Screen.Login.route) { inclusive = true }
                             }
+
+                            // Se viemos do widget com uma cesta específica, abre os detalhes.
+                            pendingWidgetCestaId?.takeIf { it.isNotBlank() }?.let { cestaId ->
+                                navController.navigate(Screen.CestaDetails.createRoute(cestaId))
+                                pendingWidgetCestaId = null
+                            }
                         } catch (e: Exception) {
                             // Se falhar o parse (raro), ignora e busca na rede
                         }
@@ -242,6 +255,12 @@ class MainActivity : ComponentActivity() {
                                 navController.navigate(role.destination()) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
+
+                                // Se viemos do widget com uma cesta específica, abre os detalhes.
+                                pendingWidgetCestaId?.takeIf { it.isNotBlank() }?.let { cestaId ->
+                                    navController.navigate(Screen.CestaDetails.createRoute(cestaId))
+                                    pendingWidgetCestaId = null
+                                }
                             },
                             onNotFound = {
                                 navController.navigate(Screen.Login.route) {
@@ -258,6 +277,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        /**
+         * Extra usado pelo widget para abrir diretamente os detalhes de uma cesta.
+         */
+        const val EXTRA_OPEN_CESTA_ID = "ipca.app.lojasas.extra.OPEN_CESTA_ID"
+
+        /**
+         * Flag opcional para identificar que a app foi aberta a partir do widget.
+         * (Útil caso no futuro queiras telemetria/UX diferente.)
+         */
+        const val EXTRA_OPEN_FROM_WIDGET = "ipca.app.lojasas.extra.OPEN_FROM_WIDGET"
     }
 }
 // Configuração do header

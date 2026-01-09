@@ -8,4 +8,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="ic_launcher_background">#349D43</color>
+
+    <!-- Brand (usado no widget / layouts XML) -->
+    <color name="green_sas">#094E33</color>
+    <color name="grey_bg">#F2F2F2</color>
+    <color name="divider_green_light">#D2EADF</color>
+    <color name="text_dark">#222222</color>
+    <color name="text_muted_grey">#B0B0B0</color>
 </resources>

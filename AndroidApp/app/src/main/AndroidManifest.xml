@@ -36,6 +36,26 @@
             </intent-filter>
         </service>
 
+        <!-- Home Screen Widget: Próximas Cestas -->
+        <receiver
+            android:name=".widget.CestasWidgetProvider"
+            android:label="@string/widget_title"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="ipca.app.lojasas.action.REFRESH_WIDGET" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/cestas_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".widget.CestasWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
