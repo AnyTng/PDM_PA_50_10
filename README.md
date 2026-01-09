@@ -24,7 +24,7 @@ Este projeto pretende **digitalizar e modernizar** esses procedimentos, permitin
 
 ## Funcionalidades principais
 
-### 📱 Aplicação móvel (Android)
+### Aplicação móvel (Android)
 - Gestão de **beneficiários** (CRUD: registar/editar/remover).
 - Gestão de **inventário/stock** e estados de produto (incl. alertas de validade).
 - **Agendamento** de entregas e visualização em calendário (com lembretes).
@@ -35,7 +35,7 @@ Este projeto pretende **digitalizar e modernizar** esses procedimentos, permitin
 - **Notificações** (estado do pedido/conta, pedidos, lembretes, etc.).
 - Perfis e permissões: **Colaborador** vs **Estudante**.
 
-### 🌐 Website informativo
+### Website informativo
 - Dashboard de necessidades/stock (por categoria).
 - Informação “**Como doar**” (locais, horários, regras).
 - Secção de **notícias/campanhas**.
@@ -43,7 +43,7 @@ Este projeto pretende **digitalizar e modernizar** esses procedimentos, permitin
 
 > Nota: o website usa Firebase (Firestore/Auth) e Leaflet (mapa).
 
-### ☁️ Backend (Firebase)
+### Backend (Firebase)
 - **Firestore** como BD principal.
 - **Firebase Auth** (contas de utilizador).
 - **Firebase Storage** (documentos/anexos, quando aplicável).
