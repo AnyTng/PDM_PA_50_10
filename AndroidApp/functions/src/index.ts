@@ -335,7 +335,7 @@ export const notifyCestaAgendadaReminders = onSchedule(
       await messaging.send({
         topic: "funcionarios",
         notification: {
-          title: `📦 Entregas agendadas — ${label} (09:00)`,
+          title: `📦 Entregas agendadas — ${label}`,
           body: bodyFunc,
         },
         data: {
@@ -545,7 +545,7 @@ export const notifyApoiadoCestaAgendadaOnCreate = onDocumentCreated(
 );
 
 export const notifyApoiadoContaExpirada = onSchedule(
-  { schedule: "0 0 * * *", timeZone: "Europe/Lisbon" }, //como esta é tds os dias as 9 ("0 9 * * *") |para testar a cada minuto usar: "* * * * *"|
+  { schedule: "0 9 * * *", timeZone: "Europe/Lisbon" }, //como esta é tds os dias as 9 ("0 9 * * *") |para testar a cada minuto usar: "* * * * *"|
   async () => {
     const db = getFirestore();
     const messaging = getMessaging();
