@@ -11,7 +11,6 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.nar
 *.ear
@@ -34,3 +33,7 @@ replay_pid*
 /Frontend/Android/.gradle
 /Frontend/Android/.idea
 Frontend/Android/local.properties
+/AndroidApp/.idea
+/App/Android/.idea
+App/Android/.gradle/config.properties
+/AndroidApp/app/.idea

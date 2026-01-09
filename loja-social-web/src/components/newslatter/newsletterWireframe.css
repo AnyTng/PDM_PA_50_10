@@ -1,0 +1,73 @@
+/* =========================
+   SIMETRIA FINAL
+========================= */
+
+/* o middle tem de esticar */
+.wf-middle{
+  align-items: stretch !important;
+}
+
+/* os dois lados ficam com a mesma altura */
+.wf-left, .wf-right{
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  min-height: 420px !important;   /* ajusta se quiseres mais alto */
+}
+
+/* divisor acompanha a altura real */
+.wf-divider{
+  align-self: stretch !important;
+}
+
+/* lado esquerdo: o bloco Venha Doar ocupa tudo */
+.wf-left > *{
+  flex: 1 1 auto !important;
+}
+
+/* dentro do Venha Doar, força o mapa a preencher altura */
+.vd-wrap{
+  height: 100% !important;
+  align-items: stretch !important;
+}
+
+.vd-right{
+  display:flex !important;
+  flex-direction: column !important;
+}
+
+.vd-map{
+  flex: 1 1 auto !important;     /* <-- o segredo: mapa cresce */
+  height: auto !important;
+  min-height: 320px !important;
+}
+
+/* lado direito: remove o "card" e deixa o form ocupar a altura */
+.wf-form{
+  height: 100% !important;
+  min-height: 420px !important;
+}
+
+/* mata o wrapper arredondado do DonationForm (mesmo que tenha classes desconhecidas) */
+.wf-form > div{
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* se o DonationForm tiver um card interno (isto apanha a maioria) */
+.wf-form div{
+  box-shadow: none !important;
+}
+
+/* (opcional) se queres tirar mesmo a moldura cinza arredondada dentro do form */
+.wf-form .card,
+.wf-form .panel,
+.wf-form .wrapper,
+.wf-form .container,
+.wf-form form{
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}

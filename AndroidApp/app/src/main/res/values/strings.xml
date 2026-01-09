@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">Loja Social IPCA</string>
+    <string name="cd_back">Voltar</string>
+    <string name="cd_header_logo">Serviços de Ação Social IPCA</string>
+    <string name="footer_calendar">Calendário</string>
+    <string name="footer_bag">Saco</string>
+    <string name="footer_grocery">Mercearia</string>
+    <string name="footer_menu">Menu</string>
+    <string name="footer_home">Início</string>
+    <string name="header_home">Home</string>
+    <string name="header_calendar">Calendário</string>
+    <string name="header_stock">Stock</string>
+    <string name="header_menu">Menu</string>
+    <string name="header_manual">Manual de Utilização</string>
+    <string name="header_historico">Histórico</string>
+    <string name="header_urgent_requests">Pedidos Urgentes</string>
+    <string name="header_cestas">Cestas</string>
+    <string name="header_cesta_details">Detalhes da Cesta</string>
+    <string name="header_create_cesta">Criar Cesta</string>
+    <string name="header_profile_funcionario">Perfil Gestor</string>
+    <string name="header_profile_apoiado">Meu Perfil</string>
+    <string name="header_create_profile">Criar Perfil</string>
+    <string name="header_urgent_help">Pedido Urgente</string>
+    <string name="header_expired_products">Fora de validade</string>
+    <string name="header_product_details">Detalhes</string>
+    <string name="header_edit_product">Editar Produto</string>
+    <string name="header_new_product">Novo Produto</string>
+    <string name="header_campaigns">Campanhas</string>
+    <string name="header_new_campaign">Nova Campanha</string>
+    <string name="header_campaign_results">Resultados</string>
+    <string name="manual_admin_url">https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_administrador.pdf?alt=media&amp;token=50be5a82-c7ef-441a-aeb8-f96d9fa415a7</string>
+    <string name="manual_colaborador_url">https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_colaborador.pdf?alt=media&amp;token=307cecb1-8ebf-4bad-9090-b46f7480170f</string>
+    <string name="manual_beneficiario_url">https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_beneficiario.pdf?alt=media&amp;token=57ac4cd0-e695-40b3-96b9-49d3df529966</string>
+
+    <!-- Widget (Home Screen) -->
+    <string name="widget_title">Cestas</string>
+    <string name="widget_subtitle_loading">A carregar…</string>
+    <string name="widget_subtitle_login">Inicie sessão</string>
+    <string name="widget_subtitle_receber">A receber</string>
+    <string name="widget_subtitle_doar">A doar</string>
+    <string name="widget_empty_login">Inicie sessão para ver as suas cestas.</string>
+    <string name="widget_empty_receber">Sem cestas agendadas para receber.</string>
+    <string name="widget_empty_doar">Sem cestas agendadas para doar.</string>
+    <string name="widget_item_cesta">Cesta</string>
+    <string name="widget_item_apoiado_unknown">Apoiado</string>
+    <string name="widget_refresh">Atualizar</string>
+</resources>

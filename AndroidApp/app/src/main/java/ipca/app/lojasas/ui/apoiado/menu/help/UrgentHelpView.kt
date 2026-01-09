@@ -1,0 +1,95 @@
+package ipca.app.lojasas.ui.apoiado.menu.help
+
+import ipca.app.lojasas.ui.theme.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import ipca.app.lojasas.ui.components.AppHeader // Importar o Header
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UrgentHelpView(
+    navController: NavController,
+    numeroMecanografico: String
+) {
+    val viewModel: UrgentHelpViewModel = hiltViewModel()
+    var descricao by remember { mutableStateOf("") }
+
+    val isLoading by viewModel.isLoading
+    val error by viewModel.error
+
+    // 1. Column principal sem padding para o Header ocupar tudo
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WhiteColor)
+    ) {
+
+
+        // 3. Column interna com padding para o formulário
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Pedido de Ajuda Urgente",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = GreenSas
+            )
+            Text(
+                text = "Descreva abaixo o que necessita com urgência.",
+                color = GreyColor,
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            OutlinedTextField(
+                value = descricao,
+                onValueChange = { descricao = it },
+                label = { Text("Descrição da necessidade") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
+                maxLines = 10,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = GreenSas,
+                    unfocusedBorderColor = GreenSas,
+                    focusedLabelColor = GreenSas,
+                    cursorColor = GreenSas
+                )
+            )
+
+            if (error != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(error!!, color = RedColor)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    viewModel.submitUrgentRequest(numeroMecanografico, descricao) {
+                        navController.popBackStack()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
+                enabled = !isLoading
+            ) {
+                if (isLoading) CircularProgressIndicator(color = WhiteColor)
+                else Text("Submeter Pedido")
+            }
+        }
+    }
+}
