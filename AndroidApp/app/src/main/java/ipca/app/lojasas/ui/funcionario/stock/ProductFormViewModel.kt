@@ -303,9 +303,7 @@ class ProductFormViewModel @Inject constructor(
                         marca = product.marca.orEmpty(),
                         codBarras = normalized,
                         tamanhoValor = sizeValueFrom(product),
-                        tamanhoUnidade = product.tamanhoUnidade?.trim().orEmpty(),
-                        estadoProduto = ProductStatus.normalizeFirestoreValue(product.estadoProduto)
-                            ?: latest.form.estadoProduto
+                        tamanhoUnidade = product.tamanhoUnidade?.trim().orEmpty()
                     )
                 )
             },
