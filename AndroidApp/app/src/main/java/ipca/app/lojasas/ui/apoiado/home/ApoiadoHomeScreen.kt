@@ -1,11 +1,13 @@
 package ipca.app.lojasas.ui.apoiado.home
 
+import ipca.app.lojasas.R
 import ipca.app.lojasas.ui.theme.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,9 +27,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,9 +48,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -65,16 +72,9 @@ import java.util.Date
 import java.util.Locale
 
 // -----------------------------------------------------------------------------
-//  Design tokens (cores aproximadas do mockup)
+//  Design tokens
 // -----------------------------------------------------------------------------
 private val DarkGreenCard = GreenSas
-
-// Card para: "Entregas não levantadas"
-
-// Card para: "Entregas canceladas"
-
-// Card para: "Documentos em Falta"
-
 
 private enum class CestaCardStyle {
     PENDENTE,
@@ -96,7 +96,6 @@ fun ApoiadoHomeScreen(
     val viewModel: ApoiadoViewModel = hiltViewModel()
     val state by viewModel.uiState
 
-    // Garante refresh quando a navegação chega aqui
     LaunchedEffect(Unit) {
         viewModel.checkStatus()
     }
@@ -123,7 +122,7 @@ fun ApoiadoHomeScreen(
         return
     }
 
-    // 3) Conta Bloqueada (não mostra cestas/pedidos)
+    // 3) Conta Bloqueada
     if (state.estadoConta.equals("Bloqueado", ignoreCase = true)) {
         BlockedAccountScreen(
             navController = navController,
@@ -147,7 +146,7 @@ fun ApoiadoHomeScreen(
         getProfileStatusUi(state.estadoConta, state.faltaDocumentos)
     }
 
-    // Pedidos urgentes que já têm cesta associada devem ser apresentados como cesta (e não duplicar cartões)
+    // Filtra pedidos urgentes
     val (urgentToShow, deniedUrgentRequests) = remember(state.urgentRequests) {
         val withoutCesta = state.urgentRequests.filter { it.cestaId.isNullOrBlank() }
         val denied = withoutCesta.filter { isDeniedUrgentRequest(it) }
@@ -163,9 +162,7 @@ fun ApoiadoHomeScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
 
-        // -----------------------------------------------------------------
-        // Cabeçalho (Olá + Estado + Ver perfil)
-        // -----------------------------------------------------------------
+        // Cabeçalho
         item {
             HomeHeader(
                 nome = state.nome,
@@ -174,7 +171,7 @@ fun ApoiadoHomeScreen(
             )
         }
 
-        // Estado especial: Suspenso / Negado (mas AINDA mostramos cartões abaixo, como pedido)
+        // Suspenso / Negado
         if (state.estadoConta.equals("Suspenso", ignoreCase = true)) {
             item { PausedCard() }
         }
@@ -188,12 +185,10 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // -----------------------------------------------------------------
         // Secção: A Acontecer Agora
-        // -----------------------------------------------------------------
         item { SectionSeparator(title = "A Acontecer Agora") }
 
-        // Card de Documentos em Falta (quando aplicável)
+        // Documentos em Falta
         if (
             state.faltaDocumentos ||
             state.estadoConta.equals("Falta_Documentos", ignoreCase = true) ||
@@ -206,7 +201,7 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // Cestas por entregar (verde escuro)
+        // Cestas pendentes
         if (state.cestasPendentes.isNotEmpty()) {
             items(state.cestasPendentes, key = { it.id }) { cesta ->
                 CestaHomeCard(
@@ -218,14 +213,14 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // Pedidos de Ajuda (azul acinzentado)
+        // Pedidos urgentes ativos
         if (urgentToShow.isNotEmpty()) {
             items(urgentToShow, key = { it.id }) { request ->
                 UrgentRequestHomeCard(request = request)
             }
         }
 
-        // Empty state (quando não há nada a acontecer agora)
+        // Empty state
         if (
             !state.faltaDocumentos &&
             !state.estadoConta.equals("Falta_Documentos", ignoreCase = true) &&
@@ -236,9 +231,7 @@ fun ApoiadoHomeScreen(
             item { EmptyStateCheck() }
         }
 
-        // -----------------------------------------------------------------
         // Secção: Anteriormente
-        // -----------------------------------------------------------------
         item { SectionSeparator(title = "Anteriormente") }
 
         if (deniedUrgentRequests.isNotEmpty()) {
@@ -247,7 +240,6 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // Entregas canceladas (cinzento claro)
         if (state.cestasCanceladas.isNotEmpty()) {
             items(state.cestasCanceladas, key = { it.id }) { cesta ->
                 CestaHomeCard(
@@ -259,7 +251,6 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // Entregas não levantadas (amarelo claro)
         if (state.cestasNaoLevantadas.isNotEmpty()) {
             items(state.cestasNaoLevantadas, key = { it.id }) { cesta ->
                 CestaHomeCard(
@@ -271,7 +262,6 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // Entregas concluídas (verde claro)
         if (state.cestasRealizadas.isNotEmpty()) {
             items(state.cestasRealizadas, key = { it.id }) { cesta ->
                 CestaHomeCard(
@@ -283,7 +273,6 @@ fun ApoiadoHomeScreen(
             }
         }
 
-        // Espaço extra para o footer não tapar o último card
         item { Spacer(modifier = Modifier.height(90.dp)) }
     }
 }
@@ -395,39 +384,80 @@ private fun SectionSeparator(title: String) {
     }
 }
 
+/**
+ * Card Genérico com ícone de fundo (Watermark) à ESQUERDA e RODADO.
+ */
+@Composable
+private fun SasHomeCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color,
+    watermarkIcon: Int? = null,
+    watermarkTint: Color = WhiteColor,
+    watermarkAlpha: Float = 0.16f,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+
+            // 1. CAMADA DE FUNDO (Ícone à Esquerda, Rodado)
+            if (watermarkIcon != null) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(14.dp))
+                ) {
+                    Icon(
+                        painter = painterResource(id = watermarkIcon),
+                        contentDescription = null,
+                        tint = watermarkTint.copy(alpha = watermarkAlpha),
+                        modifier = Modifier
+                            .requiredSize(180.dp) // Tamanho fixo e generoso
+                            .align(Alignment.CenterStart) // Alinhado ao centro-esquerdo
+                            .offset(x = (-40).dp, y = 10.dp) // Puxado ligeiramente para fora
+                            .graphicsLayer(rotationZ = -25f) // Rotação anti-horária (tipo mockup)
+                    )
+                }
+            }
+
+            // 2. CAMADA DE CONTEÚDO
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(contentPadding)
+            ) {
+                content()
+            }
+        }
+    }
+}
+
 @Composable
 private fun CardActionButton(
     text: String,
     accentColor: Color,
-    textColor: Color? = null,
-    iconColor: Color? = null,
+    modifier: Modifier = Modifier,
+    showArrow: Boolean = true,
     onClick: () -> Unit
 ) {
     Surface(
         color = WhiteColor,
         shape = RoundedCornerShape(10.dp),
-        modifier = Modifier
-            .clickable(onClick = onClick)
+        modifier = modifier.clickable(onClick = onClick)
     ) {
-        Row(
+        Text(
+            text = if (showArrow) "$text →" else text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = text,
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
-                color = textColor ?: accentColor
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = iconColor ?: accentColor,
-                modifier = Modifier.size(14.dp)
-            )
-        }
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 12.sp,
+            color = accentColor
+        )
     }
 }
 
@@ -438,7 +468,7 @@ private fun CestaHomeCard(
     produtosState: CestaProdutosUi?,
     onLoadProdutos: () -> Unit
 ) {
-    val (title, background, textColor, accentColor) = when (style) {
+    val (title, background, textColor, actionAccentColor) = when (style) {
         CestaCardStyle.PENDENTE -> Quadruple(
             "Entrega de bens agendada",
             DarkGreenCard,
@@ -454,17 +484,24 @@ private fun CestaHomeCard(
         )
 
         CestaCardStyle.NAO_LEVANTADA -> Quadruple(
-            "Entrega não levantada",
+            "Entrega de bens não levantada",
             LightYellowCard,
             LightYellowText,
             LightYellowText
         )
+
         CestaCardStyle.CANCELADA -> Quadruple(
-            "Entrega cancelada",
+            "Entrega de bens cancelada",
             DarkRedCard,
             WhiteColor,
-            WhiteColor
+            DarkRedCard
         )
+    }
+
+    val watermarkTint = when (style) {
+        CestaCardStyle.CONCLUIDA -> GreenSas
+        CestaCardStyle.NAO_LEVANTADA -> LightYellowText
+        else -> WhiteColor
     }
 
     var showDialog by remember { mutableStateOf(false) }
@@ -480,85 +517,81 @@ private fun CestaHomeCard(
         )
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = background),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    SasHomeCard(
+        containerColor = background,
+        watermarkIcon = R.drawable.ic_bg_local_mall,
+        watermarkTint = watermarkTint,
+        watermarkAlpha = 0.15f
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = title,
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = textColor
+        )
+
+        if (cesta.origem?.equals("Urgente", ignoreCase = true) == true) {
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = title,
+                text = "Origem: Pedido Urgente",
                 fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = textColor
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
+                color = textColor.copy(alpha = 0.9f)
             )
+        }
 
-            if (cesta.origem?.equals("Urgente", ignoreCase = true) == true) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Origem: Pedido Urgente",
-                    fontFamily = IntroFontFamily,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp,
-                    color = textColor.copy(alpha = 0.95f)
-                )
-            }
+        Spacer(modifier = Modifier.height(10.dp))
 
-            Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Dia: ${formatDate(cesta.dataRecolha)}",
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = textColor
+        )
+        Text(
+            text = "Horas: ${formatTime(cesta.dataRecolha)}",
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = textColor
+        )
 
+        if (style == CestaCardStyle.PENDENTE) {
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Dia: ${formatDate(cesta.dataRecolha)}",
+                text = "Caso não possa levantar, reagende via email: sas@ipca.pt",
+                fontFamily = IntroFontFamily,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                color = textColor.copy(alpha = 0.9f)
+            )
+        }
+
+        if (style == CestaCardStyle.NAO_LEVANTADA) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Faltas: ${cesta.faltas}",
                 fontFamily = IntroFontFamily,
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.sp,
                 color = textColor
             )
-            Text(
-                text = "Horas: ${formatTime(cesta.dataRecolha)}",
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                color = textColor
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            CardActionButton(
+                text = "Ver Mais",
+                accentColor = actionAccentColor,
+                onClick = { showDialog = true }
             )
-
-            if (style == CestaCardStyle.PENDENTE) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Caso não possa levantar a cesta, reagende via email, sas@ipca.pt",
-                    fontFamily = IntroFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 12.sp,
-                    color = textColor.copy(alpha = 0.95f)
-                )
-            }
-
-            if (style == CestaCardStyle.NAO_LEVANTADA) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Faltas: ${cesta.faltas}",
-                    fontFamily = IntroFontFamily,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp,
-                    color = textColor
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                CardActionButton(
-                    text = "Ver Mais",
-                    accentColor = accentColor,
-                    textColor = if (style == CestaCardStyle.CANCELADA) background else null,
-                    iconColor = if (style == CestaCardStyle.CANCELADA) background else null,
-                    onClick = { showDialog = true }
-                )
-            }
         }
     }
 }
@@ -568,134 +601,116 @@ private fun UrgentRequestHomeCard(request: UrgentRequest) {
     val title = if (request.tipo.equals("Urgente", ignoreCase = true)) {
         "Pedido de Ajuda Urgente"
     } else {
-        // Mantém o texto do design (imagem 1)
         "Pedido de Ajuda"
     }
 
     val isDenied = isDeniedUrgentRequest(request)
-    val background = if (isDenied) BlueGreyCard.copy(alpha = 0.85f) else BlueGreyCard
-    val estadoLabel = formatPedidoEstado(request.estado)
+    val background = if (isDenied) DarkRedCard else BlueGreyCard
+    val estadoLabel = formatPedidoEstadoShort(request.estado)
 
     var showDialog by remember { mutableStateOf(false) }
+
     if (showDialog) {
-        UrgentRequestDetailsDialog(request = request, onDismiss = { showDialog = false })
+        UrgentRequestDetailsDialog(
+            request = request,
+            onDismiss = { showDialog = false }
+        )
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = background),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    SasHomeCard(
+        containerColor = background,
+        watermarkIcon = R.drawable.ic_bg_approval_delegation,
+        watermarkTint = WhiteColor,
+        watermarkAlpha = 0.15f
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = title,
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = WhiteColor
+        Text(
+            text = title,
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = WhiteColor
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = estadoLabel,
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            color = WhiteColor.copy(alpha = 0.95f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            CardActionButton(
+                text = "Ver Mais",
+                accentColor = background,
+                onClick = { showDialog = true }
             )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = estadoLabel,
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                color = WhiteColor.copy(alpha = 0.95f)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                CardActionButton(
-                    text = "Ver Mais",
-                    accentColor = background,
-                    onClick = { showDialog = true }
-                )
-            }
         }
     }
 }
 
 @Composable
 private fun MissingDocumentsCard(onEnviar: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = WarningOrange),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    SasHomeCard(
+        containerColor = WarningOrange,
+        watermarkIcon = R.drawable.ic_bg_article,
+        watermarkTint = WhiteColor,
+        watermarkAlpha = 0.18f
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Documentos em Falta",
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = WhiteColor
-            )
+        Text(
+            text = "Documentos em Falta",
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = WhiteColor
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                color = WhiteColor,
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.weight(1f)
             ) {
-                /*Surface(
-                    color = WhiteColor,
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = "Nome do Documento",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        fontFamily = IntroFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = WarningOrange
-                    )
-                }*/
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Surface(
-                    color = WhiteColor,
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier
-                        .clickable(onClick = onEnviar)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Enviar",
-                            fontFamily = IntroFontFamily,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = WarningOrange
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            tint = WarningOrange,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "Documentos pendentes",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    fontFamily = IntroFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    color = WarningOrangeDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            CardActionButton(
+                text = "Enviar",
+                accentColor = WarningOrangeDark,
+                onClick = onEnviar
+            )
         }
     }
 }
 
 @Composable
-private fun EmptyStateCheck() {
+private fun EmptyStateCheck
+            () {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1004,37 +1019,43 @@ private fun resolvePedidoEstadoColor(estado: String): Color {
 }
 
 // -----------------------------------------------------------------------------
-//  Estados especiais (Mantidos)
+//  Estados especiais
 // -----------------------------------------------------------------------------
 
 @Composable
 private fun PausedCard() {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = WarningOrange),
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    SasHomeCard(
+        containerColor = WarningOrange,
+        watermarkIcon = R.drawable.ic_bg_approval_delegation,
+        watermarkTint = WhiteColor,
+        watermarkAlpha = 0.16f
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = WhiteColor)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Apoio Pausado",
-                    color = WhiteColor,
-                    fontSize = 16.sp,
-                    fontFamily = IntroFontFamily,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(modifier = Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = "Contacte o SAS: sas@ipca.pt",
-                color = WhiteColor,
-                fontSize = 14.sp,
-                fontFamily = IntroFontFamily
+                text = "⏸",
+                fontFamily = IntroFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = WhiteColor
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Apoio Pausado",
+                fontFamily = IntroFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = WhiteColor
             )
         }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = "Contacte o SAS: sas@ipca.pt",
+            fontFamily = IntroFontFamily,
+            fontSize = 14.sp,
+            color = WhiteColor.copy(alpha = 0.95f)
+        )
     }
 }
 
@@ -1083,53 +1104,47 @@ fun BlockedAccountScreen(
         }
     }
 }
-
 @Composable
 private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = ErrorRed),
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    SasHomeCard(
+        containerColor = DarkRedCard,
+        watermarkIcon = R.drawable.ic_bg_approval_delegation,
+        watermarkTint = WhiteColor,
+        watermarkAlpha = 0.16f
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Pedido Rejeitado",
-                color = WhiteColor,
-                fontSize = 16.sp,
-                fontFamily = IntroFontFamily,
-                fontWeight = FontWeight.Bold
+        Text(
+            text = "Pedido Rejeitado",
+            fontFamily = IntroFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = WhiteColor
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = reason,
+            fontFamily = IntroFontFamily,
+            fontSize = 14.sp,
+            color = WhiteColor.copy(alpha = 0.95f)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            CardActionButton(
+                text = "Tentar de Novo",
+                accentColor = DarkRedCard,
+                showArrow = false,
+                onClick = onTryAgain
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Motivo: $reason",
-                color = WhiteColor,
-                fontSize = 13.sp,
-                fontFamily = IntroFontFamily
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Button(
-                    onClick = onTryAgain,
-                    colors = ButtonDefaults.buttonColors(containerColor = WhiteColor),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = "Tentar de Novo",
-                        color = ErrorRed,
-                        fontFamily = IntroFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-            }
         }
     }
 }
+
 
 // -----------------------------------------------------------------------------
 //  Helpers
@@ -1137,28 +1152,34 @@ private fun DeniedCard(reason: String, onTryAgain: () -> Unit) {
 
 private fun getProfileStatusUi(rawStatus: String, faltaDocumentos: Boolean): ProfileStatusUi {
     val status = rawStatus.trim()
+    val normalized = status.lowercase(Locale.getDefault())
 
     return when {
-        status.equals("Aprovado", ignoreCase = true) -> ProfileStatusUi("Aprovado", GreenSas, "✓")
+        normalized == "aprovado" -> ProfileStatusUi("Aprovado", GreenSas, "✓")
 
-        // A app usa "Analise" na BD
-        status.equals("Analise", ignoreCase = true) ||
-                status.equals("Em_Analise", ignoreCase = true) ||
-                status.equals("Em analise", ignoreCase = true) -> ProfileStatusUi("Em análise", WarningOrange, "⟳")
+        normalized in listOf("analise", "em analise", "em_analise", "em análise", "em_análise") ->
+            ProfileStatusUi("Em análise", WarningOrange, "ⓘ")
 
-        // Documentos em falta / correção de dados
-        faltaDocumentos || status.equals("Falta_Documentos", ignoreCase = true) ->
-            ProfileStatusUi("Faltam Documentos", WarningOrange, "⛔")
+        faltaDocumentos ||
+                normalized in listOf("falta_documentos", "faltam_documentos", "falta documentos", "faltam documentos") ->
+            ProfileStatusUi("Faltam Documentos", DangerRed, "ⓘ")
 
-        status.equals("Correcao_Dados", ignoreCase = true) ->
-            ProfileStatusUi("Faltam Dados", WarningOrange, "⛔")
+        normalized in listOf(
+            "correcao_dados",
+            "correção_dados",
+            "correcao dados",
+            "correção dados"
+        ) -> ProfileStatusUi("Faltam Dados", DangerRed, "ⓘ")
 
-        status.equals("Suspenso", ignoreCase = true) -> ProfileStatusUi("Em pausa", WarningOrange, "⏸")
-        status.equals("Negado", ignoreCase = true) -> ProfileStatusUi("Rejeitado", ErrorRed, "⛔")
-        status.equals("Bloqueado", ignoreCase = true) -> ProfileStatusUi("Bloqueado", ErrorRed, "⛔")
+        normalized == "suspenso" -> ProfileStatusUi("Suspenso", WarningOrange, "⏸")
 
-        status.isBlank() -> ProfileStatusUi("Por submeter", WarningOrange, null)
-        else -> ProfileStatusUi(status, BlueGreyCard, null)
+        normalized in listOf("negado", "rejeitado") -> ProfileStatusUi("Rejeitado", DangerRed, "✕")
+
+        normalized == "bloqueado" -> ProfileStatusUi("Bloqueado", DangerRed, "✕")
+
+        normalized.isBlank() -> ProfileStatusUi("Por submeter", WarningOrange, "ⓘ")
+
+        else -> ProfileStatusUi(status, BlueGreyCard, "ⓘ")
     }
 }
 
@@ -1168,6 +1189,20 @@ private fun formatDate(date: Date?): String {
 
 private fun formatTime(date: Date?): String {
     return date?.let { SimpleDateFormat("HH:mm", Locale.getDefault()).format(it) } ?: "--:--"
+}
+
+private fun formatPedidoEstadoShort(raw: String): String {
+    val normalized = raw.trim().lowercase(Locale.getDefault())
+    return when {
+        normalized.isBlank() -> "—"
+        normalized in listOf("analise", "em analise", "em_analise", "em análise", "em_análise") -> "Em Análise"
+        normalized in listOf("preparar_apoio", "preparar apoio", "preparacao", "preparação") -> "Em preparação"
+        normalized == "aprovado" -> "Aprovado"
+        normalized in listOf("concluido", "concluído") -> "Concluído"
+        normalized == "negado" -> "Negado"
+        normalized == "rejeitado" -> "Rejeitado"
+        else -> raw
+    }
 }
 
 private fun formatPedidoEstado(raw: String): String {
@@ -1187,11 +1222,8 @@ private fun formatPedidoEstado(raw: String): String {
 }
 
 private fun isDeniedUrgentRequest(request: UrgentRequest): Boolean {
-    val tipo = request.tipo.trim().lowercase(Locale.getDefault())
-    if (tipo != "urgente") return false
     val estado = request.estado.trim().lowercase(Locale.getDefault())
     return estado == "negado" || estado == "rejeitado"
 }
 
-/** Pequeno helper para evitar criar uma data class só para 4 valores. */      
 private data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)

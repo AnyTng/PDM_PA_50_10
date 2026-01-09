@@ -48,6 +48,10 @@ android {
     }
 }
 
+configurations.configureEach {
+    exclude(group = "com.intellij", module = "annotations")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -61,6 +65,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
