@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.ProductStatus
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -68,7 +67,6 @@ fun ProductView(
                     val statusLabel = prod.displayStatus(reference)
                     val isDisponivel = prod.isBaseAvailable() && !prod.isExpired(reference)
                     ProductViewContent(
-                        id = prod.id,
                         nomeProduto = prod.nomeProduto,
                         estadoLabel = statusLabel,
                         isDisponivel = isDisponivel,
@@ -83,9 +81,6 @@ fun ProductView(
                         doado = prod.doado,
                         codBarras = prod.codBarras,
                         descProduto = prod.descProduto,
-                        onEditClick = { id ->
-                            navController.navigate(Screen.StockProductEdit.createRoute(id))
-                        }
                     )
                 }
             }
@@ -98,7 +93,6 @@ fun ProductView(
  */
 @Composable
 private fun ProductViewContent(
-    id: String,
     nomeProduto: String,
     estadoLabel: String,
     isDisponivel: Boolean,
@@ -112,8 +106,7 @@ private fun ProductViewContent(
     parceiroExternoNome: String?,
     doado: String?,
     codBarras: String?,
-    descProduto: String?,
-    onEditClick: (String) -> Unit
+    descProduto: String?
 ) {
     Column(
         modifier = Modifier
@@ -268,28 +261,7 @@ private fun ProductViewContent(
             }
         }
 
-        // Botão de Editar
-        Button(
-            onClick = { onEditClick(id) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = GreenSas,
-                contentColor = WhiteColor
-            )
-        ) {
-            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Editar Produto",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
@@ -404,7 +376,6 @@ private fun ProductViewPreview_Disponivel() {
             .background(GreyBg)
     ) {
         ProductViewContent(
-            id = "p1",
             nomeProduto = "Leite UHT Meio-Gordo",
             estadoLabel = ProductStatus.AVAILABLE.displayLabel,
             isDisponivel = true,
@@ -418,8 +389,7 @@ private fun ProductViewPreview_Disponivel() {
             parceiroExternoNome = "Mercadona",
             doado = null,
             codBarras = "5601234567890",
-            descProduto = "Embalagem intacta. Armazenar em local fresco e seco.",
-            onEditClick = {}
+            descProduto = "Embalagem intacta. Armazenar em local fresco e seco."
         )
     }
 }
@@ -433,7 +403,6 @@ private fun ProductViewPreview_Indisponivel() {
             .background(GreyBg)
     ) {
         ProductViewContent(
-            id = "p2",
             nomeProduto = "Arroz Carolino",
             estadoLabel = ProductStatus.RESERVED.displayLabel,
             isDisponivel = false,
@@ -447,8 +416,7 @@ private fun ProductViewPreview_Indisponivel() {
             parceiroExternoNome = null,
             doado = "Doação Particular",
             codBarras = null,
-            descProduto = "Saco selado. Sem observações.",
-            onEditClick = {}
+            descProduto = "Saco selado. Sem observações."
         )
     }
 }

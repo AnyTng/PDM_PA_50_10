@@ -303,14 +303,16 @@ private fun CampaignCardContent(
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onAction,
-                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas),
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenSas, contentColor = WhiteColor),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(36.dp)
                 ) {
-                    Icon(Icons.Default.BarChart, null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.BarChart, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Ver Resultados")
+                    Text("Ver Resultados", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
