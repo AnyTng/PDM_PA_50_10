@@ -32,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -52,6 +53,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,6 +101,7 @@ fun CestasListView(
     var cestaParaFaltaReagendar by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaTerceiraFalta by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaCancelar by remember { mutableStateOf<CestaItem?>(null) }
+    var cestaParaEditarProdutos by remember { mutableStateOf<CestaItem?>(null) }
     var cestaParaAcoes by remember { mutableStateOf<CestaItem?>(null) }
 
     fun openDateTimePicker(initial: Date?, onSelected: (Date) -> Unit) {
@@ -488,6 +491,15 @@ fun CestasListView(
                         }
                     }
                     CestaActionOption(
+                        title = "Editar Produtos da Cesta",
+                        subtitle = "Adicionar ou remover produtos desta cesta.",
+                        icon = Icons.Default.Edit,
+                        accent = GreenSas
+                    ) {
+                        cestaParaAcoes = null
+                        cestaParaEditarProdutos = cesta
+                    }
+                    CestaActionOption(
                         title = "Marcar falta",
                         subtitle = if (cesta.faltas >= 2) {
                             "3ª falta: passa para 'Não levantou'."
@@ -520,6 +532,28 @@ fun CestasListView(
             },
             shape = RoundedCornerShape(14.dp),
             containerColor = WhiteColor
+        )
+    }
+
+    if (cestaParaEditarProdutos != null) {
+        val editViewModel: EditCestaProdutosViewModel = hiltViewModel()
+        val editState by editViewModel.uiState
+        val cestaId = cestaParaEditarProdutos!!.id
+
+        LaunchedEffect(cestaId) {
+            editViewModel.start(cestaId)
+        }
+
+        EditCestaProdutosDialog(
+            state = editState,
+            onDismiss = { cestaParaEditarProdutos = null },
+            onAddProduto = { editViewModel.addProduto(it) },
+            onRemoveProduto = { editViewModel.removeProduto(it) },
+            onSave = {
+                editViewModel.saveChanges {
+                    cestaParaEditarProdutos = null
+                }
+            }
         )
     }
 
