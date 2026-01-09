@@ -42,4 +42,5 @@
     <string name="widget_empty_receber">Sem cestas agendadas para receber.</string>
     <string name="widget_empty_doar">Sem cestas agendadas para doar.</string>
     <string name="widget_item_cesta">Cesta</string>
+    <string name="widget_item_apoiado_unknown">Apoiado</string>
 </resources>

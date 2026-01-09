@@ -6,6 +6,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.functions.FirebaseFunctions
 import dagger.hilt.android.qualifiers.ApplicationContext
+import ipca.app.lojasas.widget.CestasWidgetUpdater
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,6 +25,8 @@ class AuthRepository @Inject constructor(
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    // Atualiza o widget automaticamente após login.
+                    CestasWidgetUpdater.requestRefresh(appContext)
                     onSuccess()
                 } else {
                     onError(task.exception)
@@ -38,11 +41,7 @@ class AuthRepository @Inject constructor(
     ) {
         auth.sendPasswordResetEmail(email)
             .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onSuccess()
-                } else {
-                    onError(task.exception)
-                }
+                if (task.isSuccessful) onSuccess() else onError(task.exception)
             }
     }
 
@@ -55,11 +54,8 @@ class AuthRepository @Inject constructor(
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid
-                if (uid != null) {
-                    onSuccess(uid)
-                } else {
-                    onError(IllegalStateException("Missing user id"))
-                }
+                if (uid != null) onSuccess(uid)
+                else onError(IllegalStateException("Missing user id"))
             }
             .addOnFailureListener { onError(it) }
     }
@@ -138,6 +134,7 @@ class AuthRepository @Inject constructor(
             .addOnFailureListener { onError(it) }
     }
 
+    // ✅ Mantém a tua função original (importantíssima para admin)
     fun deleteUserByUid(
         uid: String,
         onSuccess: () -> Unit,
@@ -159,10 +156,12 @@ class AuthRepository @Inject constructor(
     fun signOut() {
         clearRoleCache()
         auth.signOut()
+
+        // Atualiza o widget automaticamente após logout.
+        CestasWidgetUpdater.requestRefresh(appContext)
     }
 
     fun currentUserEmail(): String? = auth.currentUser?.email?.trim()
-
     fun currentUserId(): String? = auth.currentUser?.uid
 
     private fun clearRoleCache() {

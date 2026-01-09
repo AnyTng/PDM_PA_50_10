@@ -8,6 +8,7 @@ import android.widget.RemoteViewsService
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import ipca.app.lojasas.MainActivity
 import ipca.app.lojasas.R
@@ -25,7 +26,9 @@ private const val TAG_WIDGET = "CestasWidget"
 private data class WidgetCestaItem(
     val cestaId: String,
     val dataEntrega: Date,
-    val estado: String
+    val estado: String,
+    val apoiadoId: String = "",
+    val apoiadoNome: String? = null
 )
 
 /**
@@ -44,6 +47,7 @@ class CestasWidgetViewFactory(
     private val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
 
     private val items = mutableListOf<WidgetCestaItem>()
+    private var currentRole: UserRole? = null
 
     private val dateFormatter = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
 
@@ -57,6 +61,7 @@ class CestasWidgetViewFactory(
 
     override fun onDataSetChanged() {
         items.clear()
+        currentRole = null
 
         val user = auth.currentUser
         if (user == null) {
@@ -76,10 +81,14 @@ class CestasWidgetViewFactory(
             return
         }
 
+        currentRole = role
+
         val fetched = try {
             when (role) {
                 UserRole.APOIADO -> fetchUpcomingCestasForApoiado(uid)
-                UserRole.FUNCIONARIO, UserRole.ADMIN -> fetchUpcomingCestasForFuncionario(uid)
+                // Para Funcionário/Admin mostramos as próximas cestas a doar (todas),
+                // de forma consistente com a listagem de cestas do backoffice.
+                UserRole.FUNCIONARIO, UserRole.ADMIN -> fetchUpcomingCestasForStaff()
             }
         } catch (e: Exception) {
             Log.e(TAG_WIDGET, "Widget: erro ao carregar cestas", e)
@@ -102,10 +111,21 @@ class CestasWidgetViewFactory(
         rv.setTextViewText(R.id.widget_item_date, dateFormatter.format(item.dataEntrega))
 
         val estadoLabel = item.estado.trim().ifBlank { "-" }
-        rv.setTextViewText(
-            R.id.widget_item_desc,
-            context.getString(R.string.widget_item_cesta) + " • " + estadoLabel
-        )
+        val desc = when (currentRole) {
+            UserRole.APOIADO -> context.getString(R.string.widget_item_cesta) + " • " + estadoLabel
+            UserRole.FUNCIONARIO, UserRole.ADMIN -> {
+                val nome = item.apoiadoNome?.trim().orEmpty()
+                val recipient = when {
+                    nome.isNotBlank() && item.apoiadoId.isNotBlank() -> "$nome (${item.apoiadoId})"
+                    nome.isNotBlank() -> nome
+                    item.apoiadoId.isNotBlank() -> item.apoiadoId
+                    else -> context.getString(R.string.widget_item_apoiado_unknown)
+                }
+                recipient + " • " + estadoLabel
+            }
+            null -> context.getString(R.string.widget_item_cesta) + " • " + estadoLabel
+        }
+        rv.setTextViewText(R.id.widget_item_desc, desc)
 
         // Click do item: passamos a cestaId via Fill-In Intent.
         val fillIn = Intent().apply {
@@ -221,36 +241,92 @@ class CestasWidgetViewFactory(
         }
     }
 
-    private fun fetchUpcomingCestasForFuncionario(uid: String): List<WidgetCestaItem> {
-        val funcionarioTask = firestore.collection("funcionarios")
-            .whereEqualTo("uid", uid.trim())
-            .limit(1)
-            .get()
+    /**
+     * Para Funcionário/Admin: mostrar as próximas cestas a doar.
+     *
+     * Nota: não filtramos por funcionarioID porque na app o backoffice mostra "todas as cestas".
+     */
+    private fun fetchUpcomingCestasForStaff(): List<WidgetCestaItem> {
+        // Pequena margem para incluir cestas "de hoje" mesmo que a hora já tenha passado.
+        val now = Date()
+        val lowerBound = Date(now.time - 24L * 60L * 60L * 1000L)
 
-        val funcSnap = Tasks.await(funcionarioTask, 10, TimeUnit.SECONDS)
-        val funcDoc = funcSnap.documents.firstOrNull() ?: return emptyList()
-        val funcionarioId = funcDoc.id
+        // Tentamos uma query "leve" (filtrada por data). Caso falhe por algum motivo
+        // (ex.: dados antigos sem campo dataAgendada, ou inconsistências), fazemos fallback
+        // para uma query mais ampla para não deixar o widget vazio.
+        val snap = try {
+            Tasks.await(
+                firestore.collection("cestas")
+                    .whereGreaterThanOrEqualTo("dataAgendada", lowerBound)
+                    .orderBy("dataAgendada")
+                    .limit(50)
+                    .get(),
+                15,
+                TimeUnit.SECONDS
+            )
+        } catch (e: Exception) {
+            Log.w(TAG_WIDGET, "Widget: fallback query (cestas)", e)
+            Tasks.await(
+                firestore.collection("cestas")
+                    .limit(80)
+                    .get(),
+                15,
+                TimeUnit.SECONDS
+            )
+        }
 
-        val cestasTask = firestore.collection("cestas")
-            .whereEqualTo("funcionarioID", funcionarioId)
-            .get()
-
-        val snap = Tasks.await(cestasTask, 10, TimeUnit.SECONDS)
-        return snap.documents.mapNotNull { cestaDoc ->
+        val rawItems = snap.documents.mapNotNull { cestaDoc ->
             val estado = cestaDoc.getString("estadoCesta")?.trim().orEmpty()
             if (isCancelled(estado) || isMissed(estado) || isCompleted(estado)) {
                 return@mapNotNull null
             }
+
             val data = snapshotDate(cestaDoc, "dataAgendada")
                 ?: snapshotDate(cestaDoc, "dataRecolha")
                 ?: return@mapNotNull null
 
+            val apoiadoId = cestaDoc.getString("apoiadoID")?.trim().orEmpty()
+
             WidgetCestaItem(
                 cestaId = cestaDoc.id,
                 dataEntrega = data,
-                estado = estado
+                estado = estado,
+                apoiadoId = apoiadoId
             )
+        }.sortedBy { it.dataEntrega }
+
+        // Para o widget, não precisamos de uma lista enorme.
+        val top = rawItems.take(20)
+
+        // Fetch nomes dos apoiados (batch por chunks de 10) para mostrar "para quem".
+        val nameMap = fetchApoiadoNames(top.map { it.apoiadoId })
+        return top.map { item ->
+            item.copy(apoiadoNome = nameMap[item.apoiadoId])
         }
+    }
+
+    private fun fetchApoiadoNames(apoiadoIds: List<String>): Map<String, String> {
+        val ids = apoiadoIds.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        if (ids.isEmpty()) return emptyMap()
+
+        val result = mutableMapOf<String, String>()
+        val chunks = ids.chunked(10)
+        chunks.forEach { chunk ->
+            val snap = Tasks.await(
+                firestore.collection("apoiados")
+                    .whereIn(FieldPath.documentId(), chunk)
+                    .get(),
+                10,
+                TimeUnit.SECONDS
+            )
+            snap.documents.forEach { doc ->
+                val nome = doc.getString("nome")?.trim().orEmpty()
+                if (nome.isNotBlank()) {
+                    result[doc.id] = nome
+                }
+            }
+        }
+        return result
     }
 
     private fun snapshotDate(doc: DocumentSnapshot, field: String): Date? {
