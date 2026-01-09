@@ -11,8 +11,10 @@ import ipca.app.lojasas.data.products.Product
 import ipca.app.lojasas.data.products.ProductStatus
 import ipca.app.lojasas.data.products.toProductOrNull
 import ipca.app.lojasas.utils.AccountValidity
+import java.text.Normalizer
 import java.util.Calendar
 import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -655,6 +657,172 @@ class CestasRepository @Inject constructor(
             .addOnFailureListener { e -> onError(e) }
     }
 
+    fun fetchCestaProdutoIds(
+        cestaId: String,
+        onSuccess: (List<String>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = cestaId.trim()
+        if (normalized.isBlank()) {
+            onError(IllegalArgumentException("Cesta invalida."))
+            return
+        }
+
+        cestasCollection.document(normalized)
+            .get()
+            .addOnSuccessListener { doc ->
+                if (doc == null || !doc.exists()) {
+                    onError(IllegalStateException("Cesta nao encontrada."))
+                    return@addOnSuccessListener
+                }
+                val rawProdutos = (doc.get("produtos") as? List<*>) ?: emptyList<Any>()
+                val produtoIds = rawProdutos
+                    .mapNotNull { it as? String }
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                onSuccess(produtoIds)
+            }
+            .addOnFailureListener { e -> onError(e) }
+    }
+
+    fun updateCestaProdutos(
+        cestaId: String,
+        novoProdutoIds: List<String>,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalizedCestaId = cestaId.trim()
+        if (normalizedCestaId.isBlank()) {
+            onError(IllegalArgumentException("Cesta invalida."))
+            return
+        }
+
+        val normalizedIds = novoProdutoIds
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+        if (normalizedIds.isEmpty()) {
+            onError(IllegalStateException("Selecione pelo menos 1 produto."))
+            return
+        }
+
+        val cestaRef = cestasCollection.document(normalizedCestaId)
+        val now = Date()
+
+        firestore.runTransaction { txn ->
+            val cestaSnap = txn.get(cestaRef)
+            if (!cestaSnap.exists()) {
+                throw IllegalStateException("Cesta nao encontrada.")
+            }
+
+            val estado = cestaSnap.getString("estadoCesta")?.trim().orEmpty()
+            if (isCestaEstadoFinal(estado)) {
+                throw IllegalStateException("Nao pode editar produtos neste estado.")
+            }
+
+            val currentIds = (cestaSnap.get("produtos") as? List<*>)
+                ?.mapNotNull { it as? String }
+                ?.map { it.trim() }
+                ?.filter { it.isNotBlank() }
+                ?.distinct()
+                ?: emptyList()
+
+            val toAdd = normalizedIds.filterNot { currentIds.contains(it) }
+            val toRemove = currentIds.filterNot { normalizedIds.contains(it) }
+
+            val produtoRefs = (toAdd + toRemove).distinct().associateWith { pid ->
+                produtosCollection.document(pid)
+            }
+            val produtoSnaps = produtoRefs.mapValues { (_, ref) -> txn.get(ref) }
+
+            toAdd.forEach { pid ->
+                val prodSnap = produtoSnaps[pid]
+                    ?: throw IllegalStateException("Produto nao encontrado: $pid")
+                if (!prodSnap.exists()) {
+                    throw IllegalStateException("Produto nao encontrado: $pid")
+                }
+                val estadoProduto = prodSnap.getString("estadoProduto")?.trim().orEmpty()
+                val status = ProductStatus.fromFirestore(estadoProduto)
+                if (status != ProductStatus.AVAILABLE) {
+                    throw IllegalStateException("Produto '$pid' nao esta disponivel.")
+                }
+                val validade = snapshotDate(prodSnap, "validade")
+                if (validade != null && isExpired(validade)) {
+                    throw IllegalStateException("Produto '$pid' fora de validade.")
+                }
+            }
+
+            toRemove.forEach { pid ->
+                val prodSnap = produtoSnaps[pid] ?: return@forEach
+                if (!prodSnap.exists()) return@forEach
+                val estadoProduto = prodSnap.getString("estadoProduto")?.trim().orEmpty()
+                val status = ProductStatus.fromFirestore(estadoProduto)
+                if (status == ProductStatus.DELIVERED || status == ProductStatus.DONATED_EXPIRED) {
+                    throw IllegalStateException("Produto '$pid' nao pode ser removido.")
+                }
+            }
+
+            toAdd.forEach { pid ->
+                val prodRef = produtoRefs[pid] ?: return@forEach
+                txn.update(
+                    prodRef,
+                    mapOf(
+                        "estadoProduto" to ProductStatus.RESERVED.firestoreValue,
+                        "cestaReservaId" to normalizedCestaId,
+                        "reservadoEm" to now
+                    )
+                )
+            }
+
+            toRemove.forEach { pid ->
+                val prodRef = produtoRefs[pid] ?: return@forEach
+                val prodSnap = produtoSnaps[pid] ?: return@forEach
+                if (!prodSnap.exists()) return@forEach
+
+                val estadoProduto = prodSnap.getString("estadoProduto")?.trim().orEmpty()
+                val status = ProductStatus.fromFirestore(estadoProduto)
+                val reservaId = prodSnap.getString("cestaReservaId")?.trim().orEmpty()
+                val podeLibertar = reservaId.isBlank() ||
+                    reservaId == normalizedCestaId ||
+                    status == ProductStatus.RESERVED
+
+                if (podeLibertar) {
+                    txn.update(
+                        prodRef,
+                        mapOf(
+                            "estadoProduto" to ProductStatus.AVAILABLE.firestoreValue,
+                            "cestaReservaId" to FieldValue.delete(),
+                            "reservadoEm" to FieldValue.delete()
+                        )
+                    )
+                }
+            }
+
+            if (toAdd.isNotEmpty() || toRemove.isNotEmpty()) {
+                txn.update(cestaRef, mapOf("produtos" to normalizedIds))
+            }
+
+            ProdutosUpdateSummary(
+                added = toAdd.size,
+                removed = toRemove.size,
+                total = normalizedIds.size
+            )
+        }
+            .addOnSuccessListener { summary ->
+                if (summary.added > 0 || summary.removed > 0) {
+                    val details = "Adicionados: ${summary.added} | Removidos: ${summary.removed} | Total: ${summary.total}"
+                    AuditLogger.logAction(
+                        "Editou produtos da cesta",
+                        "cesta",
+                        normalizedCestaId,
+                        details
+                    )
+                }
+                onSuccess()
+            }
+            .addOnFailureListener { e -> onError(e) }
+    }
+
     private fun snapshotDate(snapshot: DocumentSnapshot, field: String): Date? {
         return snapshot.getTimestamp(field)?.toDate() ?: (snapshot.get(field) as? Date)
     }
@@ -739,4 +907,25 @@ class CestasRepository @Inject constructor(
         val startOfToday = calendar.time
         return validade.before(startOfToday)
     }
+}
+
+private data class ProdutosUpdateSummary(
+    val added: Int,
+    val removed: Int,
+    val total: Int
+)
+
+private val estadoDiacriticsRegex = "\\p{Mn}+".toRegex()
+
+private fun normalizeEstadoKey(value: String): String {
+    val normalized = Normalizer.normalize(value, Normalizer.Form.NFD)
+    return estadoDiacriticsRegex.replace(normalized, "").trim().lowercase(Locale.getDefault())
+}
+
+private fun isCestaEstadoFinal(estado: String): Boolean {
+    val key = normalizeEstadoKey(estado)
+    return key == "entregue" ||
+        key == "cancelada" ||
+        key == "nao levantou" ||
+        key == "nao_levantou"
 }
