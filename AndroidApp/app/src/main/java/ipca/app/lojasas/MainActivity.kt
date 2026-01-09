@@ -79,7 +79,6 @@ class MainActivity : ComponentActivity() {
                     Screen.CreateCestaUrgente,
                     Screen.StockProducts,
                     Screen.StockProductsByName,
-                    Screen.StockProduct,
                     Screen.StockProductEdit,
                     Screen.StockProductCreate -> FooterType.FUNCIONARIO
                     Screen.ApoiadoHome,
