@@ -68,6 +68,7 @@ import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.cestas.ApoiadoInfo
 import ipca.app.lojasas.data.cestas.ApoiadoOption
 import ipca.app.lojasas.data.products.Product
+import ipca.app.lojasas.widget.CestasWidgetUpdater
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -298,6 +299,8 @@ fun CreateCestaView(
                 onClick = {
                     if (state.isSubmitting) return@FloatingActionButton
                     viewModel.submitCesta {
+                        // Atualiza o widget assim que uma nova cesta é criada
+                        CestasWidgetUpdater.requestRefresh(context)
                         navController.popBackStack()
                     }
                 },

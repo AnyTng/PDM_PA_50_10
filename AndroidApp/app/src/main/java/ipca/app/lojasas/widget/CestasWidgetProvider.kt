@@ -113,7 +113,21 @@ class CestasWidgetProvider : AppWidgetProvider() {
             openAppIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.widget_header, openAppPending)
+        views.setOnClickPendingIntent(R.id.widget_header_open, openAppPending)
+
+        // Refresh manual (ícone no header)
+        val refreshIntent = Intent(context, CestasWidgetProvider::class.java).apply {
+            action = ACTION_REFRESH
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
+        }
+        val refreshPending = PendingIntent.getBroadcast(
+            context,
+            20_000 + appWidgetId,
+            refreshIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending)
 
         // Clique em item: abre detalhes da cesta
         val templateIntent = Intent(context, MainActivity::class.java).apply {

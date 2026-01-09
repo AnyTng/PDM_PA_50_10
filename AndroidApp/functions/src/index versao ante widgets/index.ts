@@ -460,24 +460,6 @@ export const notifyApoiadoCestaAgendadaOnCreate = onDocumentCreated(
     const data = event.data?.data();
     if (!data) return;
 
-    const cestaId = String(event.params.cestaId);
-
-    // 🔄 Ping silencioso (data-only) para atualizar widgets de Funcionários/Admin
-    // (Não cria notificação visível, mas dispara onMessageReceived no Android mesmo em background.)
-    try {
-      await getMessaging().send({
-        topic: "funcionarios",
-        android: { priority: "high" },
-        data: {
-          type: "WIDGET_REFRESH",
-          trigger: "CESTA_CREATED",
-          cestaId,
-        },
-      });
-    } catch (e) {
-      console.error("WIDGET_REFRESH (funcionarios) falhou", e);
-    }
-
     const apoiadoId = String(data.apoiadoID ?? "").trim(); // ✅ no teu Firestore
     if (!apoiadoId) return;
 
@@ -512,7 +494,6 @@ export const notifyApoiadoCestaAgendadaOnCreate = onDocumentCreated(
     const tokens = tokensSnap.docs.map((d) => d.id).filter(Boolean);
     if (tokens.length === 0) return;
 
-    // 1) Notificação visível (mantém comportamento atual)
     await getMessaging().sendEachForMulticast({
       tokens,
       notification: {
@@ -521,26 +502,10 @@ export const notifyApoiadoCestaAgendadaOnCreate = onDocumentCreated(
       },
       data: {
         type: "CESTA_AGENDADA",
-        cestaId,
+        cestaId: event.params.cestaId,
         apoiadoId,
       },
     });
-
-    // 2) Data-only ping extra p/ atualizar widget mesmo em background
-    try {
-      await getMessaging().sendEachForMulticast({
-        tokens,
-        android: { priority: "high" },
-        data: {
-          type: "WIDGET_REFRESH",
-          trigger: "CESTA_CREATED",
-          cestaId,
-          apoiadoId,
-        },
-      });
-    } catch (e) {
-      console.error("WIDGET_REFRESH (apoiado tokens) falhou", e);
-    }
   }
 );
 

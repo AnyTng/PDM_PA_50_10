@@ -8,13 +8,27 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import ipca.app.lojasas.R
+import ipca.app.lojasas.widget.CestasWidgetUpdater
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
-        val title = message.notification?.title ?: "Alerta"
-        val body = message.notification?.body ?: ""
-        showNotification(title, body)
+        val type = message.data["type"]?.trim().orEmpty()
+
+        // ✅ Atualiza o widget sempre que houver eventos relevantes de cestas
+        // (ou um ping explícito do backend para refresh do widget).
+        if (type == "WIDGET_REFRESH" || type == "CESTA_AGENDADA" || type == "CESTA_ENTREGA_REMINDER") {
+            CestasWidgetUpdater.requestRefresh(applicationContext)
+        }
+
+        // Só mostramos notificação se o payload de notificação existir.
+        // (Mensagens data-only usadas para refresh do widget não devem criar notificações vazias.)
+        val notif = message.notification
+        if (notif != null) {
+            val title = notif.title ?: "Alerta"
+            val body = notif.body ?: ""
+            showNotification(title, body)
+        }
     }
 
     private fun showNotification(title: String, body: String) {
