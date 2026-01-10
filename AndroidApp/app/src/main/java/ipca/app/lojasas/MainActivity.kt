@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                         showBack = true,
                         onBack = { navController.popBackStack() }
                     )
-                    Screen.ChatApoiado -> HeaderConfig(
+                    /*Screen.ChatApoiado -> HeaderConfig(
                         title = stringResource(R.string.header_chat),
                         showBack = true,
                         onBack = { navController.popBackStack() }
@@ -164,7 +164,7 @@ class MainActivity : ComponentActivity() {
                         title = stringResource(R.string.header_chat_detail),
                         showBack = true,
                         onBack = { navController.popBackStack() }
-                    )
+                    )*/
                     // "completeData" e "documentSubmission" cairão aqui (sem header)
                     Screen.StockProductsByName -> HeaderConfig(
                         title = productNameArg ?: stringResource(R.string.header_stock),
