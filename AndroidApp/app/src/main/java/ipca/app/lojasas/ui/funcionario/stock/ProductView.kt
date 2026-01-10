@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import ipca.app.lojasas.core.navigation.Screen
 import ipca.app.lojasas.data.products.ProductStatus
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -81,6 +82,10 @@ fun ProductView(
                         doado = prod.doado,
                         codBarras = prod.codBarras,
                         descProduto = prod.descProduto,
+                        canEdit = isDisponivel,
+                        onEditClick = {
+                            navController.navigate(Screen.StockProductEdit.createRoute(prod.id))
+                        }
                     )
                 }
             }
@@ -106,7 +111,9 @@ private fun ProductViewContent(
     parceiroExternoNome: String?,
     doado: String?,
     codBarras: String?,
-    descProduto: String?
+    descProduto: String?,
+    canEdit: Boolean,
+    onEditClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -261,6 +268,33 @@ private fun ProductViewContent(
             }
         }
 
+        Button(
+            onClick = onEditClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            enabled = canEdit,
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = GreenSas,
+                contentColor = WhiteColor,
+                disabledContainerColor = SurfaceMuted,
+                disabledContentColor = GreyColor
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Editar Produto",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
@@ -389,7 +423,9 @@ private fun ProductViewPreview_Disponivel() {
             parceiroExternoNome = "Mercadona",
             doado = null,
             codBarras = "5601234567890",
-            descProduto = "Embalagem intacta. Armazenar em local fresco e seco."
+            descProduto = "Embalagem intacta. Armazenar em local fresco e seco.",
+            canEdit = true,
+            onEditClick = {}
         )
     }
 }
@@ -416,7 +452,9 @@ private fun ProductViewPreview_Indisponivel() {
             parceiroExternoNome = null,
             doado = "Doação Particular",
             codBarras = null,
-            descProduto = "Saco selado. Sem observações."
+            descProduto = "Saco selado. Sem observações.",
+            canEdit = false,
+            onEditClick = {}
         )
     }
 }

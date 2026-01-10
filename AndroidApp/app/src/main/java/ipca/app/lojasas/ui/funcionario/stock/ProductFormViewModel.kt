@@ -322,10 +322,11 @@ class ProductFormViewModel @Inject constructor(
 
         val form = current.form
         val nomeProduto = form.nomeProduto.trim()
+        val categoria = form.categoria.trim()
         val subCategoria = form.subCategoria.trim()
 
-        if (nomeProduto.isBlank() || subCategoria.isBlank()) {
-            _uiState.value = current.copy(error = "Preenche pelo menos Nome e Subcategoria.")
+        if (nomeProduto.isBlank() || categoria.isBlank() || subCategoria.isBlank()) {
+            _uiState.value = current.copy(error = "Preenche Nome, Categoria e Subcategoria.")
             return
         }
 
@@ -334,7 +335,7 @@ class ProductFormViewModel @Inject constructor(
 
         val upsert = ProductUpsert(
             nomeProduto = nomeProduto,
-            categoria = form.categoria.trim(),
+            categoria = categoria,
             subCategoria = subCategoria,
             marca = form.marca.trim(),
             campanha = form.campanha.trim(), // Agora envia "" se estiver vazio
