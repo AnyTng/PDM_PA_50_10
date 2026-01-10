@@ -29,6 +29,7 @@ fun MenuApoiadoView(
     val viewModel: MenuApoiadoViewModel = hiltViewModel()
     val isApproved by viewModel.isApproved
     val isBlock by viewModel.isBlock
+    val hasNewMessages by viewModel.hasNewMessages
 
     // 1. Ler o número mecanográfico do ViewModel
     val numeroMecanografico by viewModel.numeroMecanografico
@@ -56,6 +57,13 @@ fun MenuApoiadoView(
             ) {
                 Column {
                     MenuApoiadoRow(title = "O meu Perfil") { navController.navigate(Screen.ProfileApoiado.route) }
+                    MenuApoiadoDivider()
+
+                    MenuApoiadoRow(
+                        title = "Mensagens",
+                        showAlert = hasNewMessages,
+                        onClick = { navController.navigate(Screen.ChatApoiado.route) }
+                    )
                     MenuApoiadoDivider()
                 }
             }
@@ -142,6 +150,7 @@ fun MenuApoiadoView(
 fun MenuApoiadoRow(
     title: String,
     enabled: Boolean = true,
+    showAlert: Boolean = false,
     onClick: () -> Unit
 ) {
     val contentColor = if (enabled) BlackColor else GreyColor.copy(alpha = 0.6f)
@@ -161,13 +170,20 @@ fun MenuApoiadoRow(
             fontWeight = FontWeight.Normal
         )
 
-        if (enabled) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Ir",
-                tint = contentColor,
-                modifier = Modifier.size(20.dp)
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showAlert) {
+                Badge(containerColor = DangerRed)
+                Spacer(modifier = Modifier.width(10.dp))
+            }
+
+            if (enabled) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Ir",
+                    tint = contentColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

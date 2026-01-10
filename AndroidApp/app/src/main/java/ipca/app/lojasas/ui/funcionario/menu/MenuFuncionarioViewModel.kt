@@ -10,13 +10,29 @@ import javax.inject.Inject
 @HiltViewModel
 class MenuFuncionarioViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val funcionarioRepository: FuncionarioRepository
+    private val funcionarioRepository: FuncionarioRepository,
+    private val chatRepository: ipca.app.lojasas.data.chat.ChatRepository
 ) : ViewModel() {
     var isAdmin = mutableStateOf(false)
         private set
 
+    // Badge/aviso no botão de mensagens (quando existem chats com mensagens novas)
+    var hasNewMessages = mutableStateOf(false)
+        private set
+
+    private var unreadListener: ipca.app.lojasas.data.common.ListenerHandle? = null
+
     init {
         refreshRole()
+        listenUnreadChats()
+    }
+
+    private fun listenUnreadChats() {
+        unreadListener?.remove()
+        unreadListener = chatRepository.listenHasUnreadForStaff(
+            onSuccess = { hasNewMessages.value = it },
+            onError = { }
+        )
     }
 
     fun refreshRole() {
@@ -35,5 +51,11 @@ class MenuFuncionarioViewModel @Inject constructor(
 
     fun signOut() {
         authRepository.signOut()
+    }
+
+    override fun onCleared() {
+        unreadListener?.remove()
+        unreadListener = null
+        super.onCleared()
     }
 }

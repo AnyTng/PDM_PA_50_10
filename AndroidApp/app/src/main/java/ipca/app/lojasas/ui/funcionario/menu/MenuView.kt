@@ -28,9 +28,11 @@ fun MenuView(
 ) {
     val viewModel: MenuFuncionarioViewModel = hiltViewModel()
     val isAdmin by viewModel.isAdmin
+    val hasNewMessages by viewModel.hasNewMessages
 
     MenuViewContent(
         isAdmin = isAdmin,
+        hasNewMessages = hasNewMessages,
         GreyBg = GreyBg,
         onNavigate = { route -> navController.navigate(route) },
         onLogout = {
@@ -51,6 +53,7 @@ fun MenuView(
 @Composable
 private fun MenuViewContent(
     isAdmin: Boolean,
+    hasNewMessages: Boolean,
     GreyBg: Color,
     onNavigate: (String) -> Unit,
     onLogout: () -> Unit,
@@ -81,6 +84,12 @@ private fun MenuViewContent(
                 ) {
                     Column {
                         MenuRow(title = "Gerir o meu Perfil") { onNavigate(Screen.ProfileFuncionario.route) }
+
+                        MenuDivider()
+                        MenuRow(
+                            title = "Mensagens",
+                            showAlert = hasNewMessages
+                        ) { onNavigate(Screen.ChatsList.route) }
 
                         if (isAdmin) {
                             MenuDivider()
@@ -183,6 +192,7 @@ private fun MenuViewContent(
 @Composable
 fun MenuRow(
     title: String,
+    showAlert: Boolean = false,
     onClick: () -> Unit
 ) {
     Row(
@@ -199,12 +209,18 @@ fun MenuRow(
             color = BlackColor,
             fontWeight = FontWeight.Normal
         )
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = "Ir",
-            tint = BlackColor,
-            modifier = Modifier.size(20.dp)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (showAlert) {
+                Badge(containerColor = DangerRed)
+                Spacer(modifier = Modifier.width(10.dp))
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Ir",
+                tint = BlackColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 
@@ -225,6 +241,7 @@ private fun MenuViewPreview_Colaborador() {
     MaterialTheme {
         MenuViewContent(
             isAdmin = false,
+            hasNewMessages = false,
             GreyBg = GreyBg,
             onNavigate = {},
             onLogout = {}
@@ -238,6 +255,7 @@ private fun MenuViewPreview_Admin() {
     MaterialTheme {
         MenuViewContent(
             isAdmin = true,
+            hasNewMessages = true,
             GreyBg = GreyBg,
             onNavigate = {},
             onLogout = {}

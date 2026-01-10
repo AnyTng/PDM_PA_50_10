@@ -70,6 +70,13 @@ sealed class Screen(val route: String) {
         }
     }
 
+    // --- Chat ---
+    object ChatApoiado : Screen("chatApoiado")
+    object ChatsList : Screen("chatsList")
+    object ChatDetail : Screen("chatDetail/{apoiadoId}") {
+        fun createRoute(apoiadoId: String): String = "chatDetail/${Uri.encode(apoiadoId)}"
+    }
+
     companion object {
         private val allScreens = listOf(
             Login,
@@ -106,7 +113,10 @@ sealed class Screen(val route: String) {
             StockProductsByName,
             StockProduct,
             StockProductEdit,
-            StockProductCreate
+            StockProductCreate,
+            ChatApoiado,
+            ChatsList,
+            ChatDetail
         )
 
         fun fromRoute(route: String?): Screen? {

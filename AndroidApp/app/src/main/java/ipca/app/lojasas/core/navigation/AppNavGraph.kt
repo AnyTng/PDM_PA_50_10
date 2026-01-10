@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import ipca.app.lojasas.ui.apoiado.formulario.CompleteDataView
+import ipca.app.lojasas.ui.apoiado.chat.ApoiadoChatView
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoHomeScreen
 import ipca.app.lojasas.ui.apoiado.home.BlockedAccountScreen
 import ipca.app.lojasas.ui.apoiado.home.ApoiadoViewModel
@@ -24,6 +25,8 @@ import ipca.app.lojasas.ui.funcionario.calendar.CalendarView
 import ipca.app.lojasas.ui.funcionario.cestas.CestaDetailsView
 import ipca.app.lojasas.ui.funcionario.cestas.CestasListView
 import ipca.app.lojasas.ui.funcionario.cestas.CreateCestaView
+import ipca.app.lojasas.ui.funcionario.chat.ChatDetailView
+import ipca.app.lojasas.ui.funcionario.chat.ChatListView
 import ipca.app.lojasas.ui.funcionario.menu.history.HistoryView
 import ipca.app.lojasas.ui.funcionario.menu.ManualView
 import ipca.app.lojasas.ui.funcionario.menu.MenuView
@@ -100,6 +103,7 @@ fun AppNavGraph(
         composable(Screen.MenuApoiado.route) { MenuApoiadoView(navController = navController) }
         composable(Screen.ProfileFuncionario.route) { ProfileView(navController = navController) }
         composable(Screen.ProfileApoiado.route) { ApoiadoProfileView(navController = navController) }
+        composable(Screen.ChatApoiado.route) { ApoiadoChatView(navController = navController) }
         composable(Screen.ValidateAccounts.route) { ValidateAccountsView(navController = navController) }
         composable(Screen.AccountBlocked.route) {
             val viewModel: ApoiadoViewModel = hiltViewModel()
@@ -112,6 +116,14 @@ fun AppNavGraph(
         composable(Screen.Campaigns.route) { CampaignsView(navController = navController) }
         composable(Screen.CreateApoiado.route) { CreateApoiadoView(navController = navController) }
         composable(Screen.ApoiadosList.route) { ApoiadosListView(navController = navController) }
+
+        composable(Screen.ChatsList.route) { ChatListView(navController = navController) }
+        composable(
+            route = Screen.ChatDetail.route,
+            arguments = listOf(navArgument("apoiadoId") { type = NavType.StringType })
+        ) {
+            ChatDetailView(navController = navController)
+        }
 
         composable(
             route = Screen.UrgentHelp.route,

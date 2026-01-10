@@ -10,6 +10,34 @@ import javax.inject.Singleton
 class FuncionarioRepository @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
+
+    /**
+     * Devolve o nome e o role (ex: "Admin") do funcionário a partir do uid.
+     * Útil para features como o chat (mostrar o nome de quem respondeu).
+     */
+    fun fetchFuncionarioNameAndRoleByUid(
+        uid: String,
+        onSuccess: (nome: String, role: String) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val normalized = uid.trim()
+        if (normalized.isBlank()) {
+            onSuccess("", "")
+            return
+        }
+
+        firestore.collection("funcionarios")
+            .whereEqualTo("uid", normalized)
+            .limit(1)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val doc = snapshot.documents.firstOrNull()
+                val nome = doc?.getString("nome") ?: ""
+                val role = doc?.getString("role") ?: ""
+                onSuccess(nome, role)
+            }
+            .addOnFailureListener { onError(it) }
+    }
     fun fetchFuncionarioIdByUid(
         uid: String,
         onSuccess: (String?) -> Unit,

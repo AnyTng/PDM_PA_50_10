@@ -1,6 +1,6 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { getAuth } from "firebase-admin/auth";
 
@@ -393,6 +393,110 @@ export const notifyCestaAgendadaReminders = onSchedule(
       });
       await batch.commit();
     }
+  }
+);
+
+// ---------------------------
+// CHAT: Notificações + resumo no documento do apoiado
+// ---------------------------
+
+export const onChatMessageCreated = onDocumentCreated(
+  {
+    document: "apoiados/{apoiadoId}/chat/{messageId}",
+    region: "europe-southwest1",
+  },
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) return;
+
+    const apoiadoId = event.params.apoiadoId;
+    const data: any = snapshot.data() || {};
+
+    const text = String(data.text || "").trim();
+    const senderRoleRaw = String(data.senderRole || "").trim();
+    const senderRole = senderRoleRaw.toUpperCase();
+    const senderName = String(data.senderName || "").trim();
+
+    // createdAt pode ser Timestamp (serverTimestamp resolvido) ou pode ainda não existir.
+    const createdAt = (data.createdAt || data.createdAtClient || Timestamp.now()) as any;
+
+    const db = getFirestore();
+    const apoiadoRef = db.collection("apoiados").doc(apoiadoId);
+
+    // Atualiza resumo no documento do apoiado para permitir ordenação e contadores de não lidas.
+    const resumoUpdate: any = {
+      chatLastMessageAt: createdAt,
+      chatLastMessageText: text.substring(0, 1000),
+      chatLastSenderName: senderName,
+      chatLastSenderRole: senderRoleRaw,
+    };
+
+    if (senderRole === "APOIADO") {
+      resumoUpdate.chatUnreadForStaff = FieldValue.increment(1);
+    } else {
+      resumoUpdate.chatUnreadForApoiado = FieldValue.increment(1);
+    }
+
+    await apoiadoRef.set(resumoUpdate, { merge: true });
+
+    // ---------------------------
+    // Notificações
+    // ---------------------------
+    const body = text.length > 140 ? `${text.substring(0, 140)}…` : text;
+
+    if (senderRole === "APOIADO") {
+      // Envia para todos os funcionários (tópico)
+      let apoiadoNome = senderName;
+      try {
+        const doc = await apoiadoRef.get();
+        apoiadoNome = (doc.data()?.nome as string) || senderName || apoiadoId;
+      } catch (_) {
+        // ignore
+      }
+
+      await getMessaging().send({
+        topic: "funcionarios",
+        notification: {
+          title: `Nova mensagem de ${apoiadoNome}`,
+          body,
+        },
+        data: {
+          type: "CHAT_MESSAGE",
+          apoiadoId,
+        },
+      });
+      return;
+    }
+
+    // Caso contrário (FUNCIONARIO/ADMIN), envia para o apoiado (tokens guardados em fcmTokens)
+    const tokensSnap = await apoiadoRef.collection("fcmTokens").get();
+    const tokens = tokensSnap.docs.map((t) => t.id).filter(Boolean);
+    if (tokens.length === 0) return;
+
+    const res = await getMessaging().sendEachForMulticast({
+      tokens,
+      notification: {
+        title: senderName ? `Nova mensagem de ${senderName}` : "Nova mensagem",
+        body,
+      },
+      data: {
+        type: "CHAT_MESSAGE",
+        apoiadoId,
+      },
+    });
+
+    // Limpar tokens inválidos
+    const batch = db.batch();
+    res.responses.forEach((r, idx) => {
+      if (!r.success) {
+        const code = (r.error as any)?.code ?? "";
+        if (code.includes("registration-token-not-registered") || code.includes("invalid-argument")) {
+          batch.delete(tokensSnap.docs[idx].ref);
+        }
+      }
+    });
+
+    await batch.commit();
   }
 );
 

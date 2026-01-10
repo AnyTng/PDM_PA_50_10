@@ -11,7 +11,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MenuApoiadoViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val apoiadoRepository: ApoiadoRepository
+    private val apoiadoRepository: ApoiadoRepository,
+    private val chatRepository: ipca.app.lojasas.data.chat.ChatRepository
 ) : ViewModel() {
     var isBlock = mutableStateOf(false)
         private set
@@ -22,7 +23,12 @@ class MenuApoiadoViewModel @Inject constructor(
     var numeroMecanografico = mutableStateOf("")
         private set
 
+    // Badge/aviso no botão de mensagens
+    var hasNewMessages = mutableStateOf(false)
+        private set
+
     private var statusListener: ListenerHandle? = null
+    private var chatUnreadListener: ListenerHandle? = null
 
     init {
         checkStatus()
@@ -40,7 +46,23 @@ class MenuApoiadoViewModel @Inject constructor(
                 isBlock.value = (estado == "Bloqueado")
                 isApproved.value = (estado == "Aprovado" || estado == "Suspenso")
                 numeroMecanografico.value = status.numeroMecanografico
+
+                // Inicia listener das mensagens não lidas quando já sabemos o id do apoiado.
+                startChatUnreadListener(status.numeroMecanografico)
             },
+            onError = { }
+        )
+    }
+
+    private fun startChatUnreadListener(apoiadoId: String) {
+        val normalized = apoiadoId.trim()
+        if (normalized.isBlank()) return
+
+        if (chatUnreadListener != null) return
+
+        chatUnreadListener = chatRepository.listenHasUnreadForApoiado(
+            apoiadoId = normalized,
+            onSuccess = { hasNew -> hasNewMessages.value = hasNew },
             onError = { }
         )
     }
@@ -48,6 +70,8 @@ class MenuApoiadoViewModel @Inject constructor(
     override fun onCleared() {
         statusListener?.remove()
         statusListener = null
+        chatUnreadListener?.remove()
+        chatUnreadListener = null
         super.onCleared()
     }
 
