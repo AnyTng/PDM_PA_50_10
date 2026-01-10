@@ -155,7 +155,7 @@ private fun ChatComposer(
     Surface(
         color = WhiteColor,
         shadowElevation = 8.dp,
-        modifier = Modifier.imePadding()
+        modifier = Modifier
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             HorizontalDivider(color = DividerLight)
@@ -354,5 +354,6 @@ private fun formatTime(ts: com.google.firebase.Timestamp?): String {
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     return sdf.format(date)
 }
+
 
 
