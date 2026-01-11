@@ -1,3 +1,4 @@
+
 package ipca.app.lojasas.ui.funcionario.stock.expired
 
 import ipca.app.lojasas.ui.theme.*
@@ -8,12 +9,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -23,6 +26,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,11 +39,13 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,7 +56,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,16 +63,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
+import ipca.app.lojasas.data.donations.ExpiredDonationEntry
 import ipca.app.lojasas.data.products.Product
-import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
-import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import ipca.app.lojasas.ui.funcionario.stock.ProductGroupUi
 import ipca.app.lojasas.ui.funcionario.stock.ProductSortOption
+import ipca.app.lojasas.ui.funcionario.stock.components.StockProductGroupCard
+import ipca.app.lojasas.ui.funcionario.stock.components.StockSearchBar
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun ExpiredProductsView(
@@ -72,7 +82,9 @@ fun ExpiredProductsView(
     viewModel: ExpiredProductsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
+    val context = LocalContext.current
     var showDonationDialog by remember { mutableStateOf(false) }
+    var showHistoryDialog by remember { mutableStateOf(false) }
     var associationName by remember { mutableStateOf("") }
     var associationContact by remember { mutableStateOf("") }
 
@@ -100,7 +112,8 @@ fun ExpiredProductsView(
         isDonating = state.isDonating,
         donationError = state.donationError,
         onOpenDetails = { product -> navController.navigate(Screen.StockProduct.createRoute(product.id)) },
-        onDonateClick = { showDonationDialog = true }
+        onDonateClick = { showDonationDialog = true },
+        onHistoryClick = { showHistoryDialog = true }
     )
 
     if (showDonationDialog) {
@@ -114,6 +127,32 @@ fun ExpiredProductsView(
             onAssociationContactChange = { associationContact = it },
             onConfirm = { viewModel.donateSelected(associationName, associationContact) },
             onDismiss = { showDonationDialog = false }
+        )
+    }
+
+    if (showHistoryDialog) {
+        ExpiredDonationHistoryDialog(
+            entries = state.historyEntries,
+            isLoading = state.isHistoryLoading,
+            error = state.historyError,
+            exportingDonationId = state.exportingDonationId,
+            onDismiss = {
+                showHistoryDialog = false
+                viewModel.closeDonationDetails()
+            },
+            onViewDetails = viewModel::openDonationDetails,
+            onExportPdf = { entry -> viewModel.exportDonationPdf(context, entry) }
+        )
+    }
+
+    val detailsEntry = state.detailsEntry
+    if (showHistoryDialog && detailsEntry != null) {
+        ExpiredDonationDetailsDialog(
+            entry = detailsEntry,
+            products = state.detailsProducts,
+            isLoading = state.isDetailsLoading,
+            error = state.detailsError,
+            onDismiss = viewModel::closeDonationDetails
         )
     }
 }
@@ -178,7 +217,7 @@ private fun ExpiredDonationDialog(
                     OutlinedTextField(
                         value = associationName,
                         onValueChange = onAssociationNameChange,
-                        label = { Text("Nome da associação") },
+                        label = { Text("Nome da associacao") },
                         singleLine = true,
                         enabled = !isDonating,
                         shape = RoundedCornerShape(12.dp),
@@ -247,6 +286,356 @@ private fun ExpiredDonationDialog(
 }
 
 @Composable
+private fun ExpiredDonationHistoryDialog(
+    entries: List<ExpiredDonationEntry>,
+    isLoading: Boolean,
+    error: String?,
+    exportingDonationId: String?,
+    onDismiss: () -> Unit,
+    onViewDetails: (ExpiredDonationEntry) -> Unit,
+    onExportPdf: (ExpiredDonationEntry) -> Unit
+) {
+    val dateFormatter = remember {
+        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.9f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+            border = BorderStroke(1.dp, DividerGreenLight)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                DonationDialogHeader(
+                    title = "Historico de doacoes fora de validade",
+                    subtitle = "Total: ${entries.size}",
+                    isDismissEnabled = !isLoading,
+                    onDismiss = onDismiss
+                )
+                HorizontalDivider(color = DividerGreenLight)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    when {
+                        isLoading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = GreenSas
+                            )
+                        }
+                        error != null -> {
+                            Text(
+                                text = error.ifBlank { "Erro ao carregar historico." },
+                                color = RedColor,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                        entries.isEmpty() -> {
+                            Text(
+                                text = "Sem registos de doacoes.",
+                                color = GreyColor,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
+                        }
+                        else -> {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(bottom = 24.dp)
+                            ) {
+                                items(items = entries, key = { it.id }) { entry ->
+                                    val whenText = entry.donationDate?.let { dateFormatter.format(it) } ?: "-"
+                                    ExpiredDonationHistoryCard(
+                                        entry = entry,
+                                        whenText = whenText,
+                                        isExporting = exportingDonationId == entry.id,
+                                        onViewDetails = { onViewDetails(entry) },
+                                        onExportPdf = { onExportPdf(entry) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpiredDonationHistoryCard(
+    entry: ExpiredDonationEntry,
+    whenText: String,
+    isExporting: Boolean,
+    onViewDetails: () -> Unit,
+    onExportPdf: () -> Unit
+) {
+    val associationName = entry.associationName.ifBlank { "Associacao" }
+    val associationContact = entry.associationContact.ifBlank { "-" }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = BorderStroke(1.dp, DividerGreenLight)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = associationName,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = GreenSas
+                    )
+                    Text(
+                        text = "Contacto: $associationContact",
+                        fontSize = 12.sp,
+                        color = GreyColor
+                    )
+                }
+                Text(text = whenText, fontSize = 11.sp, color = GreyColor)
+            }
+
+            HorizontalDivider(color = DividerGreenLight)
+
+            Text(
+                text = "Produtos: ${entry.productIds.size}",
+                fontSize = 12.sp,
+                color = DarkGreyColor
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onViewDetails) {
+                    Text("Ver detalhes", color = GreenSas, fontWeight = FontWeight.SemiBold)
+                }
+                Button(
+                    onClick = onExportPdf,
+                    enabled = !isExporting,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = GreenSas,
+                        contentColor = WhiteColor,
+                        disabledContainerColor = SurfaceMuted,
+                        disabledContentColor = GreyColor
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    if (isExporting) {
+                        CircularProgressIndicator(
+                            color = WhiteColor,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    } else {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = WhiteColor)
+                    }
+                    Spacer(Modifier.width(6.dp))
+                    Text("PDF", fontSize = 12.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpiredDonationDetailsDialog(
+    entry: ExpiredDonationEntry,
+    products: List<ExpiredDonationProductItem>,
+    isLoading: Boolean,
+    error: String?,
+    onDismiss: () -> Unit
+) {
+    val dateFormatter = remember {
+        SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    }
+    val whenText = entry.donationDate?.let { dateFormatter.format(it) } ?: "-"
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.9f),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = WhiteColor),
+            border = BorderStroke(1.dp, DividerGreenLight)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                DonationDialogHeader(
+                    title = "Detalhes da doacao",
+                    subtitle = "${entry.associationName.ifBlank { "Associacao" }} - $whenText",
+                    isDismissEnabled = true,
+                    onDismiss = onDismiss
+                )
+                HorizontalDivider(color = DividerGreenLight)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    DonationSummaryCard(entry = entry, whenText = whenText)
+
+                    Text(
+                        text = "Produtos doados",
+                        fontWeight = FontWeight.Bold,
+                        color = GreenSas
+                    )
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        when {
+                            isLoading -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.align(Alignment.Center),
+                                    color = GreenSas
+                                )
+                            }
+                            error != null -> {
+                                Text(
+                                    text = error.ifBlank { "Erro ao carregar detalhes." },
+                                    color = RedColor,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                            products.isEmpty() -> {
+                                Text(
+                                    text = "Sem produtos associados.",
+                                    color = GreyColor,
+                                    modifier = Modifier.align(Alignment.Center)
+                                )
+                            }
+                            else -> {
+                                LazyColumn(
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    contentPadding = PaddingValues(bottom = 12.dp)
+                                ) {
+                                    items(items = products, key = { "${it.name}-${it.idLabel}-${it.count}" }) { item ->
+                                        ExpiredDonationProductCard(item = item)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DonationSummaryCard(entry: ExpiredDonationEntry, whenText: String) {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceLight),
+        border = BorderStroke(1.dp, DividerGreenLight),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            DonationDetailRow(label = "Associacao", value = entry.associationName.ifBlank { "-" })
+            DonationDetailRow(label = "Contacto", value = entry.associationContact.ifBlank { "-" })
+            DonationDetailRow(label = "Data", value = whenText)
+            DonationDetailRow(label = "Produtos", value = entry.productIds.size.toString())
+        }
+    }
+}
+
+@Composable
+private fun DonationDetailRow(label: String, value: String) {
+    Column {
+        Text(text = label, fontSize = 12.sp, color = GreyColor)
+        Text(text = value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = BlackColor)
+    }
+}
+
+@Composable
+private fun ExpiredDonationProductCard(item: ExpiredDonationProductItem) {
+    val chipColor = if (item.isMissing) SurfaceMuted else GreenSas.copy(alpha = 0.12f)
+    val chipBorder = if (item.isMissing) LightGreyColor else GreenSas.copy(alpha = 0.3f)
+    val chipText = if (item.isMissing) GreyColor else GreenSas
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = WhiteColor),
+        border = BorderStroke(1.dp, DividerGreenLight),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = item.name,
+                    fontWeight = FontWeight.Bold,
+                    color = BlackColor
+                )
+                Text(
+                    text = "Categoria: ${item.category} / ${item.subCategory}",
+                    fontSize = 12.sp,
+                    color = GreyColor
+                )
+                Text(
+                    text = "Marca: ${item.brand} | Tam: ${item.sizeLabel}",
+                    fontSize = 12.sp,
+                    color = GreyColor
+                )
+                if (item.idLabel != null) {
+                    Text(
+                        text = "ID: ${item.idLabel}",
+                        fontSize = 11.sp,
+                        color = GreyColor
+                    )
+                }
+            }
+            Surface(
+                color = chipColor,
+                contentColor = chipText,
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, chipBorder)
+            ) {
+                Text(
+                    text = "x${item.count}",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun DonationDialogHeader(
     title: String,
     subtitle: String,
@@ -303,7 +692,8 @@ private fun ExpiredProductsViewContent(
     isDonating: Boolean,
     donationError: String?,
     onOpenDetails: (Product) -> Unit,
-    onDonateClick: () -> Unit
+    onDonateClick: () -> Unit,
+    onHistoryClick: () -> Unit
 ) {
     var showExpirySortSection by remember { mutableStateOf(false) }
     var showSizeSortSection by remember { mutableStateOf(false) }
@@ -461,7 +851,7 @@ private fun ExpiredProductsViewContent(
                             start = 16.dp,
                             end = 16.dp,
                             top = 16.dp,
-                            bottom = 120.dp
+                            bottom = 140.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -497,6 +887,18 @@ private fun ExpiredProductsViewContent(
                     }
                 }
             }
+        }
+
+        FloatingActionButton(
+            onClick = onHistoryClick,
+            containerColor = GreenSas,
+            contentColor = WhiteColor,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(20.dp)
+                .size(56.dp)
+        ) {
+            Icon(imageVector = Icons.Default.History, contentDescription = "Historico")
         }
     }
 }
@@ -537,7 +939,8 @@ private fun ExpiredProductsViewPreview_Normal() {
         isDonating = false,
         donationError = null,
         onOpenDetails = {},
-        onDonateClick = {}
+        onDonateClick = {},
+        onHistoryClick = {}
     )
 }
 
@@ -573,10 +976,11 @@ private fun ExpiredEmptyState(message: String) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "✓",
-            fontSize = 80.sp,
-            color = GreenSas.copy(alpha = 0.45f)
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = null,
+            tint = GreenSas.copy(alpha = 0.45f),
+            modifier = Modifier.size(80.dp)
         )
         Text(
             text = message,
