@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import android.widget.Toast
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import ipca.app.lojasas.core.navigation.Screen
@@ -72,9 +74,11 @@ fun ExpiredProductsView(
     viewModel: ExpiredProductsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState
+    val context = LocalContext.current
     var showDonationDialog by remember { mutableStateOf(false) }
     var associationName by remember { mutableStateOf("") }
     var associationContact by remember { mutableStateOf("") }
+    var wasDonating by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.selectedIds, state.isDonating) {
         if (state.selectedIds.isEmpty() && !state.isDonating) {
@@ -82,6 +86,13 @@ fun ExpiredProductsView(
             associationName = ""
             associationContact = ""
         }
+    }
+
+    LaunchedEffect(state.isDonating, state.donationError) {
+        if (wasDonating && !state.isDonating && state.donationError.isNullOrBlank()) {
+            Toast.makeText(context, "Obrigado! ❤️", Toast.LENGTH_SHORT).show()
+        }
+        wasDonating = state.isDonating
     }
 
     ExpiredProductsViewContent(
