@@ -15,14 +15,14 @@ on:
   push:
     branches: [ "main", "Dev" ]
     paths:
-      - 'AndroidApp/app/**'
+      - '/app/**'
 
       - '.github/workflows/codeql.yml'
 
   pull_request:
     branches: [ "main", "Dev" ]
     paths:
-      - 'AndroidApp/app/**'
+      - '/app/**'
 
       - '.github/workflows/codeql.yml' 
 
