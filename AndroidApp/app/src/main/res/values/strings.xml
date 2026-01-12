@@ -35,6 +35,10 @@
     <string name="manual_colaborador_url">https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_colaborador.pdf?alt=media&amp;token=934d4449-e922-4dc8-ad31-1421dd7690a5</string>
     <string name="manual_beneficiario_url">https://firebasestorage.googleapis.com/v0/b/app-loja-social-ipca.firebasestorage.app/o/DocumentationHelp%2FManual_beneficiario.pdf?alt=media&amp;token=f3fb7409-593c-447f-9750-dc18f9d9912f</string>
 
+    <string name="manual_download">Transferir manual</string>
+    <string name="manual_download_started">Transferencia iniciada. Consulte Downloads.</string>
+    <string name="manual_download_error">Erro ao transferir o manual.</string>
+    <string name="manual_download_description">A transferir manual em PDF.</string>
     <!-- Widget (Home Screen) -->
     <string name="widget_title">Cestas</string>
     <string name="widget_subtitle_loading">A carregar…</string>
@@ -48,3 +52,5 @@
     <string name="widget_item_apoiado_unknown">Apoiado</string>
     <string name="widget_refresh">Atualizar</string>
 </resources>
+
+
