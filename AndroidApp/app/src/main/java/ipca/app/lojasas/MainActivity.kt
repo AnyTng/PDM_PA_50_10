@@ -1,3 +1,15 @@
+//Grupo 10 - Projeto Aplicado de Engenharia de Sistemas Informáticos no IPCA
+//
+//Integrantes do Grupo:
+//
+//Gonçalo Tierri - 23020
+//Lino Azevedo - 23015
+//Luís Freitas -23008
+//Fábio Costa - 22997
+//Fábio Fernandes - 22996
+
+//Última Modificação - 12/01/2026
+//-------------
 package ipca.app.lojasas
 
 import android.net.Uri
