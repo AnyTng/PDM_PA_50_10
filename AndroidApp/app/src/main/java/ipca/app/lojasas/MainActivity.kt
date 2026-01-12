@@ -40,7 +40,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
+// Activity principal: configura sistema, conteúdo Compose e navegação.
 class MainActivity : ComponentActivity() {
+    // Repositórios injetados para autenticação e role do utilizador.
     @Inject
     lateinit var authRepository: AuthRepository
 
@@ -49,6 +51,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Ajusta a aparência das barras do sistema para combinar com o tema.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(AndroidTransparent),
             navigationBarStyle = SystemBarStyle.light(
@@ -57,7 +60,9 @@ class MainActivity : ComponentActivity() {
             )
         )
         setContent {
+            // Permissão de notificações (Android 13+), pedida uma vez.
             AskNotificationPermissionOnce()
+            // Controlador de navegação Compose.
             val navController = rememberNavController()
 
             // Quando o utilizador clica num item do widget, abrimos a app e (após login/roteamento)
@@ -65,7 +70,9 @@ class MainActivity : ComponentActivity() {
             var pendingWidgetCestaId by rememberSaveable {
                 mutableStateOf(intent.getStringExtra(EXTRA_OPEN_CESTA_ID))
             }
+            // Tema e estrutura base da UI.
             LojaSocialIPCATheme {
+                // Estado da rota atual para escolher header/footer.
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
                 val currentScreen = Screen.fromRoute(currentRoute)
@@ -224,6 +231,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
+                    // Grafo de navegação principal da app.
                     AppNavGraph(
                         navController = navController,
                         modifier = Modifier.padding(innerPadding)
@@ -232,6 +240,7 @@ class MainActivity : ComponentActivity() {
             }
 
 
+            // Roteamento inicial: resolve role do utilizador e trata deep link do widget.
             LaunchedEffect(Unit) {
                 val email = authRepository.currentUserEmail()
                 if (email != null) {
