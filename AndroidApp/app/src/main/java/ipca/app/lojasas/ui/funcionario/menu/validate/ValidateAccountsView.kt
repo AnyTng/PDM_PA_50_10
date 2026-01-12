@@ -102,7 +102,7 @@ fun ValidateAccountCard(account: ApoiadoSummary, onActionClick: () -> Unit) {
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Button(onClick = onActionClick, colors = ButtonDefaults.buttonColors(containerColor = GreenSas), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(24.dp, 8.dp), modifier = Modifier.height(36.dp)) {
-                        Text("Veredito", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("Decisão", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -140,7 +140,7 @@ fun ApoiadoDetailDialog(
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 VerdictDialogHeader(
-                    title = "Veredito do Beneficiário",
+                    title = "Decisão sobre o Beneficiário",
                     subtitle = "${details.nome} • ${details.id}",
                     onDismiss = onDismiss
                 )
